@@ -1,0 +1,117 @@
+// The Vue build version to load with the `import` command
+// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
+import Vue from 'vue'
+import router from './router'
+import store from './store'
+import ElementUI from 'element-ui'
+// import ElementUI, {Message} from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
+import App from './App'
+import 'babel-polyfill'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+import ECharts from 'vue-echarts'
+
+Vue.prototype.axios = axios
+Vue.use(VueAxios, axios)
+Vue.use(ElementUI)
+Vue.component('v-chart', ECharts)
+Vue.config.productionTip = false
+
+// 递归遍历树
+function translateTreeMain (arr) {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].componentPath !== undefined) {
+      arr[i].component = resolve => require(['@/' + arr[i].componentPath + ''], resolve)
+      if (arr[i].children !== undefined && arr[i].children.length > 0) {
+        translateTreeMain(arr[i].children, arr)
+      }
+    }
+  }
+  return arr
+}
+
+// 路由拦截
+let registerRouteFresh = true
+router.beforeEach((to, from, next) => {
+  store.commit('clearToken') // 取消请求
+  if (to.path !== '/login') { // 本身目的地址非login页
+    if (store.getters.getToken !== '' && store.getters.getToken !== null) { // token非空
+      if (registerRouteFresh) { // 防止死循环
+        console.log('刷新后跳转')
+        registerRouteFresh = false
+        router.addRoutes(translateTreeMain(JSON.parse(store.getters.getPermissionList)))
+        next({ ...to, replace: true }) //  hack方法，确保addRoutes已完成
+      } else {
+        console.log('普通跳转')
+        next()
+      }
+    } else { // token为空
+      console.log('token为空跳转到login页')
+      next({ path: '/login' })
+    }
+  } else { // 本身目的地址为login页
+    console.log('本身目的地址为login页')
+    next()
+  }
+})
+
+// todo: 请求拦截
+// axios.interceptors.request.use(config => {
+//   if (store.getters.getToken !== '' && store.getters.getToken !== null) { // 如果token非空，请求时带上token
+//     config.headers.Authorization = store.getters.getToken
+//   }
+//   config.cancelToken = new axios.CancelToken(function (cancel) {
+//     store.commit('pushToken', {cancelToken: cancel})
+//   })
+//   return config
+// })
+
+// todo: 响应截器
+// axios.interceptors.response.use((response) => {
+//   return response
+// }, function (error) {
+//   if (axios.isCancel(error)) { // 为了终结promise链 就是实际请求不会走到.catch(rej=>{});这样就不会触发错误提示之类了
+//     return new Promise(() => {})
+//   } else if (error.response.status === 400) {
+//     Message({
+//       message: '参数错误！',
+//       type: 'error'
+//     })
+//   } else if (error.response.status === 403) {
+//     Message({
+//       message: '没有权限！',
+//       type: 'error'
+//     })
+//   } else if (error.response.status === 404) {
+//     Message({
+//       message: 'URL不存在！',
+//       type: 'error'
+//     })
+//   } else if (error.response.status === 503) {
+//     Message({
+//       message: '服务忙碌或正在维护，稍后再试！',
+//       type: 'error'
+//     })
+//   } else if (error.response.status === 504) {
+//     Message({
+//       message: '网关超时！',
+//       type: 'error'
+//     })
+//   } else {
+//     Message({
+//       message: '服务器内部错误！',
+//       type: 'error'
+//     })
+//   }
+//   return Promise.reject(error)
+// })
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#app',
+  router,
+  store,
+  components: { App },
+  template: '<App/>'
+})

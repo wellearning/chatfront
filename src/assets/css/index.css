@@ -1,0 +1,96 @@
+/*通用开始*/
+* {
+  padding: 0;
+  margin: 0;
+  font-family: Times New Roman;
+}
+ul, li {
+  list-style: none;
+}
+table {
+  border-collapse:collapse;
+}
+a {
+  text-decoration: none;
+}
+a:focus {
+  outline:none;
+}
+html {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #303133;
+  background: #f5f5f5;
+}
+.el-container {
+  width: 100vw;
+  height: 100vh;
+}
+.pageHeader {
+  background-color: #409EFF;
+  text-align: right;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.pageHeader .pageTitle {
+  float: left;
+  font-size: 24px;
+  color: #fff;
+  font-weight: bold;
+  line-height: 40px;
+}
+.pageHeader .welcome {
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 20px;
+  color: #fff;
+}
+.pageAside {
+  background-color: #fff;
+  position: relative;
+}
+.pageMain {
+  padding: 40px;
+}
+.pageAsideMenu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+.el-menu {
+  border-right: none;
+}
+.el-menu-item i {
+  color: #303133;
+}
+.el-submenu__title i {
+  color: #303133;
+}
+.el-submenu .el-menu-item {
+  padding: 0 20px;
+}
+/*通用结束*/
+/*login开始*/
+.login {
+  height: 100%;
+}
+.loginBox {
+  background: #fff;
+  padding: 100px;
+  border-radius: 10px;
+}
+.loginTitle {
+  text-align: center;
+  margin-bottom: 50px;
+}
+.loginBtn {
+  margin-top: 30px;
+  width: 100%;
+}
+/*login结束*/
+/*index.vue开始*/
+
+/*index.vue结束*/
