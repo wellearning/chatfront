@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import SidebarItem from '@/component/sidebarItem'
+import SidebarItem from '@/component/sidebar/sidebarItem'
 
 export default {
   components: {
