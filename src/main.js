@@ -3,8 +3,7 @@
 import Vue from 'vue'
 import router from './router'
 import store from './store'
-import ElementUI from 'element-ui'
-// import ElementUI, {Message} from 'element-ui'
+import ElementUI, {Message} from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
 import 'babel-polyfill'
@@ -56,56 +55,62 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-// todo: 请求拦截
-// axios.interceptors.request.use(config => {
-//   if (store.getters.getToken !== '' && store.getters.getToken !== null) { // 如果token非空，请求时带上token
-//     config.headers.Authorization = store.getters.getToken
-//   }
-//   config.cancelToken = new axios.CancelToken(function (cancel) {
-//     store.commit('pushToken', {cancelToken: cancel})
-//   })
-//   return config
-// })
+// 请求拦截
+axios.interceptors.request.use(config => {
+  if (store.getters.getToken !== '' && store.getters.getToken !== null) { // 如果token非空，请求时带上token
+    config.headers.Authorization = store.getters.getToken
+  }
+  config.cancelToken = new axios.CancelToken(function (cancel) {
+    store.commit('pushToken', {cancelToken: cancel})
+  })
+  return config
+})
 
-// todo: 响应截器
-// axios.interceptors.response.use((response) => {
-//   return response
-// }, function (error) {
-//   if (axios.isCancel(error)) { // 为了终结promise链 就是实际请求不会走到.catch(rej=>{});这样就不会触发错误提示之类了
-//     return new Promise(() => {})
-//   } else if (error.response.status === 400) {
-//     Message({
-//       message: '参数错误！',
-//       type: 'error'
-//     })
-//   } else if (error.response.status === 403) {
-//     Message({
-//       message: '没有权限！',
-//       type: 'error'
-//     })
-//   } else if (error.response.status === 404) {
-//     Message({
-//       message: 'URL不存在！',
-//       type: 'error'
-//     })
-//   } else if (error.response.status === 503) {
-//     Message({
-//       message: '服务忙碌或正在维护，稍后再试！',
-//       type: 'error'
-//     })
-//   } else if (error.response.status === 504) {
-//     Message({
-//       message: '网关超时！',
-//       type: 'error'
-//     })
-//   } else {
-//     Message({
-//       message: '服务器内部错误！',
-//       type: 'error'
-//     })
-//   }
-//   return Promise.reject(error)
-// })
+// 响应截器
+axios.interceptors.response.use((response) => {
+  if (response.data.code === 0) {
+    Message({
+      message: response.data.message,
+      type: 'error'
+    })
+  }
+  return response
+}, function (error) {
+  if (axios.isCancel(error)) { // 为了终结promise链 就是实际请求不会走到.catch(rej=>{});这样就不会触发错误提示之类了
+    return new Promise(() => {})
+  } else if (error.response.status === 400) {
+    Message({
+      message: 'Bad Request',
+      type: 'error'
+    })
+  } else if (error.response.status === 403) {
+    Message({
+      message: 'Forbidden',
+      type: 'error'
+    })
+  } else if (error.response.status === 404) {
+    Message({
+      message: 'Not Found',
+      type: 'error'
+    })
+  } else if (error.response.status === 503) {
+    Message({
+      message: 'Service Unavailable',
+      type: 'error'
+    })
+  } else if (error.response.status === 504) {
+    Message({
+      message: 'Gateway Timeout',
+      type: 'error'
+    })
+  } else {
+    Message({
+      message: 'Internal Server Error',
+      type: 'error'
+    })
+  }
+  return Promise.reject(error)
+})
 
 /* eslint-disable no-new */
 new Vue({

@@ -7,12 +7,9 @@
         <el-button icon="el-icon-switch-button" type="primary" round @click="logout()" :loading="isLoading"></el-button>
       </el-header>
       <el-container>
-        <el-aside class="pageAside">
+        <el-aside class="pageAside" :width="isCollapse ? '64px' : '300px'">
           <el-col :span="24" class="pageAsideMenu">
-            <el-menu :default-active="$route.path" :unique-opened="true" :router="true">
-              <SidebarItem v-for="item in menu" :subRoute="item" :key="item.id">
-              </SidebarItem>
-            </el-menu>
+            <Sidebar :collapse="isCollapse" :routes="menu"></Sidebar>
           </el-col>
         </el-aside>
         <el-main class="pageMain">
@@ -24,20 +21,42 @@
 </template>
 
 <script>
-import SidebarItem from '@/component/sidebar/sidebarItem'
+import Sidebar from '@/component/sidebar/sidebar'
 
 export default {
   components: {
-    SidebarItem
+    Sidebar
   },
   data: function () {
     return {
       isLoading: false,
+      innerWidth: window.innerWidth,
+      isCollapse: false, // todo: 折叠后导航会报Maximum call stack size exceeded
       account: this.$store.getters.getAccount,
       menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children
     }
   },
+  mounted: function () {
+    console.log('menu', this.menu)
+    this.menuStyle()
+    this.$nextTick(() => {
+      window.onresize = () => {
+        return (() => {
+          this.innerWidth = window.innerWidth
+          this.menuStyle()
+        })()
+      }
+    })
+  },
   methods: {
+    // 根据屏幕宽度，改变菜单
+    menuStyle: function () {
+      if (this.innerWidth > 768) {
+        this.isCollapse = false
+      } else {
+        this.isCollapse = true
+      }
+    },
     // 退出登录
     logout: function () {
       this.isLoading = true

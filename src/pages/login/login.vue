@@ -46,11 +46,11 @@ export default {
       },
       loginFormRules: {
         username: [
-          { required: true, message: 'Please enter your account number', trigger: 'blur' }
+          { required: true, message: 'Please Enter Your Account Number', trigger: 'blur' }
         ],
         password: [
           // { validator: verifyPw, trigger: 'blur' },
-          { required: true, message: 'Please enter your password', trigger: 'blur' }
+          { required: true, message: 'Please Enter Your Password', trigger: 'blur' }
         ]
       }
     }
@@ -60,8 +60,9 @@ export default {
     login: function () {
       this.$refs['loginForm'].validate(valid => {
         if (valid) {
+          // todo: 登录接口
           // this.isLoading = true
-          // this.axios.get('/api/tack/auth/token?username=' + this.form.username + '&password=' + this.form.password).then(res => {
+          // this.axios.get('/api/?username=' + this.form.username + '&password=' + this.form.password).then(res => {
           //   console.log('登录', res)
           //   this.$store.dispatch('asynSetAccount', this.form.username)
           //   this.$store.dispatch('asynSetToken', res.data.data.access_token)

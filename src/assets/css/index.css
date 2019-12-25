@@ -1,3 +1,6 @@
+/*
+* Tornorroyv 分辨率768-1920
+*/
 /*通用开始*/
 * {
   padding: 0;
@@ -23,8 +26,8 @@ html {
   background: #f5f5f5;
 }
 .el-container {
-  width: 100vw;
   height: 100vh;
+  overflow: hidden;
 }
 .pageHeader {
   background-color: #409EFF;
@@ -50,7 +53,7 @@ html {
   position: relative;
 }
 .pageMain {
-  padding: 40px;
+  padding: 20px 40px;
 }
 .pageAsideMenu {
   position: absolute;
@@ -91,6 +94,71 @@ html {
   width: 100%;
 }
 /*login结束*/
-/*index.vue开始*/
-
-/*index.vue结束*/
+.inPageTitle {
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  background: #fff;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.inPageNav {
+  font-size: 22px;
+  line-height: 40px;
+}
+.inPageContent {
+  border: 1px solid #ccc;
+  padding: 20px;
+  background: #fff;
+  margin-bottom: 20px;
+}
+.rightBtnBox {
+  float: right;
+}
+.form .el-form-item__label {
+  width: 30%;
+}
+.form .el-form-item__content {
+  width: 50%;
+  float: left;
+}
+/*organization开始*/
+.organization-list {
+  border: 1px solid #ccc;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.organization-list .el-tree-node__content {
+  height: 40px;
+}
+.organization-list .organization-node {
+  line-height: 32px;
+}
+.organization-list .organization-icon {
+  font-size: 22px;
+  padding-right: 10px;
+}
+.organization-list .organization-label {
+  font-size: 18px;
+}
+.organization-editBox {
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+.organization-editTitle {
+  padding: 10px 20px;
+  border-bottom: 1px solid #ccc;
+  background: rgba(64, 158, 255, 0.15);
+  overflow: hidden;
+}
+.organization-editTitle .title {
+  font-size: 18px;
+  line-height: 32px;
+}
+.organization-editContent {
+  padding: 50px 20px;
+}
+/*organization结束*/
+/*-----------------------------------------------768开始--------------------------------------------------------------*/
+@media only screen and (max-width: 768px) {
+}
+/*-----------------------------------------------768结束--------------------------------------------------------------*/
