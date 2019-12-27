@@ -75,6 +75,18 @@ html {
 .el-submenu .el-menu-item {
   padding: 0 20px;
 }
+.el-select {
+  width: 100%;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(144,147,153,.3);
+  border-radius: 4px;
+}
 /*通用结束*/
 /*login开始*/
 .login {
@@ -121,6 +133,10 @@ html {
   width: 50%;
   float: left;
 }
+.form .confirmBtn .el-form-item__content {
+  width: 100%;
+  text-align: center;
+}
 /*organization开始*/
 .organization-list {
   border: 1px solid #ccc;
@@ -132,6 +148,10 @@ html {
 }
 .organization-list .organization-node {
   line-height: 32px;
+  width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .organization-list .organization-icon {
   font-size: 22px;
@@ -158,7 +178,20 @@ html {
   padding: 50px 20px;
 }
 /*organization结束*/
-/*-----------------------------------------------768开始--------------------------------------------------------------*/
-@media only screen and (max-width: 768px) {
+/*user开始*/
+.searchBox {
+  background: rgba(64, 158, 255, 0.15);
 }
-/*-----------------------------------------------768结束--------------------------------------------------------------*/
+.searchForm {
+  padding: 10px 20px;
+  text-align: right;
+}
+.searchForm .el-form-item {
+  display: inline-block;
+  margin-bottom: 0;
+  margin-left: 10px;
+}
+.searchForm .el-form-item__content {
+  display: inline-block;
+}
+/*user结束*/

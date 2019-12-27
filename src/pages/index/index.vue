@@ -37,7 +37,6 @@ export default {
     }
   },
   mounted: function () {
-    console.log('menu', this.menu)
     this.menuStyle()
     this.$nextTick(() => {
       window.onresize = () => {

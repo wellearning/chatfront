@@ -10,7 +10,7 @@
       <el-row :gutter="20">
         <el-col :xs="24" :sm="24" :md="24" :lg="10" :xl="10">
           <div class="organization-list" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.35)">
-            <el-tree :data="list" :props="defaultProps" default-expand-all ref="deviceTree" :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record">
+            <el-tree ref="organizationTree" :data="list" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
                 <i class="organization-icon" :class="typeList.find(item => item.id === data.type) !== undefined ? typeList.find(item => item.id === data.type).icon : ''"></i>
                 <span class="organization-label">{{ node.label }}</span>
@@ -35,13 +35,13 @@
             <div class="organization-editContent">
               <el-form class="form" ref="form" :model="form" :rules="formRules">
                 <el-form-item label="Id" prop="id" v-show="false">
-                  <el-input v-model.trim="form.id" disabled></el-input>
+                  <el-input v-model="form.id" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="ParentId" prop="parentId" v-show="false">
-                  <el-input v-model.trim="form.parentId" disabled></el-input>
+                  <el-input v-model="form.parentId" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="Parent" prop="parent">
-                  <el-input v-model.trim="form.parent" disabled></el-input>
+                  <el-input v-model="form.parent" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="Type" prop="type">
                   <el-radio-group v-model="form.type">
@@ -52,7 +52,7 @@
                   </el-radio-group>
                 </el-form-item>
                 <el-form-item label="Name" prop="name">
-                  <el-input v-model.trim="form.name"></el-input>
+                  <el-input v-model="form.name"></el-input>
                 </el-form-item>
               </el-form>
             </div>
@@ -110,11 +110,12 @@ export default {
       //   console.log('查询出错', err)
       //   this.isLoadingList = false
       // })
-      this.list = [{id: 1, label: 'a', type: 1, children: [{id: 11, label: 'aa', type: 1, children: [{id: 111, label: 'aaa', type: 1}, {id: 112, label: 'aab', type: 2}]}, {id: 12, label: 'ab', type: 2}]}, {id: 2, label: 'b', type: 1}]
+      this.list = [{id: 1, label: 'a', type: 1, children: [{id: 11, label: 'aa', type: 1, children: [{id: 111, label: 'aaa', type: 1}, {id: 112, label: 'aab', type: 2}]}, {id: 12, label: 'ab', type: 2}]}, {id: 2, label: 'b', type: 1}, {id: 3, label: 'c', type: 1}, {id: 4, label: 'd', type: 1}, {id: 5, label: 'e', type: 1}, {id: 6, label: 'f', type: 1}, {id: 7, label: 'g', type: 1}, {id: 8, label: 'h', type: 1}, {id: 9, label: 'i', type: 1}, {id: 10, label: 'j', type: 1}]
     },
     // 选择某个company或department
     nodeChange: function (data) {
       this.resetForm()
+      this.$refs.organizationTree.setCurrentKey(data.id) // 设置节点高亮
       this.currentNode = data.id
       this.currentNodeName = data.label
       this.isAdd = false
@@ -204,7 +205,7 @@ export default {
     },
     // 删除
     del: function () {
-      this.$confirm('Are you sure that you want to delete it?', 'Confirm', {
+      this.$confirm('Are you sure to delete it?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'
@@ -214,7 +215,7 @@ export default {
           console.log('删除', res)
           this.$message({
             type: 'success',
-            message: 'Operation Succeeded '
+            message: 'Operation Succeeded'
           })
           this.resetForm()
           this.search()
@@ -237,6 +238,7 @@ export default {
       this.$refs['form'].resetFields()
       this.isAdd = false
       this.isEdit = false
+      this.$refs.organizationTree.setCurrentKey(null) // 取消节点高亮
     }
   }
 }
