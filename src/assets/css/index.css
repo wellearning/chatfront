@@ -87,6 +87,10 @@ html {
   background-color: rgba(144,147,153,.3);
   border-radius: 4px;
 }
+.pageList {
+  text-align: center;
+  margin: 10px 0;
+}
 /*通用结束*/
 /*login开始*/
 .login {

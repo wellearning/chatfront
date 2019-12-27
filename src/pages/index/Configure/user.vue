@@ -59,7 +59,7 @@
                 </template>
               </el-table-column>
             </el-table>
-            <el-pagination background @current-change="handleCurrentChange" :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="total, prev, pager, next, jumper" :total=total class="pageList">
+            <el-pagination background @current-change="handleCurrentChange" :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
             </el-pagination>
           </div>
         </el-col>
