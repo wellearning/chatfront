@@ -59,8 +59,6 @@
                 </template>
               </el-table-column>
             </el-table>
-            <el-pagination background @current-change="handleCurrentChange" :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
-            </el-pagination>
           </div>
         </el-col>
       </el-row>
@@ -322,12 +320,16 @@ export default {
     // 查询
     search: function (status, name) {
       // todo: 查询接口，organization, status, name
+      this.searchStatus = status
+      this.searchName = name
       // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => {
+      // this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: 1}).then(res => {
       //   console.log('查询', res)
-      //   this.list = res.data.data.list
-      //   this.total = res.data.data.total
-      //   this.currentPage = res.data.data.pageNum
+      //   if (res) {
+      //     this.list = res.data.data.list
+      //     this.total = res.data.data.total
+      //     this.currentPage = res.data.data.pageNum
+      //   }
       //   this.isLoading = false
       // }).catch(err => {
       //   console.log('查询出错', err)
@@ -340,28 +342,6 @@ export default {
         {id: 4, name: 'Paul', organizationId: 112, organizationName: 'aab', roleId: 3, roleName: 'visitor', mobile: '416-55555', email: '13633333333@qq.com', status: 2},
         {id: 5, name: 'Lee', organizationId: 5, organizationName: 'e', roleId: 2, roleName: 'manager', mobile: '416-33333', email: '13666666666@qq.com', status: 1}
       ]
-    },
-    // 分页
-    handleCurrentChange: function (currentPage) {
-      // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => { // todo: 分页查询接口
-      //   console.log('分页', res)
-      //   this.list = res.data.data.list
-      //   this.total = res.data.data.total
-      //   if (res.data.data.total > 0) {
-      //     if (res.data.data.list.length > 0) {
-      //       this.currentPage = res.data.data.pageNum
-      //     } else {
-      //       this.currentPage = res.data.data.pageNum - 1
-      //     }
-      //   } else {
-      //     this.currentPage = 1
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('分页出错', err)
-      //   this.isLoading = false
-      // })
     },
     // 重置查询
     resetSearch: function () {
@@ -401,7 +381,7 @@ export default {
             })
             this.$refs['addForm'].resetFields()
             this.addFormVisible = false
-            this.handleCurrentChange(this.currentPage)
+            this.search(this.searchStatus, this.searchName)
             this.isLoading = false
           }).catch(err => {
             console.log('新增出错', err)
@@ -458,7 +438,7 @@ export default {
             })
             this.$refs['editForm'].resetFields()
             this.editFormVisible = false
-            this.handleCurrentChange(this.currentPage)
+            this.search(this.searchStatus, this.searchName)
             this.isLoading = false
           }).catch(err => {
             console.log('修改出错', err)
@@ -486,7 +466,7 @@ export default {
             type: 'success',
             message: 'Operation Succeeded'
           })
-          this.handleCurrentChange(this.currentPage)
+          this.search(this.searchStatus, this.searchName)
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
@@ -530,7 +510,6 @@ export default {
             })
             this.$refs['passForm'].resetFields()
             this.passFormVisible = false
-            this.handleCurrentChange(this.currentPage)
             this.isLoading = false
           }).catch(err => {
             console.log('重置密码出错', err)
