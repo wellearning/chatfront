@@ -103,6 +103,9 @@
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit User" :visible.sync="editFormVisible" width="600px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="Id" prop="id" v-show="false">
+            <el-input v-model="editForm.id" disabled></el-input>
+          </el-form-item>
           <el-form-item label="User Name" prop="name">
             <el-input v-model.trim="editForm.name" clearable></el-input>
           </el-form-item>
@@ -133,6 +136,21 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------重置密码弹窗开始------------------------------------------------->
+      <el-dialog title="Password Reset" :visible.sync="passFormVisible" width="600px" center :before-close="closePass">
+        <el-form :model="passForm" ref="passForm" :rules="passFormRules" class="form">
+          <el-form-item label="Id" prop="id" v-show="false">
+            <el-input v-model="passForm.id" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="New Password" prop="password">
+            <el-input v-model.trim="passForm.password" clearable type="password"></el-input>
+          </el-form-item>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="pass()" :loading="isLoading">Confirm</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------重置密码弹窗结束------------------------------------------------->
     </div>
   </div>
 </template>
@@ -241,7 +259,19 @@ export default {
       pageSize: 10,
       pagerCount: 5,
       currentPage: 1,
-      total: 0
+      total: 0,
+      // 重置密码
+      passFormVisible: false,
+      passForm: {
+        id: null,
+        password: null
+      },
+      passFormRules: {
+        password: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
+        ]
+      }
     }
   },
   mounted: function () {
@@ -467,6 +497,51 @@ export default {
           type: 'info',
           message: 'Operation Cancelled'
         })
+      })
+    },
+    // 重置密码弹窗
+    showPass: function (id) {
+      this.passFormVisible = true
+      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.passForm.id = id
+      })
+    },
+    // 关闭重置密码
+    closePass: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$refs['passForm'].resetFields()
+        done()
+      }).catch(() => {})
+    },
+    // 重置密码
+    pass: function () {
+      this.$refs['passForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          this.axios.post('/api/', this.passForm).then(res => { // todo: 修改接口
+            console.log('重置密码', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.$refs['passForm'].resetFields()
+            this.passFormVisible = false
+            this.handleCurrentChange(this.currentPage)
+            this.isLoading = false
+          }).catch(err => {
+            console.log('重置密码出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
       })
     }
   }

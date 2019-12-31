@@ -9,10 +9,10 @@
               <h2 class="loginTitle">Welcom to Chatin Memo</h2>
               <el-form class="loginForm" ref="loginForm" :model="loginForm" :rules="loginFormRules" @keyup.13.native="login()">
                 <el-form-item label prop="username">
-                  <el-input v-model.trim="loginForm.username" placeholder="Account"></el-input>
+                  <el-input v-model.trim="loginForm.username" placeholder="Account" clearable></el-input>
                 </el-form-item>
                 <el-form-item label prop="password">
-                  <el-input v-model.trim="loginForm.password" placeholder="Password" type="password"></el-input>
+                  <el-input v-model.trim="loginForm.password" placeholder="Password" type="password" clearable></el-input>
                 </el-form-item>
                 <el-form-item>
                   <el-button class="loginBtn" type="primary" @click="login()" :loading="isLoading">Enter</el-button>

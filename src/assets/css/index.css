@@ -131,10 +131,10 @@ html {
   float: right;
 }
 .form .el-form-item__label {
-  width: 30%;
+  width: 35%;
 }
 .form .el-form-item__content {
-  width: 50%;
+  width: 45%;
   float: left;
 }
 .form .confirmBtn .el-form-item__content {
