@@ -73,7 +73,7 @@ export default {
               // })
               // this.initPermissionList()
               this.$store.dispatch('asynSetAccount', res.Name)
-              this.$store.dispatch('asynSetToken', res.Tokenstring)
+              this.$store.dispatch('asynSetToken', res.Token)
               this.$message({
                 type: 'success',
                 message: 'Login Successful',
