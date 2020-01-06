@@ -71,7 +71,7 @@
           <el-form-item label="Id" prop="id" v-show="false">
             <el-input v-model="codeForm.id" clearable disabled></el-input>
           </el-form-item>
-          <el-form-item v-for="item in codeForm.codeList" :label="item.name" :key="item.id" :prop="item.name">
+          <el-form-item v-for="item in codeForm.codeList" :label="item.name" :key="item.id">
             <el-input v-model="item.value" clearable maxlength="20"></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
