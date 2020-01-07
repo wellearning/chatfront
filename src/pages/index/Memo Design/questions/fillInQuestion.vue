@@ -21,8 +21,12 @@
         </el-form>
       </div>
       <el-table :data="list" empty-text="No Record">
-        <el-table-column label="Question ID" prop="id" width="100"></el-table-column>
-        <el-table-column label="Question" prop="content"></el-table-column>
+        <el-table-column label="Question ID" prop="id" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Question" min-width="950">
+          <template slot-scope="scope">
+            <AnswerFillInQuestion :question="scope.row"></AnswerFillInQuestion>
+          </template>
+        </el-table-column>
         <el-table-column label="Action" width="200" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showView(scope.row.id)" :loading="isLoading" size="small"></el-button>
@@ -185,7 +189,7 @@ export default {
       //   this.isLoading = false
       // })
       this.list = [
-        {id: 1, tips: 'this is tips', part: [{id: 1, content: 'you are', isFillIn: false, isNextLine: false}, {id: 2, content: '10', isFillIn: true, isNextLine: false}, {id: 3, content: 'years old', isFillIn: false, isNextLine: false}, {id: 4, content: 'Thanks', isFillIn: false, isNextLine: true}]}
+        {id: 1, tips: 'this is tips', part: [{id: 1, content: 'you are', isFillIn: false, isNextLine: false}, {id: 2, content: '10', isFillIn: true, isNextLine: false}, {id: 3, content: 'years old', isFillIn: false, isNextLine: false}, {id: 4, content: 'Thanks', isFillIn: false, isNextLine: true}, {id: 5, content: '50', isFillIn: true, isNextLine: false}]}
       ]
     },
     // 分页
@@ -274,7 +278,7 @@ export default {
       // })
       this.editFormVisible = true
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.editForm = {id: 1, tips: 'this is tips', part: [{id: 1, content: 'you are', isFillIn: false, isNextLine: false}, {id: 2, content: '10', isFillIn: true, isNextLine: false}, {id: 3, content: 'years old', isFillIn: false, isNextLine: false}, {id: 4, content: 'Thanks', isFillIn: false, isNextLine: true}]}
+        this.editForm = {id: 1, tips: 'this is tips', part: [{id: 1, content: 'you are', isFillIn: false, isNextLine: false}, {id: 2, content: '10', isFillIn: true, isNextLine: false}, {id: 3, content: 'years old', isFillIn: false, isNextLine: false}, {id: 4, content: 'Thanks', isFillIn: false, isNextLine: true}, {id: 5, content: '50', isFillIn: true, isNextLine: false}]}
       })
     },
     // 关闭修改

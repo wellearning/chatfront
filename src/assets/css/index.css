@@ -275,6 +275,10 @@ html {
   border-bottom: 1px solid #303133;
   font-size: 14px;
   padding: 0 40px 0 5px;
+  background: transparent;
+}
+.answer .choiceQuestion .choice .additionContent .el-input__count .el-input__count-inner {
+  background: transparent;
 }
 .answer .choiceQuestion .choice .additionContent .el-input__suffix{
   right: 0;
@@ -300,6 +304,10 @@ html {
   border-bottom: 1px solid #303133;
   font-size: 14px;
   padding: 0 40px 0 5px;
+  background: transparent;
+}
+.answer .fillInQuestion .question .part .additionContent .el-input__count .el-input__count-inner {
+  background: transparent;
 }
 .answer .fillInQuestion .question .part .additionContent .el-input__suffix{
   right: 0;

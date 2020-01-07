@@ -21,23 +21,28 @@
         </el-form>
       </div>
       <el-table :data="list" empty-text="No Record">
-        <el-table-column label="Question ID" prop="id" width="100"></el-table-column>
-        <el-table-column label="Question" prop="content"></el-table-column>
-        <el-table-column label="Type">
+        <el-table-column label="Question ID" prop="id" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Question" min-width="950">
           <template slot-scope="scope">
-            <span>{{showType(scope.row.type)}}</span>
+            <AnswerChoiceQuestion :question="scope.row"></AnswerChoiceQuestion>
           </template>
         </el-table-column>
-        <el-table-column label="Choice">
-          <template slot-scope="scope">
-            <div v-for="item in scope.row.choice" :key="item.id">{{item.content}}</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="NeedAddition">
-          <template slot-scope="scope">
-            <span>{{scope.row.choice.find(item => item.addition === true) !== undefined ? 'Yes' : 'No'}}</span>
-          </template>
-        </el-table-column>
+        <!--<el-table-column label="Question" prop="content"></el-table-column>-->
+        <!--<el-table-column label="Type">-->
+          <!--<template slot-scope="scope">-->
+            <!--<span>{{showType(scope.row.type)}}</span>-->
+          <!--</template>-->
+        <!--</el-table-column>-->
+        <!--<el-table-column label="Choice">-->
+          <!--<template slot-scope="scope">-->
+            <!--<div v-for="item in scope.row.choice" :key="item.id">{{item.content}}</div>-->
+          <!--</template>-->
+        <!--</el-table-column>-->
+        <!--<el-table-column label="NeedAddition">-->
+          <!--<template slot-scope="scope">-->
+            <!--<span>{{scope.row.choice.find(item => item.addition === true) !== undefined ? 'Yes' : 'No'}}</span>-->
+          <!--</template>-->
+        <!--</el-table-column>-->
         <el-table-column label="Action" width="200" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showView(scope.row.id)" :loading="isLoading" size="small"></el-button>
