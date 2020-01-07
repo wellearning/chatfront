@@ -21,13 +21,13 @@
         </el-form>
       </div>
       <el-table :data="list" empty-text="No Record">
-        <el-table-column label="Company ID" prop="id" width="100"></el-table-column>
-        <el-table-column label="Company Name">
+        <el-table-column label="Company ID" prop="id" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Company Name" min-width="200">
           <template slot-scope="scope">
             <el-input v-model="scope.row.name" :disabled="!(scope.row.id === currentId)"></el-input>
           </template>
         </el-table-column>
-        <el-table-column label="Short Name">
+        <el-table-column label="Short Name" min-width="200">
           <template slot-scope="scope">
             <el-input v-model="scope.row.shortName" :disabled="!(scope.row.id === currentId)"></el-input>
           </template>
