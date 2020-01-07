@@ -39,12 +39,12 @@
               </el-form>
             </div>
             <el-table :data="list" empty-text="No Record">
-              <el-table-column label="User ID" prop="id" width="100"></el-table-column>
-              <el-table-column label="Name" prop="name"></el-table-column>
-              <el-table-column label="Organization" prop="organizationName"></el-table-column>
-              <el-table-column label="Role" prop="roleName"></el-table-column>
-              <el-table-column label="Mobile" prop="mobile"></el-table-column>
-              <el-table-column label="Email" prop="email"></el-table-column>
+              <el-table-column label="User ID" prop="id" width="100" fixed="left"></el-table-column>
+              <el-table-column label="Name" prop="name" min-width="100"></el-table-column>
+              <el-table-column label="Organization" prop="organizationName" min-width="100"></el-table-column>
+              <el-table-column label="Role" prop="roleName" min-width="100"></el-table-column>
+              <el-table-column label="Mobile" prop="mobile" min-width="100"></el-table-column>
+              <el-table-column label="Email" prop="email" min-width="100"></el-table-column>
               <el-table-column label="Status" width="100">
                 <template slot-scope="scope">
                   <el-tag v-if="scope.row.status === 1" size="medium">Normal</el-tag>

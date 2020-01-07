@@ -21,8 +21,8 @@
         </el-form>
       </div>
       <el-table :data="list" empty-text="No Record">
-        <el-table-column label="Reminder ID" prop="id" width="100"></el-table-column>
-        <el-table-column label="Content" prop="content"></el-table-column>
+        <el-table-column label="Reminder ID" prop="id" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Content" prop="content" min-width="300"></el-table-column>
         <el-table-column label="Action" width="200" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.id)" :loading="isLoading" size="small"></el-button>
