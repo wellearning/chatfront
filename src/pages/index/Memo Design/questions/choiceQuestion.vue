@@ -145,12 +145,22 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------预览弹窗开始----------------------------------------------------->
+      <el-dialog title="View Choice Question" :visible.sync="viewFormVisible" width="1000px" center>
+        <AnswerChoiceQuestion :question="viewChoiceQuestion"></AnswerChoiceQuestion>
+      </el-dialog>
+      <!----------------------------------------------预览弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
+import AnswerChoiceQuestion from '@/component/choiceQuestion/answerChoiceQuestion'
+
 export default {
+  components: {
+    AnswerChoiceQuestion
+  },
   data: function () {
     return {
       isLoading: false,
@@ -203,7 +213,11 @@ export default {
       pageSize: 10,
       pagerCount: 5,
       currentPage: 1,
-      total: 0
+      total: 0,
+      // 预览
+      viewFormVisible: false,
+      viewChoiceQuestion: {}
+      // viewChoiceQuestionAnswer: []
     }
   },
   mounted: function () {
@@ -245,7 +259,7 @@ export default {
       //   this.isLoading = false
       // })
       this.list = [
-        {id: 1, type: 1, outputWay: 1, content: 'which is your favorite?', tips: 'this is tips', choice: [{id: 1, content: 'plan A', tips: 'this is inner tips A', output: 'inner output A', addition: false}, {id: 2, content: 'plan B', tips: 'this is inner tips B', output: 'inner output B', addition: false}, {id: 3, content: 'other ', tips: 'this is inner tips C', output: 'inner output C', addition: true}]}
+        {id: 1, type: 1, outputWay: 1, content: 'which is your favorite?', tips: 'this is tips', choice: [{id: 1, content: 'plan A', tips: 'this is inner tips A', output: 'inner output A', addition: false, additionContent: null}, {id: 2, content: 'plan B', tips: 'this is inner tips B', output: 'inner output B', addition: false, additionContent: null}, {id: 3, content: 'other', tips: 'this is inner tips C', output: 'inner output C', addition: true, additionContent: null}]}
       ]
     },
     // 分页
@@ -334,7 +348,7 @@ export default {
       // })
       this.editFormVisible = true
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.editForm = {id: 1, type: 1, outputWay: 1, content: 'which is your favorite?', tips: 'this is tips', choice: [{id: 1, content: 'plan A', tips: 'this is inner tips A', output: 'inner output A', addition: false}, {id: 2, content: 'plan B', tips: 'this is inner tips B', output: 'inner output B', addition: false}, {id: 3, content: 'other ', tips: 'this is inner tips C', output: 'inner output C', addition: true}]}
+        this.editForm = {id: 1, type: 1, outputWay: 1, content: 'which is your favorite?', tips: 'this is tips', choice: [{id: 1, content: 'plan A', tips: 'this is inner tips A', output: 'inner output A', addition: false, additionContent: null}, {id: 2, content: 'plan B', tips: 'this is inner tips B', output: 'inner output B', addition: false, additionContent: null}, {id: 3, content: 'other', tips: 'this is inner tips C', output: 'inner output C', addition: true, additionContent: null}]}
       })
     },
     // 关闭修改
@@ -404,8 +418,32 @@ export default {
       })
     },
     // 预览
-    showView: function () {
+    showView: function (id) {
+      // this.isLoading = true
+      // this.axios.get('/api/get?id=' + id).then(res => { // todo: 根据id查询单个信息接口
+      //   console.log('查询单个', res)
+      //   this.viewFormVisible = true
+      //   this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+      //     this.editForm = res.data.data
+      //   })
+      //   this.isLoading = false
+      // }).catch(err => {
+      //   console.log('查询单个出错', err)
+      //   this.isLoading = false
+      // })
+      this.viewFormVisible = true
+      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.viewChoiceQuestion = {id: 1, type: 2, singleValue: null, multipleValue: [], outputWay: 1, content: 'which is your favorite?', tips: 'this is tips', choice: [{id: 1, content: 'plan A', tips: 'this is inner tips A', output: 'inner output A', addition: false, additionContent: null}, {id: 2, content: 'plan B', tips: 'this is inner tips B', output: 'inner output B', addition: false, additionContent: null}, {id: 3, content: 'other', tips: 'this is inner tips C', output: 'inner output C', addition: true, additionContent: null}]}
+      })
     }
+    // updateAnswer: function (data) {
+    //   if (this.viewChoiceQuestionAnswer.find(item => item.id === data.id) === undefined) {
+    //     this.viewChoiceQuestionAnswer.push(data)
+    //   } else {
+    //     this.viewChoiceQuestionAnswer = this.viewChoiceQuestionAnswer.filter(item => item.id !== data.id)
+    //     this.viewChoiceQuestionAnswer.push(data)
+    //   }
+    // }
   }
 }
 </script>

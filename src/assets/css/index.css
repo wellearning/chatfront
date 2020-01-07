@@ -227,4 +227,89 @@ html {
 .choiceQuestionForm .choice .el-form-item__content {
   width: 70%;
 }
+.answer .choiceQuestion .question{
+  font-size: 20px;
+  color: #303133;
+  font-weight: bold;
+}
+.answer .choiceQuestion .questionTips{
+  font-size: 16px;
+  color: #909399;
+}
+.answer .choiceQuestion .choice {
+  margin-top: 20px;
+}
+.answer .choiceQuestion .choice .el-radio-group, .answer .choiceQuestion .choice .el-checkbox-group{
+  width: 100%;
+}
+.answer .choiceQuestion .choice .el-radio-group .el-radio, .answer .choiceQuestion .choice .el-checkbox-group .el-checkbox {
+  width: 100%;
+  line-height: 28px;
+  margin-right: 0;
+}
+.answer .choiceQuestion .choice .el-radio-group .el-radio .el-radio__input, .answer .choiceQuestion .choice .el-checkbox-group .el-checkbox .el-checkbox__input {
+  position: absolute;
+  top: 6px;
+}
+.answer .choiceQuestion .choice .el-radio-group .el-radio .el-radio__label, .answer .choiceQuestion .choice .el-checkbox-group .el-checkbox .el-checkbox__label {
+  padding-left: 24px;
+  display: inline-block;
+}
+.answer .choiceQuestion .choice .choiceTitle{
+  font-size: 18px;
+  color: #303133;
+  white-space: normal;
+}
+.answer .choiceQuestion .choice .choiceTips{
+  font-size: 14px;
+  color: #909399;
+  margin: 0 10px;
+}
+.answer .choiceQuestion .choice .additionContent {
+  width: 345px;
+  font-weight: normal;
+}
+.answer .choiceQuestion .choice .additionContent .el-input__inner {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #303133;
+  font-size: 14px;
+  padding: 0 40px 0 5px;
+}
+.answer .choiceQuestion .choice .additionContent .el-input__suffix{
+  right: 0;
+}
+.answer .choiceQuestion .choice .additionContent.is-disabled .el-input__inner {
+  border-bottom: none;
+}
 /*choiceQuestion结束*/
+/*fillInQuestion开始*/
+.answer .fillInQuestion .question{
+  font-size: 20px;
+  color: #303133;
+  font-weight: bold;
+}
+.answer .fillInQuestion .question .part .additionContent {
+  margin: 0 10px;
+  max-width: 800px;
+  font-weight: normal;
+}
+.answer .fillInQuestion .question .part .additionContent .el-input__inner {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #303133;
+  font-size: 14px;
+  padding: 0 40px 0 5px;
+}
+.answer .fillInQuestion .question .part .additionContent .el-input__suffix{
+  right: 0;
+}
+.answer .fillInQuestion .question .part .nextLine {
+  display: block;
+  clear: both;
+}
+.answer .fillInQuestion .questionTips {
+  font-size: 16px;
+  color: #909399;
+}
+/*fillInQuestion结束*/
