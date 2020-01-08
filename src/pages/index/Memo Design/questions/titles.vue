@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Simple Answer</span>
+      <span class="inPageNav">Titles</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
       </div>
@@ -10,7 +10,7 @@
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Question" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Title" size="small"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
@@ -21,8 +21,8 @@
         </el-form>
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record">
-        <el-table-column label="Question ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Question" min-width="300">
+        <el-table-column label="Title ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Title" min-width="300">
           <template slot-scope="scope">
             <el-input v-model="scope.row.Description" :disabled="!(scope.row.QuestionID === currentId)"></el-input>
           </template>
@@ -39,9 +39,9 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Title" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item label="Question" prop="Description">
+          <el-form-item label="Title" prop="Description">
             <el-input v-model="addForm.Description" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -76,7 +76,7 @@ export default {
       // 新增
       addFormVisible: false,
       addForm: {
-        TypeID: 4,
+        TypeID: 1,
         Description: null,
         Tips: null,
         OutputModeID: 1,
@@ -101,7 +101,7 @@ export default {
     search: function (name) {
       if (name === null) {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 4}).then(res => {
+        this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 1}).then(res => {
           if (res) {
             console.log('查询', res)
             this.list = res.data

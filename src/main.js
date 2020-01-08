@@ -68,23 +68,15 @@ axios.interceptors.request.use(config => {
 
 // 响应截器
 axios.interceptors.response.use((response) => {
-  if (response.data.d === '') {
+  let finalRes = JSON.parse(response.data.d)
+  if (finalRes.code === 0) {
+    return finalRes
+  } else {
     Message({
-      message: 'Not Found',
+      message: finalRes.message,
       type: 'error'
     })
     return false
-  } else {
-    let finalRes = JSON.parse(response.data.d)
-    if (finalRes.code === undefined || finalRes.code === 0) {
-      return finalRes
-    } else {
-      Message({
-        message: finalRes.message,
-        type: 'error'
-      })
-      return false
-    }
   }
 }, function (error) {
   if (axios.isCancel(error)) { // 为了终结promise链 就是实际请求不会走到.catch(rej=>{});这样就不会触发错误提示之类了

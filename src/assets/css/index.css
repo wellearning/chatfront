@@ -91,6 +91,9 @@ html {
   text-align: center;
   margin: 10px 0;
 }
+.el-table .cell { /*表格识别换行符*/
+  white-space: pre-line;
+}
 /*通用结束*/
 /*login开始*/
 .login {
@@ -274,10 +277,7 @@ html {
   border: none;
   border-bottom: 1px solid #303133;
   font-size: 14px;
-  padding: 0 40px 0 5px;
-  background: transparent;
-}
-.answer .choiceQuestion .choice .additionContent .el-input__count .el-input__count-inner {
+  padding: 0 5px;
   background: transparent;
 }
 .answer .choiceQuestion .choice .additionContent .el-input__suffix{
@@ -303,10 +303,7 @@ html {
   border: none;
   border-bottom: 1px solid #303133;
   font-size: 14px;
-  padding: 0 40px 0 5px;
-  background: transparent;
-}
-.answer .fillInQuestion .question .part .additionContent .el-input__count .el-input__count-inner {
+  padding: 0 5px;
   background: transparent;
 }
 .answer .fillInQuestion .question .part .additionContent .el-input__suffix{

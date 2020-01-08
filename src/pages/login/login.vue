@@ -72,8 +72,8 @@ export default {
               //   duration: 1000
               // })
               // this.initPermissionList()
-              this.$store.dispatch('asynSetAccount', res.Name)
-              this.$store.dispatch('asynSetToken', res.Token)
+              this.$store.dispatch('asynSetAccount', res.data.Name)
+              this.$store.dispatch('asynSetToken', res.data.Token)
               this.$message({
                 type: 'success',
                 message: 'Login Successful',
@@ -133,9 +133,14 @@ export default {
                           path: '/questions',
                           name: 'Questions',
                           componentPath: 'pages/index/Memo Design/questions/questions',
-                          redirect: '/reminders',
+                          redirect: '/titles',
                           children: [
                             {
+                              id: 1310,
+                              path: '/titles',
+                              name: 'Titles',
+                              componentPath: 'pages/index/Memo Design/questions/titles'
+                            }, {
                               id: 1311,
                               path: '/reminders',
                               name: 'Reminders',
@@ -147,16 +152,21 @@ export default {
                               componentPath: 'pages/index/Memo Design/questions/properties'
                             }, {
                               id: 1313,
-                              path: '/choiceQuestion',
-                              name: 'Choice Question',
-                              componentPath: 'pages/index/Memo Design/questions/choiceQuestion'
+                              path: '/singleChoiceQuestion',
+                              name: 'Single Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
                             }, {
                               id: 1314,
+                              path: '/multipleChoiceQuestion',
+                              name: 'Multiple Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
+                            }, {
+                              id: 1315,
                               path: '/fillInQuestion',
                               name: 'Fill In Question',
                               componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
                             }, {
-                              id: 1315,
+                              id: 1316,
                               path: '/simpleAnswer',
                               name: 'Simple Answer',
                               componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
