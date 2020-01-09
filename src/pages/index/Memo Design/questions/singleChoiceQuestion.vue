@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Choice Question</span>
+      <span class="inPageNav">Single Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
       </div>
@@ -149,7 +149,7 @@ export default {
         StatusID: 1,
         Integration: null,
         fillinParts: [],
-        options: null
+        options: []
       },
       addFormRules: {
         Description: [
@@ -171,7 +171,7 @@ export default {
         StatusID: 1,
         Integration: null,
         fillinParts: [],
-        options: null
+        options: []
       },
       editFormRules: {
         Description: [
@@ -188,7 +188,6 @@ export default {
       },
       searchName: null,
       // 列表
-      tempList: [],
       list: [],
       pageSize: 20,
       pagerCount: 5,
@@ -234,27 +233,29 @@ export default {
     },
     // 查询
     search: function (name) {
-      if (name === null) {
-        this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 6}).then(res => {
-          if (res) {
-            console.log('查询', res)
-            this.list = res.data
-            this.tempList = res.data
-            this.total = res.data.length
-            this.currentPage = 1
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 6}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          // 声明value，AdditionContent，防止输入框无法输入
+          let listWidthAdditionContent = res.data
+          for (let i = 0; i < listWidthAdditionContent.length; i++) {
+            listWidthAdditionContent[i].value = null
+            listWidthAdditionContent[i].options.forEach(item => { item.AdditionContent = null })
           }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('查询出错', err)
-          this.isLoading = false
-        })
-      } else {
-        this.searchName = name
-        this.list = this.tempList.filter(item => item.Description.indexOf(this.searchName) !== -1)
-        this.total = this.list.length
-        this.currentPage = 1
-      }
+          this.list = listWidthAdditionContent
+          if (name !== null) {
+            this.searchName = name
+            this.list = this.list.filter(item => item.Description.indexOf(this.searchName) !== -1)
+          }
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
     },
     // 重置查询
     resetSearch: function () {
@@ -298,7 +299,11 @@ export default {
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-                this.list.push(res.data)
+                // 声明value，AdditionContent，防止输入框无法输入
+                let listWidthAdditionContent = res.data
+                listWidthAdditionContent.value = null
+                listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
+                this.list.push(listWidthAdditionContent)
                 this.total = this.list.length
               }
             }
@@ -364,7 +369,11 @@ export default {
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-                this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
+                // 声明value，AdditionContent，防止输入框无法输入
+                let listWidthAdditionContent = res.data
+                listWidthAdditionContent.value = null
+                listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
+                this.list = this.list.map(item => { return item.QuestionID === listWidthAdditionContent.QuestionID ? listWidthAdditionContent : item })
               } else {
                 this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
                 this.total = this.list.length

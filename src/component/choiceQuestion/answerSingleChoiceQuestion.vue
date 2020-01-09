@@ -26,7 +26,7 @@ export default {
   },
   methods: {
     resetAdditionContent: function () {
-      this.question.choice.forEach(item => { item.additionContent = null })
+      this.question.options.forEach(item => { this.question.value !== item.ChoiceOptionID ? item.AdditionContent = null : item.AdditionContent = item.AdditionContent })
       this.$emit('finishAnswer', this.question)
     },
     changeAdditionContent: function () {

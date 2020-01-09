@@ -125,27 +125,23 @@ export default {
   methods: {
     // 查询
     search: function (name) {
-      if (name === null) {
-        this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 2}).then(res => {
-          if (res) {
-            console.log('查询', res)
-            this.list = res.data
-            this.tempList = res.data
-            this.total = res.data.length
-            this.currentPage = 1
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 2}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          if (name !== null) {
+            this.searchName = name
+            this.list = this.list.filter(item => item.Description.indexOf(this.searchName) !== -1)
           }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('查询出错', err)
-          this.isLoading = false
-        })
-      } else {
-        this.searchName = name
-        this.list = this.tempList.filter(item => item.Description.indexOf(this.searchName) !== -1)
-        this.total = this.list.length
-        this.currentPage = 1
-      }
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
     },
     // 重置查询
     resetSearch: function () {
