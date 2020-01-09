@@ -8,8 +8,8 @@
     </div>
     <div class="inPageContent">
       <el-row :gutter="20">
-        <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="5">
-          <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.35)">
+        <el-col :xs="24" :sm="24" :md="24" :lg="5" :xl="5">
+          <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
             <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
                 <i class="organization-icon" :class="typeList.find(item => item.id === data.type) !== undefined ? typeList.find(item => item.id === data.type).icon : ''"></i>
@@ -18,8 +18,8 @@
             </el-tree>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="19">
-          <div class="organization-editBox" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.35)">
+        <el-col :xs="24" :sm="24" :md="24" :lg="19" :xl="19">
+          <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
                 <el-form-item prop="status" label="Status">
@@ -38,13 +38,13 @@
                 </el-form-item>
               </el-form>
             </div>
-            <el-table :data="list" empty-text="No Record">
-              <el-table-column label="User ID" prop="id" width="100"></el-table-column>
-              <el-table-column label="Name" prop="name"></el-table-column>
-              <el-table-column label="Organization" prop="organizationName"></el-table-column>
-              <el-table-column label="Role" prop="roleName"></el-table-column>
-              <el-table-column label="Mobile" prop="mobile"></el-table-column>
-              <el-table-column label="Email" prop="email"></el-table-column>
+            <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
+              <el-table-column label="User ID" prop="id" width="100" fixed="left"></el-table-column>
+              <el-table-column label="Name" prop="name" min-width="100"></el-table-column>
+              <el-table-column label="Organization" prop="organizationName" min-width="100"></el-table-column>
+              <el-table-column label="Role" prop="roleName" min-width="100"></el-table-column>
+              <el-table-column label="Mobile" prop="mobile" min-width="100"></el-table-column>
+              <el-table-column label="Email" prop="email" min-width="100"></el-table-column>
               <el-table-column label="Status" width="100">
                 <template slot-scope="scope">
                   <el-tag v-if="scope.row.status === 1" size="medium">Normal</el-tag>
@@ -59,8 +59,6 @@
                 </template>
               </el-table-column>
             </el-table>
-            <el-pagination background @current-change="handleCurrentChange" :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
-            </el-pagination>
           </div>
         </el-col>
       </el-row>
@@ -103,6 +101,9 @@
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit User" :visible.sync="editFormVisible" width="600px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="Id" prop="id" v-show="false">
+            <el-input v-model="editForm.id" disabled></el-input>
+          </el-form-item>
           <el-form-item label="User Name" prop="name">
             <el-input v-model.trim="editForm.name" clearable></el-input>
           </el-form-item>
@@ -133,6 +134,21 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------重置密码弹窗开始------------------------------------------------->
+      <el-dialog title="Password Reset" :visible.sync="passFormVisible" width="600px" center :before-close="closePass">
+        <el-form :model="passForm" ref="passForm" :rules="passFormRules" class="form">
+          <el-form-item label="Id" prop="id" v-show="false">
+            <el-input v-model="passForm.id" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="New Password" prop="password">
+            <el-input v-model.trim="passForm.password" clearable type="password"></el-input>
+          </el-form-item>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="pass()" :loading="isLoading">Confirm</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------重置密码弹窗结束------------------------------------------------->
     </div>
   </div>
 </template>
@@ -241,7 +257,19 @@ export default {
       pageSize: 10,
       pagerCount: 5,
       currentPage: 1,
-      total: 0
+      total: 0,
+      // 重置密码
+      passFormVisible: false,
+      passForm: {
+        id: null,
+        password: null
+      },
+      passFormRules: {
+        password: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
+        ]
+      }
     }
   },
   mounted: function () {
@@ -292,12 +320,16 @@ export default {
     // 查询
     search: function (status, name) {
       // todo: 查询接口，organization, status, name
+      this.searchStatus = status
+      this.searchName = name
       // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => {
+      // this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: 1}).then(res => {
       //   console.log('查询', res)
-      //   this.list = res.data.data.list
-      //   this.total = res.data.data.total
-      //   this.currentPage = res.data.data.pageNum
+      //   if (res) {
+      //     this.list = res.data.data.list
+      //     this.total = res.data.data.total
+      //     this.currentPage = res.data.data.pageNum
+      //   }
       //   this.isLoading = false
       // }).catch(err => {
       //   console.log('查询出错', err)
@@ -310,28 +342,6 @@ export default {
         {id: 4, name: 'Paul', organizationId: 112, organizationName: 'aab', roleId: 3, roleName: 'visitor', mobile: '416-55555', email: '13633333333@qq.com', status: 2},
         {id: 5, name: 'Lee', organizationId: 5, organizationName: 'e', roleId: 2, roleName: 'manager', mobile: '416-33333', email: '13666666666@qq.com', status: 1}
       ]
-    },
-    // 分页
-    handleCurrentChange: function (currentPage) {
-      // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => { // todo: 分页查询接口
-      //   console.log('分页', res)
-      //   this.list = res.data.data.list
-      //   this.total = res.data.data.total
-      //   if (res.data.data.total > 0) {
-      //     if (res.data.data.list.length > 0) {
-      //       this.currentPage = res.data.data.pageNum
-      //     } else {
-      //       this.currentPage = res.data.data.pageNum - 1
-      //     }
-      //   } else {
-      //     this.currentPage = 1
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('分页出错', err)
-      //   this.isLoading = false
-      // })
     },
     // 重置查询
     resetSearch: function () {
@@ -371,7 +381,7 @@ export default {
             })
             this.$refs['addForm'].resetFields()
             this.addFormVisible = false
-            this.handleCurrentChange(this.currentPage)
+            this.search(this.searchStatus, this.searchName)
             this.isLoading = false
           }).catch(err => {
             console.log('新增出错', err)
@@ -428,7 +438,7 @@ export default {
             })
             this.$refs['editForm'].resetFields()
             this.editFormVisible = false
-            this.handleCurrentChange(this.currentPage)
+            this.search(this.searchStatus, this.searchName)
             this.isLoading = false
           }).catch(err => {
             console.log('修改出错', err)
@@ -456,7 +466,7 @@ export default {
             type: 'success',
             message: 'Operation Succeeded'
           })
-          this.handleCurrentChange(this.currentPage)
+          this.search(this.searchStatus, this.searchName)
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
@@ -467,6 +477,50 @@ export default {
           type: 'info',
           message: 'Operation Cancelled'
         })
+      })
+    },
+    // 重置密码弹窗
+    showPass: function (id) {
+      this.passFormVisible = true
+      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.passForm.id = id
+      })
+    },
+    // 关闭重置密码
+    closePass: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$refs['passForm'].resetFields()
+        done()
+      }).catch(() => {})
+    },
+    // 重置密码
+    pass: function () {
+      this.$refs['passForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          this.axios.post('/api/', this.passForm).then(res => { // todo: 修改接口
+            console.log('重置密码', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.$refs['passForm'].resetFields()
+            this.passFormVisible = false
+            this.isLoading = false
+          }).catch(err => {
+            console.log('重置密码出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
       })
     }
   }

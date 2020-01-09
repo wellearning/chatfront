@@ -7,9 +7,9 @@
       </div>
     </div>
     <div class="inPageContent">
-      <el-table :data="list" empty-text="No Record">
-        <el-table-column label="Role ID" prop="id" width="100"></el-table-column>
-        <el-table-column label="Role Name">
+      <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
+        <el-table-column label="Role ID" prop="id" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Role Name" min-width="300">
           <template slot-scope="scope">
             <el-input v-model="scope.row.name" :disabled="!(scope.row.id === currentId)"></el-input>
           </template>
@@ -65,6 +65,7 @@ export default {
       list: [],
       // 权限
       privilegesVisible: false,
+      currentPrivileges: null,
       menuList: [],
       defaultProps: {
         children: 'children',
@@ -108,6 +109,7 @@ export default {
       //   console.log('查询单个权限', res)
       //   this.privilegesVisible = true
       //   this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+      //     this.currentPrivileges = id
       //     this.menuList = res.data.data
       //   })
       //   this.isLoading = false
@@ -117,6 +119,7 @@ export default {
       // })
       this.privilegesVisible = true
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.currentPrivileges = id
         this.menuList = (JSON.parse(this.$store.getters.getPermissionList))[0].children
         this.$refs.tree.setCheckedKeys([11, 121, 122, 123])
       })
@@ -128,6 +131,7 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
+        this.currentPrivileges = null
         this.menuList = []
         done()
       }).catch(() => {})
@@ -135,12 +139,13 @@ export default {
     // 提交权限
     privileges: function () {
       this.isLoading = true
-      this.axios.post('/api/', {list: [...this.$refs.tree.getHalfCheckedKeys(), ...this.$refs.tree.getCheckedKeys()]}).then(res => { // todo: 提交权限接口，半选和全选全部传递
+      this.axios.post('/api/', {id: this.currentPrivileges, list: [...this.$refs.tree.getHalfCheckedKeys(), ...this.$refs.tree.getCheckedKeys()]}).then(res => { // todo: 提交权限接口，半选和全选全部传递
         console.log('提交权限', res)
         this.$message({
           type: 'success',
           message: 'Operation Succeeded'
         })
+        this.currentPrivileges = null
         this.menuList = []
         this.privilegesVisible = false
         this.isLoading = false
@@ -186,7 +191,7 @@ export default {
       if (!new RegExp(rule).test(obj.name)) {
         this.$message({
           type: 'error',
-          message: 'Please Enter Within 30 Characters'
+          message: 'Format Error'
         })
       } else {
         this.isLoading = true

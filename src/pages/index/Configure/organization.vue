@@ -9,7 +9,7 @@
     <div class="inPageContent">
       <el-row :gutter="20">
         <el-col :xs="24" :sm="24" :md="24" :lg="10" :xl="10">
-          <div class="organization-list" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.35)">
+          <div class="organization-list" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.5)">
             <el-tree ref="organizationTree" :data="list" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
                 <i class="organization-icon" :class="typeList.find(item => item.id === data.type) !== undefined ? typeList.find(item => item.id === data.type).icon : ''"></i>
@@ -19,7 +19,7 @@
           </div>
         </el-col>
         <el-col :xs="24" :sm="24" :md="24" :lg="14" :xl="14">
-          <div class="organization-editBox" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.35)">
+          <div class="organization-editBox">
             <div class="organization-editTitle">
               <span class="title">Information</span>
               <div class="rightBtnBox" v-if="isAdd">
@@ -32,7 +32,7 @@
                 <el-button icon="el-icon-close" type="primary" @click="cancel()" :loading="isLoading || isLoadingList" size="small" plain>Cancel</el-button>
               </div>
             </div>
-            <div class="organization-editContent">
+            <div class="organization-editContent" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.5)">
               <el-form class="form" ref="form" :model="form" :rules="formRules">
                 <el-form-item label="Id" prop="id" v-show="false">
                   <el-input v-model="form.id" disabled></el-input>

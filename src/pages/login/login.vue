@@ -9,10 +9,10 @@
               <h2 class="loginTitle">Welcom to Chatin Memo</h2>
               <el-form class="loginForm" ref="loginForm" :model="loginForm" :rules="loginFormRules" @keyup.13.native="login()">
                 <el-form-item label prop="username">
-                  <el-input v-model.trim="loginForm.username" placeholder="Account"></el-input>
+                  <el-input v-model.trim="loginForm.username" placeholder="Account" clearable></el-input>
                 </el-form-item>
                 <el-form-item label prop="password">
-                  <el-input v-model.trim="loginForm.password" placeholder="Password" type="password"></el-input>
+                  <el-input v-model.trim="loginForm.password" placeholder="Password" type="password" clearable></el-input>
                 </el-form-item>
                 <el-form-item>
                   <el-button class="loginBtn" type="primary" @click="login()" :loading="isLoading">Enter</el-button>
@@ -60,156 +60,167 @@ export default {
     login: function () {
       this.$refs['loginForm'].validate(valid => {
         if (valid) {
-          // todo: 登录接口
-          // this.isLoading = true
-          // this.axios.get('/api/?username=' + this.form.username + '&password=' + this.form.password).then(res => {
-          //   console.log('登录', res)
-          //   this.$store.dispatch('asynSetAccount', this.form.username)
-          //   this.$store.dispatch('asynSetToken', res.data.data.access_token)
-          //   this.$message({
-          //     type: 'success',
-          //     message: 'Login Successful',
-          //     duration: 1000
-          //   })
-          //   this.initPermissionList()
-          //   this.isLoading = false
-          // }).catch(err => {
-          //   console.log('登录出错', err)
-          //   this.isLoading = false
-          // })
-          this.$store.dispatch('asynSetAccount', 'administrator')
-          this.$store.dispatch('asynSetToken', 'tempToken')
-          this.$message({
-            type: 'success',
-            message: 'Login Successful',
-            duration: 1000
-          })
-          let arr = [
-            {
-              id: 1,
-              path: '/',
-              name: 'Index',
-              componentPath: 'pages/index/index',
-              redirect: '/home',
-              children: [
+          this.isLoading = true
+          this.axios.post('/api/Services/baseservice.asmx/Login', {username: this.loginForm.username, password: this.loginForm.password}).then(res => {
+            console.log('登录', res)
+            if (res) {
+              // this.$store.dispatch('asynSetAccount', this.form.username)
+              // this.$store.dispatch('asynSetToken', res.data.data.access_token)
+              // this.$message({
+              //   type: 'success',
+              //   message: 'Login Successful',
+              //   duration: 1000
+              // })
+              // this.initPermissionList()
+              this.$store.dispatch('asynSetAccount', res.data.Name)
+              this.$store.dispatch('asynSetToken', res.data.Token)
+              this.$message({
+                type: 'success',
+                message: 'Login Successful',
+                duration: 1000
+              })
+              let arr = [
                 {
-                  id: 11,
-                  path: '/home',
-                  name: 'Home',
-                  componentPath: 'pages/index/Home/home'
-                }, {
-                  id: 12,
-                  path: '/configure',
-                  name: 'Configure',
-                  componentPath: 'pages/index/Configure/configure',
-                  redirect: '/organization',
+                  id: 1,
+                  path: '/',
+                  name: 'Index',
+                  componentPath: 'pages/index/index',
+                  redirect: '/home',
                   children: [
                     {
-                      id: 121,
-                      path: '/organization',
-                      name: 'Organization',
-                      componentPath: 'pages/index/Configure/organization'
+                      id: 11,
+                      path: '/home',
+                      name: 'Home',
+                      componentPath: 'pages/index/Home/home'
                     }, {
-                      id: 122,
-                      path: '/user',
-                      name: 'User',
-                      componentPath: 'pages/index/Configure/user'
-                    }, {
-                      id: 123,
-                      path: '/role',
-                      name: 'Role',
-                      componentPath: 'pages/index/Configure/role'
-                    }, {
-                      id: 124,
-                      path: '/insuranceCompany',
-                      name: 'Insurance Company',
-                      componentPath: 'pages/index/Configure/insuranceCompany'
-                    }
-                  ]
-                }, {
-                  id: 13,
-                  path: '/memoDesign',
-                  name: 'Memo Design',
-                  componentPath: 'pages/index/Memo Design/memoDesign',
-                  redirect: '/questions',
-                  children: [
-                    {
-                      id: 131,
-                      path: '/questions',
-                      name: 'Questions',
-                      componentPath: 'pages/index/Memo Design/questions/questions',
-                      redirect: '/reminders',
+                      id: 12,
+                      path: '/configure',
+                      name: 'Configure',
+                      componentPath: 'pages/index/Configure/configure',
+                      redirect: '/organization',
                       children: [
                         {
-                          id: 1311,
-                          path: '/reminders',
-                          name: 'Reminders',
-                          componentPath: 'pages/index/Memo Design/questions/reminders'
+                          id: 121,
+                          path: '/organization',
+                          name: 'Organization',
+                          componentPath: 'pages/index/Configure/organization'
                         }, {
-                          id: 1312,
-                          path: '/properties',
-                          name: 'Properties',
-                          componentPath: 'pages/index/Memo Design/questions/properties'
+                          id: 122,
+                          path: '/user',
+                          name: 'User',
+                          componentPath: 'pages/index/Configure/user'
                         }, {
-                          id: 1313,
-                          path: '/choiceQuestion',
-                          name: 'Choice Question',
-                          componentPath: 'pages/index/Memo Design/questions/choiceQuestion'
+                          id: 123,
+                          path: '/role',
+                          name: 'Role',
+                          componentPath: 'pages/index/Configure/role'
                         }, {
-                          id: 1314,
-                          path: '/fillInQuestion',
-                          name: 'Fill In Question',
-                          componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
-                        }, {
-                          id: 1315,
-                          path: '/simpleAnswer',
-                          name: 'Simple Answer',
-                          componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
+                          id: 124,
+                          path: '/insuranceCompany',
+                          name: 'Insurance Company',
+                          componentPath: 'pages/index/Configure/insuranceCompany'
                         }
                       ]
                     }, {
-                      id: 132,
-                      path: '/blocks',
-                      name: 'Blocks',
-                      componentPath: 'pages/index/Memo Design/blocks/blocks'
+                      id: 13,
+                      path: '/memoDesign',
+                      name: 'Memo Design',
+                      componentPath: 'pages/index/Memo Design/memoDesign',
+                      redirect: '/questions',
+                      children: [
+                        {
+                          id: 131,
+                          path: '/questions',
+                          name: 'Questions',
+                          componentPath: 'pages/index/Memo Design/questions/questions',
+                          redirect: '/titles',
+                          children: [
+                            {
+                              id: 1310,
+                              path: '/titles',
+                              name: 'Titles',
+                              componentPath: 'pages/index/Memo Design/questions/titles'
+                            }, {
+                              id: 1311,
+                              path: '/reminders',
+                              name: 'Reminders',
+                              componentPath: 'pages/index/Memo Design/questions/reminders'
+                            }, {
+                              id: 1312,
+                              path: '/properties',
+                              name: 'Properties',
+                              componentPath: 'pages/index/Memo Design/questions/properties'
+                            }, {
+                              id: 1313,
+                              path: '/singleChoiceQuestion',
+                              name: 'Single Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
+                            }, {
+                              id: 1314,
+                              path: '/multipleChoiceQuestion',
+                              name: 'Multiple Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
+                            }, {
+                              id: 1315,
+                              path: '/fillInQuestion',
+                              name: 'Fill In Question',
+                              componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
+                            }, {
+                              id: 1316,
+                              path: '/simpleAnswer',
+                              name: 'Simple Answer',
+                              componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
+                            }
+                          ]
+                        }, {
+                          id: 132,
+                          path: '/blocks',
+                          name: 'Blocks',
+                          componentPath: 'pages/index/Memo Design/blocks/blocks'
+                        }, {
+                          id: 133,
+                          path: '/templates',
+                          name: 'Templates',
+                          componentPath: 'pages/index/Memo Design/templates/templates'
+                        }
+                      ]
                     }, {
-                      id: 133,
-                      path: '/templates',
-                      name: 'Templates',
-                      componentPath: 'pages/index/Memo Design/templates/templates'
-                    }
-                  ]
-                }, {
-                  id: 14,
-                  path: '/memo',
-                  name: 'Memo',
-                  componentPath: 'pages/index/Memo/memo',
-                  redirect: '/newMemo',
-                  children: [
-                    {
-                      id: 141,
-                      path: '/newMemo',
-                      name: 'New Memo',
-                      componentPath: 'pages/index/Memo/newMemo'
-                    }, {
-                      id: 142,
-                      path: '/myMemoes',
-                      name: 'My Memoes',
-                      componentPath: 'pages/index/Memo/myMemoes'
-                    }, {
-                      id: 143,
-                      path: '/memoes',
-                      name: 'Memoes',
-                      componentPath: 'pages/index/Memo/memoes'
+                      id: 14,
+                      path: '/memo',
+                      name: 'Memo',
+                      componentPath: 'pages/index/Memo/memo',
+                      redirect: '/newMemo',
+                      children: [
+                        {
+                          id: 141,
+                          path: '/newMemo',
+                          name: 'New Memo',
+                          componentPath: 'pages/index/Memo/newMemo'
+                        }, {
+                          id: 142,
+                          path: '/myMemoes',
+                          name: 'My Memoes',
+                          componentPath: 'pages/index/Memo/myMemoes'
+                        }, {
+                          id: 143,
+                          path: '/memoes',
+                          name: 'Memoes',
+                          componentPath: 'pages/index/Memo/memoes'
+                        }
+                      ]
                     }
                   ]
                 }
               ]
+              this.$store.dispatch('asynSetPermissionList', JSON.stringify(arr))
+              this.$router.addRoutes(this.translateTree(arr))
+              this.$router.push({ path: '/' })
             }
-          ]
-          this.$store.dispatch('asynSetPermissionList', JSON.stringify(arr))
-          this.$router.addRoutes(this.translateTree(arr))
-          this.$router.push({ path: '/' })
+            this.isLoading = false
+          }).catch(err => {
+            console.log('登录出错', err)
+            this.isLoading = false
+          })
         }
       })
     },
