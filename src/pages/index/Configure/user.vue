@@ -8,7 +8,7 @@
     </div>
     <div class="inPageContent">
       <el-row :gutter="20">
-        <el-col :xs="24" :sm="24" :md="24" :lg="5" :xl="5">
+        <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="5">
           <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
             <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
@@ -18,7 +18,7 @@
             </el-tree>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="24" :lg="19" :xl="19">
+        <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="19">
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
