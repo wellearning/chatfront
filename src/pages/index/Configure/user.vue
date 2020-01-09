@@ -9,7 +9,7 @@
     <div class="inPageContent">
       <el-row :gutter="20">
         <el-col :xs="24" :sm="24" :md="24" :lg="5" :xl="5">
-          <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.35)">
+          <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
             <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
                 <i class="organization-icon" :class="typeList.find(item => item.id === data.type) !== undefined ? typeList.find(item => item.id === data.type).icon : ''"></i>
@@ -19,7 +19,7 @@
           </div>
         </el-col>
         <el-col :xs="24" :sm="24" :md="24" :lg="19" :xl="19">
-          <div class="organization-editBox" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.35)">
+          <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
                 <el-form-item prop="status" label="Status">
@@ -38,7 +38,7 @@
                 </el-form-item>
               </el-form>
             </div>
-            <el-table :data="list" empty-text="No Record">
+            <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
               <el-table-column label="User ID" prop="id" width="100" fixed="left"></el-table-column>
               <el-table-column label="Name" prop="name" min-width="100"></el-table-column>
               <el-table-column label="Organization" prop="organizationName" min-width="100"></el-table-column>

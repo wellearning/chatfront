@@ -7,7 +7,7 @@
       </div>
     </div>
     <div class="inPageContent">
-      <el-table :data="list" empty-text="No Record">
+      <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Role ID" prop="id" width="100" fixed="left"></el-table-column>
         <el-table-column label="Role Name" min-width="300">
           <template slot-scope="scope">

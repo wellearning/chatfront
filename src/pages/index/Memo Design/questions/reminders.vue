@@ -20,7 +20,7 @@
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record">
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Reminder ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Content" prop="Description" min-width="300"></el-table-column>
         <el-table-column label="Action" width="200" fixed="right">
