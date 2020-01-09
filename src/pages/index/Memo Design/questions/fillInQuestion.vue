@@ -10,7 +10,7 @@
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Question" size="small"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
@@ -45,20 +45,18 @@
               <!--<el-input v-model="item.Part" clearable></el-input>-->
             <!--</el-form-item>-->
             <el-form-item label="Part">
-              <el-input v-model="item.Part" clearable></el-input>
+              <el-input v-model="item.Part" clearable size="small"></el-input>
             </el-form-item>
-            <el-form-item style="margin-left: 20%;">
+            <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsFillin">Is Fill In</el-checkbox>
               <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
-              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" style="float: right; margin-left: 10px;"></el-button>
-              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" style="float: right;"></el-button>
-            </el-form-item>
-            <el-form-item style="margin-left: 20%;">
-              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" style="float: right;"></el-button>
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
             </el-form-item>
           </div>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" style="float: right; margin-right: 10%;"></el-button>
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="addForm.Tips" clearable></el-input>
@@ -74,20 +72,18 @@
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <div v-for="(item, index) in editForm.fillinParts" :key="index" class="choice">
             <el-form-item label="Part">
-              <el-input v-model.number="item.Part" clearable></el-input>
+              <el-input v-model.number="item.Part" clearable size="small"></el-input>
             </el-form-item>
-            <el-form-item style="margin-left: 20%;">
+            <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsFillin">Is Fill In</el-checkbox>
               <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
-              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" style="float: right; margin-left: 10px;"></el-button>
-              <el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" style="float: right;"></el-button>
-            </el-form-item>
-            <el-form-item style="margin-left: 20%;">
-              <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" style="float: right;"></el-button>
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
             </el-form-item>
           </div>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" style="float: right; margin-right: 10%;"></el-button>
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="editForm.Tips" clearable></el-input>
