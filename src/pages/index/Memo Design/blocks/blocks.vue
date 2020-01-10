@@ -3,7 +3,7 @@
     <div class="inPageTitle">
       <span class="inPageNav">Blocks</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingInsuranceCompany">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -13,20 +13,20 @@
             <el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Block ID" prop="BlockID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Name" prop="Name" min-width="300"></el-table-column>
         <el-table-column label="Action" width="200" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.BlockID)" :loading="isLoading" size="small"></el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.BlockID)" :loading="isLoading" size="small"></el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small"></el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -45,25 +45,25 @@
               <span v-else><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Integration}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20" v-if="[3, 6].indexOf(item.question.TypeID) !== -1">
-              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup">Routing</el-button>
+              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Routing</el-button>
             </el-form-item>
             <el-form-item class="marginLeft20">
-              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.blockQuestions.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.blockQuestions.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
             </el-form-item>
           </div>
           <el-form-item class="confirmBtn smallLine">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
               <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.TypeID !== 5 ? '(' + item.QuestionID + ') ' + item.Description : '(' + item.QuestionID + ')' + item.Integration" :value="item.QuestionID"></el-option>
             </el-select>
-            <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)">
+            <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -77,7 +77,7 @@
             </el-form-item>
             <el-form-item label="Insurance Company">
               <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
-                <el-option v-for="item in insuranceCompanyList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCropID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
@@ -96,15 +96,53 @@
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
-                  <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading" plain size="small" class="questionRightBtn"></el-button>
+                  <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
                 </el-col>
               </el-row>
             </el-form-item>
             <el-form-item class="confirmBtn">
-              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
+              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
             </el-form-item>
             <el-form-item class="confirmBtn">
-              <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading">Confirm</el-button>
+              <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
+            </el-form-item>
+          </div>
+          <div v-else-if="routesForm.question.TypeID === 6">
+            <el-form-item label="Question">
+              <span>{{routesForm.question.Description}}</span>
+            </el-form-item>
+            <el-form-item label="Insurance Company">
+              <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
+                <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCropID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+              <el-row :gutter="10">
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
+                  <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="it in operatorList.filter(i => i.name === '=')" :key="it.id" :label="it.name" :value="it.name"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
+                  <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="it in routesForm.question.options" :key="it.ChoiceOptionID" :label="it.Content" :value="it.ChoiceOptionID"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="it in addForm.blockQuestions.length - addForm.blockQuestions.indexOf(routesForm)" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                  <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                </el-col>
+              </el-row>
+            </el-form-item>
+            <el-form-item class="confirmBtn">
+              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+            </el-form-item>
+            <el-form-item class="confirmBtn">
+              <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
             </el-form-item>
           </div>
         </el-form>
@@ -114,7 +152,7 @@
       <el-dialog title="Edit Block" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -128,12 +166,13 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      isLoadingInsuranceCompany: false,
       currentQuestionType: null,
       currentQuestion: null,
       questionTypeList: [{id: 1, name: 'Title'}, {id: 2, name: 'Reminder'}, {id: 3, name: 'Property'}, {id: 4, name: 'Simple Answer'}, {id: 5, name: 'Fill In Question'}, {id: 6, name: 'Single Choice Question'}, {id: 7, name: 'Multiple Choice Question'}],
       questionList: [],
       currentInsuranceCompany: null,
-      insuranceCompanyList: [{id: 1, name: 'company1'}, {id: 2, name: 'company2'}],
+      insuranceCompanyList: [],
       operatorList: [{id: 1, name: '='}, {id: 2, name: '>'}, {id: 3, name: '<'}, {id: 4, name: '>='}, {id: 5, name: '<='}],
       // 新增
       addFormVisible: false,
@@ -202,8 +241,23 @@ export default {
   },
   mounted: function () {
     this.search(null)
+    this.initInsuranceCompany()
   },
   methods: {
+    // 保险公司列表
+    initInsuranceCompany: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+        if (res) {
+          console.log('保险公司列表', res)
+          this.insuranceCompanyList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
     // 选择问题类型
     changeQuestionType: function (id) {
       this.currentQuestion = null
@@ -233,6 +287,7 @@ export default {
             if (res) {
               console.log('查询单个', res)
               this.addForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, IsRoute: false, routes: [], question: res.data})
+              this.currentQuestion = null
             }
             this.isLoading = false
           }).catch(err => {
@@ -252,6 +307,7 @@ export default {
             if (res) {
               console.log('查询单个', res)
               this.editForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, IsRoute: false, routes: [], question: res.data})
+              this.currentQuestion = null
             }
             this.isLoading = false
           }).catch(err => {
@@ -333,39 +389,40 @@ export default {
     },
     // 新增
     add: function () {
-      this.$refs['addForm'].validate((valid) => {
-        if (valid) {
-          this.isLoading = true
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
-            if (res) {
-              console.log('新增', res)
-              this.$message({
-                type: 'success',
-                message: 'Operation Succeeded'
-              })
-              this.$refs['addForm'].resetFields()
-              this.addForm.blockQuestions = []
-              this.currentQuestion = null
-              this.currentQuestionType = null
-              this.addFormVisible = false
-              // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-                this.list.push(res.data)
-                this.total = this.list.length
-              }
-            }
-            this.isLoading = false
-          }).catch(err => {
-            console.log('新增出错', err)
-            this.isLoading = false
-          })
-        } else {
-          this.$message({
-            type: 'error',
-            message: 'Format Error'
-          })
-        }
-      })
+      console.log('hello', this.addForm)
+      // this.$refs['addForm'].validate((valid) => {
+      //   if (valid) {
+      //     this.isLoading = true
+      //     this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.addForm)}).then(res => {
+      //       if (res) {
+      //         console.log('新增', res)
+      //         this.$message({
+      //           type: 'success',
+      //           message: 'Operation Succeeded'
+      //         })
+      //         this.$refs['addForm'].resetFields()
+      //         this.addForm.blockQuestions = []
+      //         this.currentQuestion = null
+      //         this.currentQuestionType = null
+      //         this.addFormVisible = false
+      //         // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
+      //         if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+      //           this.list.push(res.data)
+      //           this.total = this.list.length
+      //         }
+      //       }
+      //       this.isLoading = false
+      //     }).catch(err => {
+      //       console.log('新增出错', err)
+      //       this.isLoading = false
+      //     })
+      //   } else {
+      //     this.$message({
+      //       type: 'error',
+      //       message: 'Format Error'
+      //     })
+      //   }
+      // })
     },
     // 显示路由编辑弹窗
     showAddRoutes: function (blockQuestion, index) {
@@ -384,7 +441,7 @@ export default {
           message: 'Please Select Insurance Company'
         })
       } else {
-        this.routesForm.routes.push({InsuranceCropID: this.currentInsuranceCompany, Operator: null, Opreand: null, MoveStep: null})
+        this.routesForm.routes.push({InsuranceCropID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1})
       }
     },
     // 删除一行比较属性
@@ -413,20 +470,61 @@ export default {
     // 路由编辑
     addRoutes: function () {
       if (this.addFormVisible) {
-        this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCropID + '|' + item.Operator + '|' + item.Operand })
+        if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
+          this.$message({
+            type: 'warning',
+            message: 'Please Input Operand'
+          })
+        } else if (this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
+          this.$message({
+            type: 'warning',
+            message: 'Please Select Option'
+          })
+        } else if (new Set(tempList).size !== tempList.length) { // 重复选项
+          this.$message({
+            type: 'warning',
+            message: 'Duplicate options'
+          })
+        } else {
+          this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.$refs['routesForm'].resetFields()
+          this.currentInsuranceCompany = null
+          this.currentIndex = 0
+          this.routesForm.routes = []
+          this.routesFormVisible = false
+        }
       } else if (this.editFormVisible) {
-        this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCropID + '|' + item.Operator + '|' + item.Operand })
+        if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
+          this.$message({
+            type: 'warning',
+            message: 'Please Input Operand'
+          })
+        } else if (this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
+          this.$message({
+            type: 'warning',
+            message: 'Please Select Option'
+          })
+        } else if (new Set(tempList).size !== tempList.length) { // 重复选项
+          this.$message({
+            type: 'warning',
+            message: 'Duplicate options'
+          })
+        } else {
+          this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.$refs['routesForm'].resetFields()
+          this.currentInsuranceCompany = null
+          this.currentIndex = 0
+          this.routesForm.routes = []
+          this.routesFormVisible = false
+        }
       }
-      this.$refs['routesForm'].resetFields()
-      this.currentInsuranceCompany = null
-      this.currentIndex = 0
-      this.routesForm.routes = []
-      this.routesFormVisible = false
     },
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/GetBlock', {blockid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -456,7 +554,7 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.editForm)}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -467,9 +565,9 @@ export default {
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-                this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
+                this.list = this.list.map(item => { return item.BlockID === res.data.BlockID ? res.data : item })
               } else {
-                this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
+                this.list = this.list.filter(item => item.BlockID !== res.data.BlockID)
                 this.total = this.list.length
               }
             }
@@ -494,14 +592,14 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/memoservice.asmx/RemoveBlock', {blockid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            this.list = this.list.filter(item => item.QuestionID !== id)
+            this.list = this.list.filter(item => item.BlockID !== id)
             this.total = this.list.length
           }
           this.isLoading = false

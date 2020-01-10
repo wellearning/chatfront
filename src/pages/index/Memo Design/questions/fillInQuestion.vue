@@ -56,7 +56,7 @@
             </el-form-item>
           </div>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="addForm.Tips" clearable></el-input>
@@ -83,7 +83,7 @@
             </el-form-item>
           </div>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle"></el-button>
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="editForm.Tips" clearable></el-input>
