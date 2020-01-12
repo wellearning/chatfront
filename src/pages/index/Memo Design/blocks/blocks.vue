@@ -80,7 +80,7 @@
                 <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCropID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
               <el-row :gutter="10">
                 <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
                   <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
@@ -90,9 +90,14 @@
                 <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
                   <el-input v-model="item.Operand" clearable size="small"></el-input>
                 </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in addForm.blockQuestions.length - addForm.blockQuestions.indexOf(routesForm)" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -116,7 +121,7 @@
                 <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCropID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
               <el-row :gutter="10">
                 <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
                   <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
@@ -128,9 +133,14 @@
                     <el-option v-for="it in routesForm.question.options" :key="it.ChoiceOptionID" :label="it.Content" :value="it.ChoiceOptionID"></el-option>
                   </el-select>
                 </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in addForm.blockQuestions.length - addForm.blockQuestions.indexOf(routesForm)" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -474,7 +484,7 @@ export default {
           message: 'Please Select Insurance Company'
         })
       } else {
-        this.routesForm.routes.push({InsuranceCropID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1})
+        this.routesForm.routes.push({InsuranceCorpID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1})
       }
     },
     // 删除一行比较属性
@@ -503,7 +513,7 @@ export default {
     // 路由编辑
     addRoutes: function () {
       if (this.addFormVisible) {
-        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCropID + '|' + item.Operator + '|' + item.Operand })
+        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCorpID + '|' + item.Operator + '|' + item.Operand })
         if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
           this.$message({
             type: 'warning',
@@ -528,7 +538,7 @@ export default {
           this.routesFormVisible = false
         }
       } else if (this.editFormVisible) {
-        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCropID + '|' + item.Operator + '|' + item.Operand })
+        let tempList = this.routesForm.routes.map(item => { return item.InsuranceCorpID + '|' + item.Operator + '|' + item.Operand })
         if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
           this.$message({
             type: 'warning',
