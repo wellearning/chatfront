@@ -150,7 +150,34 @@
       <!----------------------------------------------路由编辑弹窗结束------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit Block" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
-        <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+        <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
+          <el-form-item label="Name" prop="Name">
+            <el-input v-model="editForm.Name" clearable></el-input>
+          </el-form-item>
+          <div v-for="(item, index) in editForm.blockQuestions" :key="index" class="choice">
+            <el-form-item class="marginLeft10">
+              <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
+              <span v-if="item.question.TypeID !== 5"><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
+              <span v-else><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Integration}}</span>
+            </el-form-item>
+            <el-form-item class="marginLeft20" v-if="[3, 6].indexOf(item.question.TypeID) !== -1">
+              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Routing</el-button>
+            </el-form-item>
+            <el-form-item class="marginLeft20">
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== editForm.blockQuestions.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
+            </el-form-item>
+          </div>
+          <el-form-item class="confirmBtn smallLine">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
+            <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.TypeID !== 5 ? '(' + item.QuestionID + ') ' + item.Description : '(' + item.QuestionID + ')' + item.Integration" :value="item.QuestionID"></el-option>
+            </el-select>
+            <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
+              <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
           </el-form-item>
@@ -389,48 +416,54 @@ export default {
     },
     // 新增
     add: function () {
-      console.log('hello', this.addForm)
-      // this.$refs['addForm'].validate((valid) => {
-      //   if (valid) {
-      //     this.isLoading = true
-      //     this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.addForm)}).then(res => {
-      //       if (res) {
-      //         console.log('新增', res)
-      //         this.$message({
-      //           type: 'success',
-      //           message: 'Operation Succeeded'
-      //         })
-      //         this.$refs['addForm'].resetFields()
-      //         this.addForm.blockQuestions = []
-      //         this.currentQuestion = null
-      //         this.currentQuestionType = null
-      //         this.addFormVisible = false
-      //         // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-      //         if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-      //           this.list.push(res.data)
-      //           this.total = this.list.length
-      //         }
-      //       }
-      //       this.isLoading = false
-      //     }).catch(err => {
-      //       console.log('新增出错', err)
-      //       this.isLoading = false
-      //     })
-      //   } else {
-      //     this.$message({
-      //       type: 'error',
-      //       message: 'Format Error'
-      //     })
-      //   }
-      // })
+      this.$refs['addForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          // 按顺序添加SequenceNo，有routing的IsRoute赋true
+          for (let i = 0; i < this.addForm.blockQuestions.length; i++) {
+            this.addForm.blockQuestions[i].SequenceNo = i + 1
+            if (this.addForm.blockQuestions[i].routes.length > 0) {
+              this.addForm.blockQuestions[i].IsRoute = true
+            }
+          }
+          this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.addForm)}).then(res => {
+            if (res) {
+              console.log('新增', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['addForm'].resetFields()
+              this.addForm.blockQuestions = []
+              this.currentQuestion = null
+              this.currentQuestionType = null
+              this.addFormVisible = false
+              // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+                this.list.push(res.data)
+                this.total = this.list.length
+              }
+            }
+            this.isLoading = false
+          }).catch(err => {
+            console.log('新增出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
+      })
     },
     // 显示路由编辑弹窗
     showAddRoutes: function (blockQuestion, index) {
       this.routesFormVisible = true
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.routesForm = blockQuestion
-        this.routesFormBeforeEdit = blockQuestion
-        this.currentIndex = index
+        this.routesForm = JSON.parse(JSON.stringify(blockQuestion))
+        this.routesFormBeforeEdit = JSON.parse(JSON.stringify(blockQuestion))
+        this.currentIndex = JSON.parse(JSON.stringify(index))
       })
     },
     // 添加一行比较属性
@@ -487,7 +520,7 @@ export default {
             message: 'Duplicate options'
           })
         } else {
-          this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesForm))
           this.$refs['routesForm'].resetFields()
           this.currentInsuranceCompany = null
           this.currentIndex = 0
@@ -512,7 +545,7 @@ export default {
             message: 'Duplicate options'
           })
         } else {
-          this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesForm))
           this.$refs['routesForm'].resetFields()
           this.currentInsuranceCompany = null
           this.currentIndex = 0
@@ -530,6 +563,11 @@ export default {
           this.editFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.editForm = res.data
+            for (let i = 0; i < this.editForm.blockQuestions.length; i++) {
+              if (this.editForm.blockQuestions[i].routes === null) {
+                this.editForm.blockQuestions[i].routes = []
+              }
+            }
           })
         }
         this.isLoading = false
@@ -546,6 +584,9 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['editForm'].resetFields()
+        this.editForm.blockQuestions = []
+        this.currentQuestion = null
+        this.currentQuestionType = null
         done()
       }).catch(() => {})
     },
@@ -554,6 +595,13 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
+          // 按顺序添加SequenceNo，有routing的IsRoute赋true
+          for (let i = 0; i < this.editForm.blockQuestions.length; i++) {
+            this.editForm.blockQuestions[i].SequenceNo = i + 1
+            if (this.editForm.blockQuestions[i].routes.length > 0) {
+              this.editForm.blockQuestions[i].IsRoute = true
+            }
+          }
           this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.editForm)}).then(res => {
             if (res) {
               console.log('修改', res)
@@ -562,9 +610,12 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['editForm'].resetFields()
+              this.editForm.blockQuestions = []
+              this.currentQuestion = null
+              this.currentQuestionType = null
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
                 this.list = this.list.map(item => { return item.BlockID === res.data.BlockID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.BlockID !== res.data.BlockID)
