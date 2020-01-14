@@ -4,6 +4,10 @@ import Vue from 'vue'
 import router from './router'
 import store from './store'
 import ElementUI, {Message} from 'element-ui'
+
+import lang from 'element-ui/lib/locale/lang/en'
+import locale from 'element-ui/lib/locale'
+
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
 import 'babel-polyfill'
@@ -14,6 +18,10 @@ import ECharts from 'vue-echarts'
 Vue.prototype.axios = axios
 Vue.use(VueAxios, axios)
 Vue.use(ElementUI)
+
+// 设置语言
+locale.use(lang)
+
 Vue.component('v-chart', ECharts)
 Vue.config.productionTip = false
 
@@ -35,7 +43,7 @@ let registerRouteFresh = true
 router.beforeEach((to, from, next) => {
   store.commit('clearToken') // 取消请求
   if (to.path !== '/login') { // 本身目的地址非login页
-    if (store.getters.getToken !== '' && store.getters.getToken !== null) { // token非空
+    if (store.getters.getAccount !== '' && store.getters.getAccount !== null) { // token非空
       if (registerRouteFresh) { // 防止死循环
         console.log('刷新后跳转')
         registerRouteFresh = false
@@ -57,8 +65,8 @@ router.beforeEach((to, from, next) => {
 
 // 请求拦截
 axios.interceptors.request.use(config => {
-  if (store.getters.getToken !== '' && store.getters.getToken !== null) { // 如果token非空，请求时带上token
-    config.headers.Authorization = store.getters.getToken
+  if (store.getters.getAccount !== '' && store.getters.getAccount !== null) { // 如果token非空，请求时带上token
+    config.headers.Authorization = JSON.parse(store.getters.getAccount).Token
   }
   config.cancelToken = new axios.CancelToken(function (cancel) {
     store.commit('pushToken', {cancelToken: cancel})

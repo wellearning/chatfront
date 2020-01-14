@@ -6,7 +6,7 @@
           <!--<i :class="{'nextLine' : item.isNextLine}"></i>-->
           <template v-if="item.IsFillin === false">{{item.Part}}</template>
           <!--todo: v-model中的答案未定义-->
-          <template v-else><el-input class="additionContent" v-model="item.FillinContent" size="mini" @blur="changeAdditionContent" :style="{width: item.Part * 10 + 'px'}"></el-input></template>
+          <template v-else><el-input class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}"></el-input></template>
         </span>
       </div>
       <div class="questionTips">{{question.Tips}}</div>
@@ -23,9 +23,6 @@ export default {
     }
   },
   methods: {
-    changeAdditionContent: function () {
-      this.$emit('finishAnswer', this.question)
-    }
   }
 }
 </script>

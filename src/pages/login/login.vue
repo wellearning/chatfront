@@ -64,21 +64,13 @@ export default {
           this.axios.post('/api/Services/baseservice.asmx/Login', {username: this.loginForm.username, password: this.loginForm.password}).then(res => {
             console.log('登录', res)
             if (res) {
-              // this.$store.dispatch('asynSetAccount', this.form.username)
-              // this.$store.dispatch('asynSetToken', res.data.data.access_token)
-              // this.$message({
-              //   type: 'success',
-              //   message: 'Login Successful',
-              //   duration: 1000
-              // })
-              // this.initPermissionList()
-              this.$store.dispatch('asynSetAccount', res.data.Name)
-              this.$store.dispatch('asynSetToken', res.data.Token)
+              this.$store.dispatch('asynSetAccount', JSON.stringify(res.data))
               this.$message({
                 type: 'success',
                 message: 'Login Successful',
                 duration: 1000
               })
+              // this.initPermissionList()
               let arr = [
                 {
                   id: 1,
@@ -198,14 +190,14 @@ export default {
                           componentPath: 'pages/index/Memo/newMemo'
                         }, {
                           id: 142,
-                          path: '/myMemoes',
-                          name: 'My Memoes',
-                          componentPath: 'pages/index/Memo/myMemoes'
+                          path: '/myMemos',
+                          name: 'My Memos',
+                          componentPath: 'pages/index/Memo/myMemos'
                         }, {
                           id: 143,
-                          path: '/memoes',
-                          name: 'Memoes',
-                          componentPath: 'pages/index/Memo/memoes'
+                          path: '/memos',
+                          name: 'Memos',
+                          componentPath: 'pages/index/Memo/memos'
                         }
                       ]
                     }

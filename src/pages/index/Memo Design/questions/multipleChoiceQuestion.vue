@@ -79,7 +79,7 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Multiple Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="editForm.OutputModeID">
@@ -271,7 +271,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['addForm'].resetFields()
-        this.addForm.options = null
+        this.addForm.options = []
         done()
       }).catch(() => {})
     },
@@ -291,7 +291,7 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['addForm'].resetFields()
-              this.addForm.options = null
+              this.addForm.options = []
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {

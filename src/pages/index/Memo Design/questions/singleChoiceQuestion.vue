@@ -79,7 +79,7 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Single Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="editForm.OutputModeID">

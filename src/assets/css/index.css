@@ -374,3 +374,77 @@ html {
   margin-right: 20px;
 }
 /*block结束*/
+/*newMemo开始*/
+.newMemo .title .el-input__inner {
+  text-align: center;
+}
+.newMemo .subtitle .el-form-item__label{
+  width: 30%;
+}
+.newMemo .subtitle .el-form-item__content{
+  width: 50%;
+  float: left;
+}
+.newMemo .subtitle .el-input, .newMemo .subtitle .el-select{
+  width: 100%;
+}
+.el-select__tags{
+  flex-wrap: unset;
+  overflow: hidden;
+  margin-left: 1px;
+}
+.answerMemo {
+  margin-bottom: 30px;
+}
+.answerMemo .typeTitle {
+  font-size: 28px;
+  color: #303133;
+  font-weight: bold;
+  text-align: center;
+}
+.answerMemo .typeReminder {
+  font-size: 20px;
+  color: #303133;
+  font-weight: bold;
+}
+.answer .propertyQuestion .question {
+  font-size: 20px;
+  color: #303133;
+  font-weight: bold;
+}
+.answer .propertyQuestion .additionContent {
+  width: 100px;
+  font-weight: normal;
+  margin-left: 10px;
+}
+.answer .propertyQuestion .additionContent .el-input__inner {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #303133;
+  font-size: 14px;
+  padding: 0 5px;
+  background: transparent;
+}
+.answer .propertyQuestion .additionContent .el-input__suffix{
+  right: 0;
+}
+.answer .propertyQuestion .additionContent.is-disabled .el-input__inner {
+  border-bottom: none;
+}
+.answer .textAreaWithLine {
+  background: url(../images/textAreaWithLine.png);
+}
+.answer .textAreaWithLine .el-textarea__inner {
+  border-radius: 0;
+  border: none;
+  font-size: 14px;
+  padding: 0 5px;
+  background: transparent;
+}
+.newMemo-submit {
+  text-align: center;
+}
+.newMemo-content {
+  padding: 0 30px;
+}
+/*newMemo结束*/

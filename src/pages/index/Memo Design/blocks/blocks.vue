@@ -130,7 +130,7 @@
                 </el-col>
                 <el-col :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
                   <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in routesForm.question.options" :key="it.ChoiceOptionID" :label="it.Content" :value="it.ChoiceOptionID"></el-option>
+                    <el-option v-for="it in routesForm.question.options" :key="(it.ChoiceOptionID).toString()" :label="it.Content" :value="(it.ChoiceOptionID).toString()"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
@@ -312,13 +312,13 @@ export default {
     },
     // 添加一行
     addChoice: function (form) {
-      if (form === 'addForm') {
-        if (this.currentQuestion === null) {
-          this.$message({
-            type: 'warning',
-            message: 'Please Select Question'
-          })
-        } else {
+      if (this.currentQuestion === null) {
+        this.$message({
+          type: 'warning',
+          message: 'Please Select Question'
+        })
+      } else {
+        if (form === 'addForm') {
           this.isLoading = true
           this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
@@ -331,14 +331,7 @@ export default {
             console.log('查询单个出错', err)
             this.isLoading = false
           })
-        }
-      } else if (form === 'editForm') {
-        if (this.currentQuestion === null) {
-          this.$message({
-            type: 'warning',
-            message: 'Please Select Question'
-          })
-        } else {
+        } else if (form === 'editForm') {
           this.isLoading = true
           this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
@@ -487,9 +480,10 @@ export default {
         this.routesForm.routes.push({InsuranceCorpID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1})
       }
     },
-    // 删除一行比较属性
+    // 删除一行比较属性，因为使用了filter，所以不能直接this.routesForm.routes.splice(index, 1)，这样删除的可能是过滤掉的别的保险公司对应的routing
     delOperator: function (index) {
-      this.routesForm.routes.splice(index, 1)
+      let delObj = this.routesForm.routes.filter(i => i.InsuranceCorpID === this.currentInsuranceCompany)[index]
+      this.routesForm.routes = this.routesForm.routes.filter(i => i !== delObj)
     },
     // 隐藏路由编辑弹窗
     closeAddRoutes: function (done) {

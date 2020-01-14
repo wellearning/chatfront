@@ -32,7 +32,7 @@ export default {
       isLoading: false,
       innerWidth: window.innerWidth,
       isCollapse: false, // todo: 折叠后导航会报Maximum call stack size exceeded
-      account: this.$store.getters.getAccount,
+      account: JSON.parse(this.$store.getters.getAccount).Name,
       menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children
     }
   },

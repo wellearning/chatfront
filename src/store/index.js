@@ -5,19 +5,12 @@ Vue.use(Vuex)
 
 // 要设置的全局访问的state对象
 const state = {
-  token: '',
   account: '',
   permissionList: '',
   cancelTokenArr: []
 }
 
 const getters = { // 实时监听state值的变化(最新状态)
-  getToken (state) {
-    if (state.token === '') {
-      state.token = localStorage.getItem('token')
-    }
-    return state.token
-  },
   getAccount (state) {
     if (state.account === '') {
       state.account = localStorage.getItem('account')
@@ -33,10 +26,6 @@ const getters = { // 实时监听state值的变化(最新状态)
 }
 
 const mutations = {
-  setToken (state, account) {
-    state.token = account
-    localStorage.setItem('token', account)
-  },
   setAccount (state, account) {
     state.account = account
     localStorage.setItem('account', account)
@@ -57,9 +46,6 @@ const mutations = {
 }
 
 const actions = {
-  asynSetToken (context, account) {
-    context.commit('setToken', account)
-  },
   asynSetAccount (context, account) {
     context.commit('setAccount', account)
   },
@@ -67,8 +53,6 @@ const actions = {
     context.commit('setPermissionList', account)
   },
   asynClean (context) {
-    context.commit('setToken', '')
-    localStorage.setItem('token', '')
     context.commit('setAccount', '')
     localStorage.setItem('account', '')
     context.commit('setPermissionList', '')
