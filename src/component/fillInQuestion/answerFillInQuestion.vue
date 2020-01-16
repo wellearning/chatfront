@@ -2,6 +2,7 @@
   <div class="answer">
     <div class="fillInQuestion">
       <div class="question">
+        <span v-if="question.Label !== undefined && question.Label !== null && question.Label !== ''">{{question.Label}}&nbsp;&nbsp;</span>
         <span v-for="item in question.fillinParts" :key="item.FillinPartID" class="part"><!--排序.slice().sort((a,b) => { return a.SequenceNo - b.SequenceNo })-->
           <!--<i :class="{'nextLine' : item.isNextLine}"></i>-->
           <template v-if="item.IsFillin === false">{{item.Part}}</template>

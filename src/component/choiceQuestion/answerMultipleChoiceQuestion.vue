@@ -1,7 +1,7 @@
 <template>
   <div class="answer">
     <div class="choiceQuestion">
-      <div class="question">{{question.Description}}</div>
+      <div class="question"><span v-if="question.Label !== undefined && question.Label !== null && question.Label !== ''">{{question.Label}}&nbsp;&nbsp;</span>{{question.Description}}</div>
       <div class="questionTips">{{question.Tips}}</div>
       <div class="choice">
         <el-checkbox-group v-model="question.value" @change="resetAdditionContent">

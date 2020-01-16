@@ -45,10 +45,10 @@
         <!--<div class="newMemo-content-block-title">{{item.BlockName}}</div>-->
         <div v-for="i in it.block.blockQuestions" :key="i.BlockQuestionID">
           <div class="answerMemo" v-if="i.question.TypeID === 1 && !i.question.isSkip">
-            <div class="typeTitle">{{i.question.Description}}</div>
+            <div class="typeTitle"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
           </div>
           <div class="answerMemo" v-else-if="i.question.TypeID === 2 && !i.question.isSkip">
-            <div class="typeReminder">{{i.question.Description}}</div>
+            <div class="typeReminder"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
           </div>
           <div class="answerMemo" v-else-if="i.question.TypeID === 3 && !i.question.isSkip">
             <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerProperty>
@@ -104,6 +104,7 @@ export default {
         StatusID: 1,
         RequestDate: moment(new Date()),
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
+        Author: JSON.parse(this.$store.getters.getAccount).Name,
         Templates: null
       },
       memoFormRules: {
@@ -181,6 +182,7 @@ export default {
               // 对所有问题赋值value，选择题的每个选项赋值AdditionContent
               for (let p = 0; p < temp.templateBlocks.length; p++) {
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
+                  temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
                   if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) {
                     temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
@@ -253,8 +255,10 @@ export default {
       // singleChoice
       if (question.question.TypeID === 6) {
         // 单选题判断答案所属routes，得出跳过个数
-        if (routes.find(item => item.Operand === value) !== undefined) {
-          skipNumber = routes.find(item => item.Operand === value).MoveStep
+        if (routes.find(item => parseInt(item.Operand) === value) !== undefined) {
+          skipNumber = routes.find(item => parseInt(item.Operand) === value).MoveStep
+        } else {
+          skipNumber = 1
         }
       }
       if (skipNumber > 1) { // 如果跳过个数（n）大于1，对后面（n - 1）个问题赋null值（多选为[]），isSkip属性赋true值，同时执行countShipNumber发放，将这（n - 1）个问题处理的isSkip属性赋true值的问题，isSkip属性赋false值
@@ -286,7 +290,6 @@ export default {
         if (valid) {
           // form
           let form = JSON.parse(JSON.stringify(this.memoForm))
-          delete form.Templates
           // templates
           let templates = JSON.parse(JSON.stringify(this.currentTemplates))
           templates = templates.map(item => { return { TemplateID: item.TemplateID, memoBlocks: item.templateBlocks } })
@@ -299,13 +302,16 @@ export default {
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 4) { // simpleAnswer
                   templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 5) { // fillIn
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.filter(it => it.IsFillin === true).map(it => {
-                    return { FillinPartID: it.FillinPartID, FillinContent: it.FillinContent }
+                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.map(it => {
+                    return { FillinPartID: it.FillinPartID, IsFillin: it.IsFillin, Part: it.Part, FillinContent: it.FillinContent }
                   })
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 6) { // single
                   if (templates[i].memoBlocks[j].answers[k].question.value !== null) {
                     templates[i].memoBlocks[j].answers[k].question.AnswerDesc = {
                       ChoiceOptionID: templates[i].memoBlocks[j].answers[k].question.value,
+                      OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
+                      Content: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Content,
+                      Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Outputs,
                       AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).AdditionContent
                     }
                   } else {
@@ -316,6 +322,9 @@ export default {
                     templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value.map(it => {
                       return {
                         ChoiceOptionID: it,
+                        OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
+                        Content: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
+                        Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
                         AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent
                       }
                     })
@@ -325,7 +334,7 @@ export default {
                 } else { // title, reminder
                   templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
                 }
-                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: null, Outputs: ''}
+                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, QuestionDesc: templates[i].memoBlocks[j].answers[k].question.Description, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: templates[i].memoBlocks[j].answers[k].question.Label, Outputs: templates[i].memoBlocks[j].answers[k].question.TypeID + '|' + templates[i].memoBlocks[j].answers[k].question.isSkip}
               }
             }
           }

@@ -79,6 +79,14 @@ axios.interceptors.response.use((response) => {
   let finalRes = JSON.parse(response.data.d)
   if (finalRes.code === 0) {
     return finalRes
+  } else if (finalRes.code === 2) {
+    Message({
+      message: finalRes.message,
+      type: 'error'
+    })
+    store.dispatch('asynClean')
+    router.push({ path: '/login' })
+    return false
   } else {
     Message({
       message: finalRes.message,

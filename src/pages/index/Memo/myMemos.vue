@@ -20,11 +20,6 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="150">
-          <template slot-scope="scope">
-            <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
-          </template>
-        </el-table-column>
         <el-table-column label="RequestDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
@@ -87,10 +82,10 @@
             <!--<div class="newMemo-content-block-title">{{item.BlockName}}</div>-->
             <div v-for="i in it.block.blockQuestions" :key="i.BlockQuestionID">
               <div class="answerMemo" v-if="i.question.TypeID === 1 && !i.question.isSkip">
-                <div class="typeTitle">{{i.question.Description}}</div>
+                <div class="typeTitle"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
               </div>
               <div class="answerMemo" v-else-if="i.question.TypeID === 2 && !i.question.isSkip">
-                <div class="typeReminder">{{i.question.Description}}</div>
+                <div class="typeReminder"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
               </div>
               <div class="answerMemo" v-else-if="i.question.TypeID === 3 && !i.question.isSkip">
                 <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerProperty>
@@ -115,6 +110,116 @@
         </div>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="viewFormVisible" width="1000px" center :before-close="closeView">
+        <div class="viewMemo">
+          <div class="viewMemo-title">{{viewForm.Title}}</div>
+          <el-row :gutter="20">
+            <el-col :span="4">
+              <div class="viewMemo-subtitle">EffectiveDate:</div>
+            </el-col>
+            <el-col :span="8">
+              <div class="viewMemo-subtitle"><span>{{viewForm.EffectiveDate}}</span></div>
+            </el-col>
+            <el-col :span="4">
+              <div class="viewMemo-subtitle">InsuranceCorp:</div>
+            </el-col>
+            <el-col :span="8">
+              <div class="viewMemo-subtitle"><span>{{viewForm.InsuranceCorp}}</span></div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="4">
+              <div class="viewMemo-subtitle">PolicyNumber:</div>
+            </el-col>
+            <el-col :span="8">
+              <div class="viewMemo-subtitle"><span>{{viewForm.PolicyNumber}}</span></div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="4">
+              <div class="viewMemo-subtitle">Author:</div>
+            </el-col>
+            <el-col :span="8">
+              <div class="viewMemo-subtitle"><span>{{viewForm.Author}}</span></div>
+            </el-col>
+            <el-col :span="4">
+              <div class="viewMemo-subtitle">RequestDate:</div>
+            </el-col>
+            <el-col :span="8">
+              <div class="viewMemo-subtitle"><span>{{viewForm.RequestDate}}</span></div>
+            </el-col>
+          </el-row>
+          <div class="viewMemo-content">
+            <div v-for="i in viewForm.memoTemplates" :key="i.MemoTemplateID">
+              <div v-for="it in i.memoBlocks" :key="it.MemoBlockID">
+                <div class="viewMemo-content-answer" v-for="item in it.answers" :key="item.AnswerID">
+                  <div v-if="item.Outputs === '1|false'" class="title">
+                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                  </div>
+                  <div v-else-if="item.Outputs === '2|false'">
+                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                  </div>
+                  <div v-else-if="item.Outputs === '3|false' || item.Outputs === '4|false'">
+                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                    <div class="answer" v-if="JSON.parse(item.AnswerDesc) !== null">
+                      <span class="content">{{JSON.parse(item.AnswerDesc)}}</span>
+                    </div>
+                    <div class="answer" v-else>
+                      <span class="noAnswer">No Answer</span>
+                    </div>
+                  </div>
+                  <div v-else-if="item.Outputs === '5|false'">
+                    <div class="question">
+                      <span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>
+                      <span v-for="(part, index) in JSON.parse(item.AnswerDesc)" :key="index">
+                        <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== undefined && part.FillinContent !== null && part.FillinContent !== '')">{{part.FillinContent}}</span>
+                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === undefined || part.FillinContent === null || part.FillinContent === '')">No Answer</span>
+                        <span v-else>{{part.Part}}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else-if="item.Outputs === '6|false'">
+                    <div v-if="JSON.parse(item.AnswerDesc) === null || (JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID !== 3)">
+                      <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                      <div class="answer">
+                        <span v-if="JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID === 1">
+                          <span class="content">{{JSON.parse(item.AnswerDesc).Content}}</span>
+                          <i class="addition" v-if="JSON.parse(item.AnswerDesc).AdditionContent !== null">Addition:<b>{{JSON.parse(item.AnswerDesc).AdditionContent}}</b></i>
+                        </span>
+                        <span v-else-if="JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID === 2">
+                          <span class="content">{{JSON.parse(item.AnswerDesc).Outputs}}</span>
+                          <i class="addition" v-if="JSON.parse(item.AnswerDesc).AdditionContent !== null">Addition:<b>{{JSON.parse(item.AnswerDesc).AdditionContent}}</b></i>
+                        </span>
+                        <span class="noAnswer" v-else-if="JSON.parse(item.AnswerDesc) === null">No Answer</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else-if="item.Outputs === '7|false'">
+                    <div v-if="JSON.parse(item.AnswerDesc) === null || (JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).filter(option => option.OutputModeID === 3).length === 0)">
+                      <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                      <div class="answer">
+                        <div v-for="(option, index) in JSON.parse(item.AnswerDesc)" :key="index">
+                          <span v-if="option.OutputModeID === 1">
+                            <span class="content">{{option.Content}}</span>
+                            <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
+                          </span>
+                          <span v-else-if="option.OutputModeID === 2">
+                            <span class="content">{{option.Outputs}}</span>
+                            <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
+                          </span>
+                        </div>
+                        <div class="noAnswer" v-if="JSON.parse(item.AnswerDesc) === null">No Answer</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-dialog>
+      <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -186,11 +291,29 @@ export default {
         Templates: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ]
+      },
+      // 查阅
+      viewFormVisible: false,
+      viewForm: {
+        Title: null,
+        EffectiveDate: null,
+        InsuranceCorp: null,
+        PolicyNumber: null,
+        Author: null,
+        RequestDate: null,
+        memoTemplates: [{
+          memoBlocks: [{
+            answers: []
+          }]
+        }],
+        answerList: []
       }
     }
   },
   mounted: function () {
     this.search(null)
+    this.initTemplates()
+    this.initInsuranceCompany()
   },
   methods: {
     // 日期格式
@@ -300,6 +423,7 @@ export default {
               // 对所有问题赋值value，选择题的每个选项赋值AdditionContent
               for (let p = 0; p < temp.templateBlocks.length; p++) {
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
+                  temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
                   if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) {
                     temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
@@ -320,13 +444,16 @@ export default {
                 for (let p = 0; p < blocks.length; p++) {
                   for (let q = 0; q < blocks[p].answers.length; q++) {
                     blocks[p].answers[q].AnswerDesc = JSON.parse(blocks[p].answers[q].AnswerDesc)
+                    if (blocks[p].answers[q].Outputs.indexOf('true') > -1) {
+                      temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
+                    }
                     if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 3) { // property
                       temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc
                     } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 4) { // simpleAnswer
                       temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc
                     } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 5) { // fillIn
                       for (let a = 0; a < blocks[p].answers[q].AnswerDesc.length; a++) {
-                        if (blocks[p].answers[q].AnswerDesc[a].FillinContent !== undefined) {
+                        if (blocks[p].answers[q].AnswerDesc[a].IsFillin && blocks[p].answers[q].AnswerDesc[a].FillinContent !== undefined) {
                           temp.templateBlocks[p].block.blockQuestions[q].question.fillinParts.find(it => it.FillinPartID === blocks[p].answers[q].AnswerDesc[a].FillinPartID).FillinContent = blocks[p].answers[q].AnswerDesc[a].FillinContent
                         }
                       }
@@ -406,8 +533,10 @@ export default {
       // singleChoice
       if (question.question.TypeID === 6) {
         // 单选题判断答案所属routes，得出跳过个数
-        if (routes.find(item => item.Operand === value) !== undefined) {
-          skipNumber = routes.find(item => item.Operand === value).MoveStep
+        if (routes.find(item => parseInt(item.Operand) === value) !== undefined) {
+          skipNumber = routes.find(item => parseInt(item.Operand) === value).MoveStep
+        } else {
+          skipNumber = 1
         }
       }
       if (skipNumber > 1) { // 如果跳过个数（n）大于1，对后面（n - 1）个问题赋null值（多选为[]），isSkip属性赋true值，同时执行countShipNumber发放，将这（n - 1）个问题处理的isSkip属性赋true值的问题，isSkip属性赋false值
@@ -474,7 +603,6 @@ export default {
         if (valid) {
           // form
           let form = JSON.parse(JSON.stringify(this.memoForm))
-          delete form.Templates
           // templates
           let templates = JSON.parse(JSON.stringify(this.currentTemplates))
           templates = templates.map(item => { return { TemplateID: item.TemplateID, memoBlocks: item.templateBlocks } })
@@ -487,13 +615,16 @@ export default {
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 4) { // simpleAnswer
                   templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 5) { // fillIn
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.filter(it => it.IsFillin === true).map(it => {
-                    return { FillinPartID: it.FillinPartID, FillinContent: it.FillinContent }
+                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.map(it => {
+                    return { FillinPartID: it.FillinPartID, IsFillin: it.IsFillin, Part: it.Part, FillinContent: it.FillinContent }
                   })
                 } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 6) { // single
                   if (templates[i].memoBlocks[j].answers[k].question.value !== null) {
                     templates[i].memoBlocks[j].answers[k].question.AnswerDesc = {
                       ChoiceOptionID: templates[i].memoBlocks[j].answers[k].question.value,
+                      OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
+                      Content: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Content,
+                      Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Outputs,
                       AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).AdditionContent
                     }
                   } else {
@@ -504,6 +635,9 @@ export default {
                     templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value.map(it => {
                       return {
                         ChoiceOptionID: it,
+                        OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
+                        Content: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
+                        Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
                         AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent
                       }
                     })
@@ -513,7 +647,7 @@ export default {
                 } else { // title, reminder
                   templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
                 }
-                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: null, Outputs: ''}
+                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, QuestionDesc: templates[i].memoBlocks[j].answers[k].question.Description, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: templates[i].memoBlocks[j].answers[k].question.Label, Outputs: templates[i].memoBlocks[j].answers[k].question.TypeID + '|' + templates[i].memoBlocks[j].answers[k].question.isSkip}
               }
             }
           }
@@ -529,7 +663,7 @@ export default {
           this.isLoading = true
           this.axios.post('/api/Services/memoservice.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
             if (res) {
-              console.log('新增', res)
+              console.log('提交', res)
               this.$message({
                 type: 'success',
                 message: 'Operation Succeeded'
@@ -537,10 +671,17 @@ export default {
               this.$refs['memoForm'].resetFields()
               this.currentTemplates = []
               this.memoFormVisible = false
+              // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
+              if (this.searchName === null || (this.searchName !== null && res.data.Title.indexOf(this.searchName) !== -1)) {
+                this.list = this.list.map(item => { return item.MemoID === res.data.MemoID ? res.data : item })
+              } else {
+                this.list = this.list.filter(item => item.MemoID !== res.data.MemoID)
+                this.total = this.list.length
+              }
             }
             this.isLoading = false
           }).catch(err => {
-            console.log('新增出错', err)
+            console.log('提交出错', err)
             this.isLoading = false
           })
         } else {
@@ -550,6 +691,32 @@ export default {
           })
         }
       })
+    },
+    // 查阅弹窗
+    view: function (id) {
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetMemo', {memoid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.viewFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            this.viewForm = res.data
+            this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
+            this.viewForm.Author = JSON.parse(this.$store.getters.getAccount).Name // todo
+            this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
+            this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
+      })
+    },
+    // 关闭查阅
+    closeView: function (done) {
+      this.viewForm = {}
+      done()
     }
   }
 }

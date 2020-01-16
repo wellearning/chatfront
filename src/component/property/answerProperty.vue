@@ -1,7 +1,7 @@
 <template>
   <div class="answer">
     <div class="propertyQuestion">
-      <span class="question">{{question.Description}}</span>
+      <span class="question"><span v-if="question.Label !== undefined && question.Label !== null && question.Label !== ''">{{question.Label}}&nbsp;&nbsp;</span>{{question.Description}}</span>
       <el-input class="additionContent" v-model="question.value" size="mini" @input="changeVal(question.value)"></el-input>
     </div>
   </div>

@@ -440,6 +440,7 @@ html {
   font-size: 14px;
   padding: 0 5px;
   background: transparent;
+  line-height: 28px;
 }
 .newMemo-submit {
   text-align: center;
@@ -448,3 +449,73 @@ html {
   padding: 0 30px;
 }
 /*newMemo结束*/
+/*myMemo开始*/
+.viewMemo {
+  padding: 0 30px;
+}
+.viewMemo .viewMemo-title{
+  font-size: 36px;
+  text-align: center;
+  color: #303133;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+.viewMemo .viewMemo-subtitle{
+  font-size: 18px;
+  color: #303133;
+  font-weight: bold;
+}
+.viewMemo .viewMemo-subtitle span{
+  font-size: 20px;
+  font-weight: normal;
+  color: #606266;
+  text-decoration: underline;
+}
+.viewMemo .viewMemo-content {
+  margin-top: 30px;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer{
+  margin-bottom: 30px;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .title .question {
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
+  text-align: center;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .question {
+  font-size: 20px;
+  color: #303133;
+  font-weight: bold;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .question .fillInPart {
+  font-size: 20px;
+  color: #606266;
+  font-weight: normal;
+  margin-left: 10px;
+  margin-right: 10px;
+  text-decoration: underline;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .answer .content {
+  font-size: 20px;
+  color: #606266;
+  text-decoration: underline;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .answer .addition {
+  font-size: 20px;
+  color: #606266;
+  font-style: normal;
+  margin-left: 30px;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .answer .addition b {
+  margin-left: 10px;
+  font-weight: normal;
+  text-decoration: underline;
+}
+.noAnswer {
+  font-size: 20px;
+  color: #909399 !important;
+  font-style: italic;
+  text-decoration: underline;
+}
+/*myMemo结束*/
