@@ -7,28 +7,30 @@
       </div>
     </div>
     <div class="inPageContent">
-      <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Role ID" prop="id" width="100" fixed="left"></el-table-column>
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
+        <el-table-column label="Role ID" prop="RoleID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Role Name" min-width="300">
           <template slot-scope="scope">
-            <el-input v-model="scope.row.name" :disabled="!(scope.row.id === currentId)"></el-input>
+            <el-input v-model="scope.row.Name" :disabled="!(scope.row.RoleID === currentId)"></el-input>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.id)" :loading="isLoading" size="small">Privileges</el-button>
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.id)" :loading="isLoading" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.id)" :loading="isLoading" size="small">Delete</el-button>
-            <el-button v-if="scope.row.id === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
-            <el-button v-if="scope.row.id === currentId" icon="el-icon-close" type="primary" @click="cancel()" :loading="isLoading" plain size="small">Cancel</el-button>
+            <!--<el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.RoleID)" :loading="isLoading" size="small">Privileges</el-button>-->
+            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading" size="small">Edit</el-button>
+            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading" size="small">Delete</el-button>
+            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
+            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.RoleID)" :loading="isLoading" plain size="small">Cancel</el-button>
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New Role" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
           <el-form-item label="Role Name" prop="name">
-            <el-input v-model="addForm.name" clearable></el-input>
+            <el-input v-model="addForm.Name" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
@@ -62,7 +64,12 @@ export default {
     return {
       isLoading: false,
       currentId: null,
+      currentDescription: null,
       list: [],
+      pageSize: 20,
+      pagerCount: 5,
+      currentPage: 1,
+      total: 0,
       // 权限
       privilegesVisible: false,
       currentPrivileges: null,
@@ -74,10 +81,10 @@ export default {
       // 新增
       addFormVisible: false,
       addForm: {
-        name: null
+        Name: null
       },
       addFormRules: {
-        name: [
+        Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
         ]
@@ -90,17 +97,19 @@ export default {
   methods: {
     // 查询
     search: function () {
-      // todo: 查询接口
-      // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => {
-      //   console.log('查询', res)
-      //   this.list = res.data.data
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询出错', err)
-      //   this.isLoading = false
-      // })
-      this.list = [{id: 1, name: 'admin'}, {id: 2, name: 'manager'}, {id: 3, name: 'visitor'}, {id: 4, name: 'worker'}]
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetRoles', {}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
     },
     // 显示权限弹窗
     showPrivilege: function (id) {
@@ -155,8 +164,9 @@ export default {
       })
     },
     // 显示修改
-    showEdit: function (id) {
+    showEdit: function (id, description) {
       this.currentId = id
+      this.currentDescription = description
     },
     // 删除
     del: function (id) {
@@ -166,13 +176,16 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/?id=' + id).then(res => { // todo: 删除接口
-          console.log('删除', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          this.search()
+        this.axios.post('/api/Services/baseservice.asmx/RemoveRole', {roleid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list = this.list.filter(item => item.RoleID !== id)
+            this.total = this.list.length
+          }
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
@@ -188,21 +201,26 @@ export default {
     // 修改
     edit: function (obj) {
       let rule = '^.{1,30}$'
-      if (!new RegExp(rule).test(obj.name)) {
+      if (!new RegExp(rule).test(obj.Name)) {
         this.$message({
           type: 'error',
           message: 'Format Error'
         })
       } else {
         this.isLoading = true
-        this.axios.post('/api/', {id: obj.id, name: obj.name}).then(res => { // todo: 修改接口
-          console.log('修改', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          this.currentId = null
-          this.search()
+        this.axios.post('/api/Services/baseservice.asmx/SaveRole', {role: JSON.stringify(obj)}).then(res => {
+          if (res) {
+            console.log('修改', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.currentId = null
+            this.currentDescription = null
+            this.list = this.list.map(item => {
+              return item.RoleID === res.data.RoleID ? res.data : item
+            })
+          }
           this.isLoading = false
         }).catch(err => {
           console.log('修改出错', err)
@@ -211,8 +229,10 @@ export default {
       }
     },
     // 取消修改
-    cancel: function () {
+    cancel: function (id) {
       this.currentId = null
+      this.list.find(item => item.RoleID === id).Name = this.currentDescription
+      this.currentDescription = null
     },
     // 显示新增弹窗
     showAdd: function () {
@@ -234,15 +254,18 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/', this.addForm).then(res => { // todo: 新增接口
-            console.log('新增', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.$refs['addForm'].resetFields()
-            this.addFormVisible = false
-            this.search()
+          this.axios.post('/api/Services/baseservice.asmx/SaveRole', {role: JSON.stringify(this.addForm)}).then(res => {
+            if (res) {
+              console.log('新增', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['addForm'].resetFields()
+              this.addFormVisible = false
+              this.list.push(res.data)
+              this.total = this.list.length
+            }
             this.isLoading = false
           }).catch(err => {
             console.log('新增出错', err)
