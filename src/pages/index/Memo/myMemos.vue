@@ -25,11 +25,11 @@
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="200" fixed="right">
+        <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small"></el-button>
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small"></el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small"></el-button>
+            <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>

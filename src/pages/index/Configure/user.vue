@@ -3,26 +3,26 @@
     <div class="inPageTitle">
       <span class="inPageNav">User</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization || isLoadingRole">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
       <el-row :gutter="20">
-        <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="5">
-          <div class="organization-list" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-            <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="id" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
+        <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="6">
+          <div class="organization-list" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
+            <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="InstitutionID" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
-                <i class="organization-icon" :class="typeList.find(item => item.id === data.type) !== undefined ? typeList.find(item => item.id === data.type).icon : ''"></i>
+                <i class="organization-icon" :class="typeList.find(item => item.key === data.TypeID) !== undefined ? typeList.find(item => item.key === data.TypeID).icon : ''"></i>
                 <span class="organization-label">{{ node.label }}</span>
               </span>
             </el-tree>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="19">
+        <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="18">
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
-                <el-form-item prop="status" label="Status">
+                <el-form-item prop="status" label="Status" v-show="false">
                   <el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">
                     <el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
                   </el-select>
@@ -31,34 +31,36 @@
                   <el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>
                 </el-form-item>
                 <el-form-item>
-                  <el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading" size="small">Go</el-button>
+                  <el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>
                 </el-form-item>
                 <el-form-item>
-                  <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
+                  <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Reset</el-button>
                 </el-form-item>
               </el-form>
             </div>
-            <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-              <el-table-column label="User ID" prop="id" width="100" fixed="left"></el-table-column>
-              <el-table-column label="Name" prop="name" min-width="100"></el-table-column>
+            <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
+              <el-table-column label="User ID" prop="StaffID" width="100" fixed="left"></el-table-column>
+              <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
               <el-table-column label="Organization" prop="organizationName" min-width="100"></el-table-column>
-              <el-table-column label="Role" prop="roleName" min-width="100"></el-table-column>
-              <el-table-column label="Mobile" prop="mobile" min-width="100"></el-table-column>
-              <el-table-column label="Email" prop="email" min-width="100"></el-table-column>
+              <el-table-column label="Role" prop="roles.Name" min-width="100"></el-table-column>
+              <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
+              <el-table-column label="Email" prop="Email" min-width="100"></el-table-column>
               <el-table-column label="Status" width="100">
                 <template slot-scope="scope">
-                  <el-tag v-if="scope.row.status === 1" size="medium">Normal</el-tag>
+                  <el-tag v-if="scope.row.StatusID === 1" size="medium">Normal</el-tag>
                   <el-tag v-else type="danger" size="medium">Inactive</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="Action" width="200" fixed="right">
                 <template slot-scope="scope">
-                  <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.id)" :loading="isLoading" size="small"></el-button>
-                  <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.id)" :loading="isLoading" size="small"></el-button>
-                  <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.id)" :loading="isLoading" size="small"></el-button>
+                  <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                 </template>
               </el-table-column>
             </el-table>
+            <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+            </el-pagination>
           </div>
         </el-col>
       </el-row>
@@ -76,7 +78,7 @@
           </el-form-item>
           <el-form-item label="Role" prop="roleId">
             <el-select v-model="addForm.roleId" placeholder="Please Select" filterable clearable>
-              <el-option v-for="item in roleIdOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              <el-option v-for="item in roleIdOptions" :key="item.RoleID" :label="item.Name" :value="item.RoleID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Mobile" prop="mobile">
@@ -93,7 +95,7 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization || isLoadingRole">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -112,7 +114,7 @@
           </el-form-item>
           <el-form-item label="Role" prop="roleId">
             <el-select v-model="editForm.roleId" placeholder="Please Select" filterable clearable>
-              <el-option v-for="item in roleIdOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              <el-option v-for="item in roleIdOptions" :key="item.RoleID" :label="item.Name" :value="item.RoleID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Mobile" prop="mobile">
@@ -129,7 +131,7 @@
             </el-radio-group>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization || isLoadingRole">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -144,7 +146,7 @@
             <el-input v-model.trim="passForm.password" clearable type="password"></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="pass()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="pass()" :loading="isLoading || isLoadingOrganization || isLoadingRole">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -167,9 +169,9 @@ export default {
       organizationIdOptions: [],
       defaultProps: {
         children: 'children',
-        label: 'label'
+        label: 'Name'
       },
-      typeList: [{id: 1, name: 'Company / Branch', icon: 'el-icon-office-building'}, {id: 2, name: 'Department', icon: 'el-icon-house'}],
+      typeList: [{key: 1, value: 'Department', icon: 'el-icon-house'}, {key: 2, value: 'Branch', icon: 'el-icon-office-building'}],
       // 新增
       addFormVisible: false,
       addForm: {
@@ -182,9 +184,9 @@ export default {
         status: 1
       },
       organizationProps: {
-        value: 'id',
-        label: 'label',
-        children: 'children'
+        value: 'InstitutionID',
+        children: 'children',
+        label: 'Name'
       },
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Normal'}, {id: 2, name: 'Inactive'}],
@@ -254,7 +256,7 @@ export default {
       searchName: null,
       // 列表
       list: [],
-      pageSize: 10,
+      pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
       total: 0,
@@ -287,61 +289,55 @@ export default {
     },
     // 组织列表
     initOrganization: function () {
-      // this.isLoadingOrganization = true
-      // this.axios.post('/api/', {}).then(res => {
-      //   console.log('组织列表', res)
-      //   this.organizationIdOptions = res.data.data
-      //   this.isLoadingOrganization = false
-      // }).catch(err => {
-      //   console.log('组织列表出错', err)
-      //   this.isLoadingOrganization = false
-      // })
-      this.organizationIdOptions = [{id: 1, label: 'a', type: 1, children: [{id: 11, label: 'aa', type: 1, children: [{id: 111, label: 'aaa', type: 1}, {id: 112, label: 'aab', type: 2}]}, {id: 12, label: 'ab', type: 2}]}, {id: 2, label: 'b', type: 1}, {id: 3, label: 'c', type: 1}, {id: 4, label: 'd', type: 1}, {id: 5, label: 'e', type: 1}, {id: 6, label: 'f', type: 1}, {id: 7, label: 'g', type: 1}, {id: 8, label: 'h', type: 1}, {id: 9, label: 'i', type: 1}, {id: 10, label: 'j', type: 1}]
+      this.isLoadingOrganization = true
+      this.axios.post('/api/Services/baseservice.asmx/GetOrganization', {}).then(res => {
+        if (res) {
+          console.log('查询树', res)
+          this.organizationIdOptions = res.data
+        }
+        this.isLoadingOrganization = false
+      }).catch(err => {
+        console.log('查询树出错', err)
+        this.isLoadingOrganization = false
+      })
     },
     // 角色列表
     initRole: function () {
-      // this.isLoadingRole = true
-      // this.axios.post('/api/', {}).then(res => {
-      //   console.log('组织列表', res)
-      //   this.roleIdOptions = res.data.data
-      //   this.isLoadingRole = false
-      // }).catch(err => {
-      //   console.log('组织列表出错', err)
-      //   this.isLoadingRole = false
-      // })
-      this.roleIdOptions = [{id: 1, name: 'admin'}, {id: 2, name: 'manager'}, {id: 3, name: 'visitor'}, {id: 4, name: 'worker'}]
+      this.isLoadingRole = true
+      this.axios.post('/api/Services/baseservice.asmx/GetRoles', {}).then(res => {
+        if (res) {
+          console.log('角色', res)
+          this.roleIdOptions = res.data
+        }
+        this.isLoadingRole = false
+      }).catch(err => {
+        console.log('角色出错', err)
+        this.isLoadingRole = false
+      })
     },
     // 树状选择当前组织
     nodeChange: function (data) {
-      this.searchOrganization = data.id
-      this.addForm.organizationId = data.id
-      this.$refs.organizationTree.setCurrentKey(data.id) // 设置节点高亮
+      this.searchOrganization = data.InstitutionID
+      this.addForm.organizationId = data.InstitutionID
+      this.$refs.organizationTree.setCurrentKey(data.InstitutionID) // 设置节点高亮
     },
     // 查询
     search: function (status, name) {
-      // todo: 查询接口，organization, status, name
+      this.isLoading = true
       this.searchStatus = status
       this.searchName = name
-      // this.isLoading = true
-      // this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: 1}).then(res => {
-      //   console.log('查询', res)
-      //   if (res) {
-      //     this.list = res.data.data.list
-      //     this.total = res.data.data.total
-      //     this.currentPage = res.data.data.pageNum
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询出错', err)
-      //   this.isLoading = false
-      // })
-      this.list = [
-        {id: 1, name: 'Brendan', organizationId: 1, organizationName: 'a', roleId: 1, roleName: 'admin', mobile: '416-88888', email: '13664342612@qq.com', status: 1},
-        {id: 2, name: 'Ruby', organizationId: 11, organizationName: 'aa', roleId: 2, roleName: 'manager', mobile: '416-77777', email: '13611111111@qq.com', status: 1},
-        {id: 3, name: 'Fiona', organizationId: 12, organizationName: 'ab', roleId: 3, roleName: 'visitor', mobile: '416-66666', email: '13622222222@qq.com', status: 2},
-        {id: 4, name: 'Paul', organizationId: 112, organizationName: 'aab', roleId: 3, roleName: 'visitor', mobile: '416-55555', email: '13633333333@qq.com', status: 2},
-        {id: 5, name: 'Lee', organizationId: 5, organizationName: 'e', roleId: 2, roleName: 'manager', mobile: '416-33333', email: '13666666666@qq.com', status: 1}
-      ]
+      this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: 1}).then(res => {
+        if (res) {
+          console.log('查询树', res)
+          this.list = res.data
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询树出错', err)
+        this.isLoading = false
+      })
     },
     // 重置查询
     resetSearch: function () {

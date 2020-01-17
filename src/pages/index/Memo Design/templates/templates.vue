@@ -23,10 +23,10 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingBlock" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
-        <el-table-column label="Action" width="200" fixed="right">
+        <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small"></el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small"></el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>

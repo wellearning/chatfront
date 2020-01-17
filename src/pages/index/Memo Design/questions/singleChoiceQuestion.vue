@@ -27,10 +27,10 @@
             <AnswerSingleChoiceQuestion :question="scope.row"></AnswerSingleChoiceQuestion>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="200" fixed="right">
+        <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small"></el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small"></el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small">Edit</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>

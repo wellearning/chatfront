@@ -3,7 +3,7 @@
     <div class="inPageTitle">
       <span class="inPageNav">Insurance Company</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -13,69 +13,77 @@
             <el-input v-model="searchForm.name" placeholder="Company Name" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingOrganization" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingOrganization" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Company ID" prop="id" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Company Name" min-width="200">
-          <template slot-scope="scope">
-            <el-input v-model="scope.row.name" :disabled="!(scope.row.id === currentId)"></el-input>
-          </template>
-        </el-table-column>
-        <el-table-column label="Short Name" min-width="200">
-          <template slot-scope="scope">
-            <el-input v-model="scope.row.shortName" :disabled="!(scope.row.id === currentId)"></el-input>
-          </template>
-        </el-table-column>
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization" element-loading-background="rgba(255, 255, 255, 0.5)">
+        <el-table-column label="Company ID" prop="InsuranceCorpID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Company Name" prop="Name" min-width="200"></el-table-column>
+        <el-table-column label="Short Name" prop="ShortName" min-width="200"></el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.id)" :loading="isLoading" size="small">Broken Code</el-button>
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.id)" :loading="isLoading" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.id === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.id)" :loading="isLoading" size="small">Delete</el-button>
-            <el-button v-if="scope.row.id === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
-            <el-button v-if="scope.row.id === currentId" icon="el-icon-close" type="primary" @click="cancel()" :loading="isLoading" plain size="small">Cancel</el-button>
+            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broken Code</el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination background @current-change="handleCurrentChange" :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New Insurance Company" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item label="Name" prop="name">
-            <el-input v-model="addForm.name" clearable></el-input>
+          <el-form-item label="Name" prop="Name">
+            <el-input v-model="addForm.Name" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Short Name" prop="shortName">
-            <el-input v-model="addForm.shortName" clearable></el-input>
+          <el-form-item label="Short Name" prop="ShortName">
+            <el-input v-model="addForm.ShortName" clearable></el-input>
           </el-form-item>
-          <el-form-item label="AutoBindingAuthority" prop="autoBindingAuthority">
-            <el-input v-model.number="addForm.autoBindingAuthority" clearable></el-input>
+          <el-form-item label="AutoBindingAuthority" prop="AutoBindingAuthority">
+            <el-input v-model.number="addForm.AutoBindingAuthority" clearable></el-input>
           </el-form-item>
-          <el-form-item label="PropertyBindingAuthority" prop="propertyBindingAuthority">
-            <el-input v-model.number="addForm.propertyBindingAuthority" clearable></el-input>
+          <el-form-item label="PropertyBindingAuthority" prop="PropertyBindingAuthority">
+            <el-input v-model.number="addForm.PropertyBindingAuthority" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
-      <!----------------------------------------------权限弹窗开始----------------------------------------------------->
-      <el-dialog title="Broker Code" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
-        <el-form :model="codeForm" ref="codeForm" class="form">
-          <el-form-item label="Id" prop="id" v-show="false">
-            <el-input v-model="codeForm.id" clearable disabled></el-input>
+      <!----------------------------------------------修改弹窗开始----------------------------------------------------->
+      <el-dialog title="Edit Insurance Company" :visible.sync="editFormVisible" width="600px" center :before-close="closeEdit">
+        <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="Name" prop="Name">
+            <el-input v-model="editForm.Name" clearable></el-input>
           </el-form-item>
-          <el-form-item v-for="item in codeForm.codeList" :label="item.name" :key="item.id">
-            <el-input v-model="item.value" clearable maxlength="20"></el-input>
+          <el-form-item label="Short Name" prop="ShortName">
+            <el-input v-model="editForm.ShortName" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="AutoBindingAuthority" prop="AutoBindingAuthority">
+            <el-input v-model.number="editForm.AutoBindingAuthority" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="PropertyBindingAuthority" prop="PropertyBindingAuthority">
+            <el-input v-model.number="editForm.PropertyBindingAuthority" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="privileges()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------权限弹窗开始----------------------------------------------------->
+      <el-dialog title="Broker Code" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
+        <el-form class="form">
+          <el-form-item v-for="(item, index) in organizationList" :label="item.Name" :key="index">
+            <el-input v-model="item.BrokerCode" clearable maxlength="20"></el-input>
+          </el-form-item>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="privileges()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -89,10 +97,11 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      isLoadingOrganization: false,
       currentId: null,
       // 列表
       list: [],
-      pageSize: 10,
+      pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
       total: 0,
@@ -103,32 +112,59 @@ export default {
       searchName: null,
       // 权限
       privilegesVisible: false,
-      codeForm: {
-        id: null,
-        codeList: []
-      },
+      organizationList: [],
       // 新增
       addFormVisible: false,
       addForm: {
-        name: null,
-        shortName: null,
-        autoBindingAuthority: null,
-        propertyBindingAuthority: null
+        Name: null,
+        ShortName: null,
+        AutoBindingAuthority: null,
+        PropertyBindingAuthority: null
       },
       addFormRules: {
-        name: [
+        Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
         ],
-        shortName: [
+        ShortName: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
         ],
-        autoBindingAuthority: [
+        AutoBindingAuthority: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ],
-        propertyBindingAuthority: [
+        PropertyBindingAuthority: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ]
+      },
+      // 修改
+      editFormVisible: false,
+      editForm: {
+        InsuranceCorpID: null,
+        Name: null,
+        ShortName: null,
+        AutoBindingAuthority: null,
+        PropertyBindingAuthority: null,
+        IsNew: false,
+        IsNewAdded: false,
+        IsRemoved: false
+      },
+      editFormRules: {
+        Name: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        ShortName: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
+        ],
+        AutoBindingAuthority: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ],
+        PropertyBindingAuthority: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ]
@@ -137,43 +173,42 @@ export default {
   },
   mounted: function () {
     this.search(null)
+    this.initOrganization()
   },
   methods: {
-    // 查询
-    search: function () {
-      // todo: 查询接口
-      // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => {
-      //   console.log('查询', res)
-      //   this.list = res.data.data
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询出错', err)
-      //   this.isLoading = false
-      // })
-      this.list = [{id: 1, name: 'Aviva Insurance Company', shortName: 'Aviva'}, {id: 2, name: 'CAA Insurance', shortName: 'CAA'}, {id: 3, name: 'Chieftain Insurance', shortName: 'Chieftain'}, {id: 4, name: 'Coachman Insurance Company', shortName: 'Coachman'}]
+    // 查询组织架构
+    initOrganization: function () {
+      this.isLoadingOrganization = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInstitutions', {}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.organizationList = res.data.filter(item => item.TypeID === 2).map(item => { return {BranchCode: item.InstitutionID, Name: item.Name, BrokerCode: null, InsuranceCorpBrokerID: null} })
+        }
+        this.isLoadingOrganization = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingOrganization = false
+      })
     },
-    // 分页
-    handleCurrentChange: function (currentPage) {
-      // this.isLoading = true
-      // this.axios.post('/api/', {}).then(res => { // todo: 分页查询接口
-      //   console.log('分页', res)
-      //   this.list = res.data.data.list
-      //   this.total = res.data.data.total
-      //   if (res.data.data.total > 0) {
-      //     if (res.data.data.list.length > 0) {
-      //       this.currentPage = res.data.data.pageNum
-      //     } else {
-      //       this.currentPage = res.data.data.pageNum - 1
-      //     }
-      //   } else {
-      //     this.currentPage = 1
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('分页出错', err)
-      //   this.isLoading = false
-      // })
+    // 查询
+    search: function (name) {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          if (name !== null) {
+            this.searchName = name
+            this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+          }
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
     },
     // 重置查询
     resetSearch: function () {
@@ -183,21 +218,24 @@ export default {
     },
     // 显示权限弹窗
     showPrivilege: function (id) {
-      // this.isLoading = true
-      // this.axios.get('/api/get?id=' + id).then(res => { // todo: 根据id显示权限接口
-      //   console.log('查询单个权限', res)
-      //   this.privilegesVisible = true
-      //   this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //   })
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询单个权限出错', err)
-      //   this.isLoading = false
-      // })
-      this.privilegesVisible = true
-      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.codeForm.id = id
-        this.codeForm.codeList = [{id: 1, name: 'Company1', code: '111111'}, {id: 2, name: 'Company2', code: '222222'}]
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.editFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            for (let i = 0; i < res.data.length; i++) {
+              if (this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode) !== undefined) {
+                this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode).InsuranceCorpBrokerID = res.data[i].InsuranceCorpBrokerID
+                this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode).BrokerCode = res.data[i].BrokerCode
+              }
+            }
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
       })
     },
     // 隐藏权限弹窗
@@ -214,23 +252,24 @@ export default {
     // 提交权限
     privileges: function () {
       this.isLoading = true
-      this.axios.post('/api/', this.codeForm).then(res => { // todo: 提交修改接口
-        console.log('提交权限', res)
-        this.$message({
-          type: 'success',
-          message: 'Operation Succeeded'
-        })
-        this.$refs['codeForm'].resetFields()
-        this.privilegesVisible = false
+      this.axios.post('/api', {}).then(res => { // todo
+        if (res) {
+          console.log('提交权限', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          for (let i = 0; i < this.organizationList.length; i++) {
+            this.organizationList[i].InsuranceCorpBrokerID = null
+            this.organizationList[i].BrokerCode = null
+          }
+          this.privilegesVisible = false
+        }
         this.isLoading = false
       }).catch(err => {
         console.log('提交权限出错', err)
         this.isLoading = false
       })
-    },
-    // 显示修改
-    showEdit: function (id) {
-      this.currentId = id
     },
     // 删除
     del: function (id) {
@@ -240,13 +279,16 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/?id=' + id).then(res => { // todo: 删除接口
-          console.log('删除', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          this.handleCurrentChange(this.currentPage)
+        this.axios.post('/api/Services/baseservice.asmx/RemoveInsuranceCorp', {insuranceCorpid: id}).then(res => { // todo: 删除接口
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list = this.list.filter(item => item.InsuranceCorpID !== id)
+            this.total = this.list.length
+          }
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
@@ -259,35 +301,76 @@ export default {
         })
       })
     },
-    // 修改
-    edit: function (obj) {
-      let ruleName = '^.{1,100}$'
-      let ruleShortName = '^.{1,30}$'
-      if (!new RegExp(ruleName).test(obj.name) || !new RegExp(ruleShortName).test(obj.shortName)) {
-        this.$message({
-          type: 'error',
-          message: 'Format Error'
-        })
-      } else {
-        this.isLoading = true
-        this.axios.post('/api/', {id: obj.id, name: obj.name}).then(res => { // todo: 修改接口
-          console.log('修改', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          this.currentId = null
-          this.handleCurrentChange(this.currentPage)
-          this.isLoading = false
-        }).catch(err => {
-          console.log('修改出错', err)
-          this.isLoading = false
-        })
-      }
+    // 修改弹窗
+    showEdit: function (obj) {
+      // this.isLoading = true
+      // this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorp', {insuranceCorpid: id}).then(res => { // todo
+      //   if (res) {
+      //     console.log('查询单个', res)
+      //     this.editFormVisible = true
+      //     this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+      //       this.editForm = res.data
+      //     })
+      //   }
+      //   this.isLoading = false
+      // }).catch(err => {
+      //   console.log('查询单个出错', err)
+      //   this.isLoading = false
+      // })
+      this.editFormVisible = true
+      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.editForm.InsuranceCorpID = obj.InsuranceCorpID
+        this.editForm.Name = obj.Name
+        this.editForm.ShortName = obj.ShortName
+        this.editForm.AutoBindingAuthority = obj.AutoBindingAuthority
+        this.editForm.PropertyBindingAuthority = obj.PropertyBindingAuthority
+      })
     },
-    // 取消修改
-    cancel: function () {
-      this.currentId = null
+    // 关闭修改
+    closeEdit: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$refs['editForm'].resetFields()
+        done()
+      }).catch(() => {})
+    },
+    // 修改
+    edit: function () {
+      this.$refs['editForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {insuranceCorp: JSON.stringify(this.editForm)}).then(res => { // todo
+            if (res) {
+              console.log('修改', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['editForm'].resetFields()
+              this.editFormVisible = false
+              // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+                this.list = this.list.map(item => { return item.InsuranceCorpID === res.data.InsuranceCorpID ? res.data : item })
+              } else {
+                this.list = this.list.filter(item => item.InsuranceCorpID !== res.data.InsuranceCorpID)
+                this.total = this.list.length
+              }
+            }
+            this.isLoading = false
+          }).catch(err => {
+            console.log('修改出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
+      })
     },
     // 显示新增弹窗
     showAdd: function () {
@@ -309,15 +392,21 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/', this.addForm).then(res => { // todo: 新增接口
-            console.log('新增', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.$refs['addForm'].resetFields()
-            this.addFormVisible = false
-            this.handleCurrentChange(this.currentPage)
+          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {insuranceCorp: JSON.stringify(this.editForm)}).then(res => { // todo
+            if (res) {
+              console.log('新增', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['addForm'].resetFields()
+              this.addFormVisible = false
+              // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+                this.list.push(res.data)
+                this.total = this.list.length
+              }
+            }
             this.isLoading = false
           }).catch(err => {
             console.log('新增出错', err)
