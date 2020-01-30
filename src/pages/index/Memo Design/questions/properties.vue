@@ -34,7 +34,7 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Reminder" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Property" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
           <el-form-item label="Content" prop="Description">
             <el-input v-model="addForm.Description" clearable></el-input>
@@ -53,7 +53,7 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Reminder" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Property" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
           <el-form-item label="Content" prop="Description">
             <el-input v-model="editForm.Description" clearable></el-input>
@@ -84,12 +84,12 @@ export default {
       // 新增
       addFormVisible: false,
       addForm: {
-        TypeID: 2,
+        TypeID: 3,
         Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        InputType: '0',
+        InputType: 'text',
         fillinParts: null,
         options: null
       },
@@ -103,7 +103,7 @@ export default {
       editFormVisible: false,
       editForm: {
         QuestionID: null,
-        TypeID: 2,
+        TypeID: 3,
         Description: null,
         Tips: null,
         OutputModeID: 1,

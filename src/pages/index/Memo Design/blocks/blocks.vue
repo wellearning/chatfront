@@ -41,11 +41,21 @@
           <div v-for="(item, index) in addForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span v-if="item.question.TypeID !== 5"><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
-              <span v-else><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Integration}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
             </el-form-item>
-            <el-form-item class="marginLeft20" v-if="[3, 6].indexOf(item.question.TypeID) !== -1">
-              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Routing</el-button>
+            <el-form-item class="marginLeft20">
+              <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
+            </el-form-item>
+            <el-form-item class="marginLeft20" v-if="item.IsRoute">
+              <el-radio-group v-model="item.RouteTypeID">
+                <el-radio :label="1">
+                  <span>Base On Question</span>
+                </el-radio>
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                  <span>Base On Answer</span>
+                </el-radio>
+              </el-radio-group>
+              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Route</el-button>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -56,7 +66,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.TypeID !== 5 ? '(' + item.QuestionID + ') ' + item.Description : '(' + item.QuestionID + ')' + item.Integration" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
@@ -69,9 +79,10 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------路由编辑弹窗开始------------------------------------------------->
-      <el-dialog title="Routing" :visible.sync="routesFormVisible" width="800px" top="20vh" center :before-close="closeAddRoutes">
+      <el-dialog title="Route" :visible.sync="routesFormVisible" width="800px" top="20vh" center :before-close="closeAddRoutes">
         <el-form :model="routesForm" ref="routesForm" class="form">
-          <div v-if="routesForm.question.TypeID === 3">
+          <!--RouteType为BaseOnQuestion开始-->
+          <div v-if="routesForm.RouteTypeID === 1">
             <el-form-item label="Question">
               <span>{{routesForm.question.Description}}</span>
             </el-form-item>
@@ -82,20 +93,18 @@
             </el-form-item>
             <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
               <el-row :gutter="10">
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
-                  <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in operatorList" :key="it.id" :label="it.name" :value="it.name"></el-option>
-                  </el-select>
+                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-show="false">
+                  <el-input v-model="item.Operator" clearable size="small"></el-input>
                 </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-show="false">
                   <el-input v-model="item.Operand" clearable size="small"></el-input>
                 </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
+                <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                   </el-select>
                 </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                   </el-select>
@@ -105,56 +114,102 @@
                 </el-col>
               </el-row>
             </el-form-item>
-            <el-form-item class="confirmBtn">
+            <el-form-item class="confirmBtn" v-if="routesForm.routes.find(i => i.InsuranceCorpID === currentInsuranceCompany) === undefined">
               <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
             </el-form-item>
             <el-form-item class="confirmBtn">
               <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
             </el-form-item>
           </div>
-          <div v-else-if="routesForm.question.TypeID === 6">
-            <el-form-item label="Question">
-              <span>{{routesForm.question.Description}}</span>
-            </el-form-item>
-            <el-form-item label="Insurance Company">
-              <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
-                <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
-              <el-row :gutter="10">
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
-                  <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in operatorList.filter(i => i.name === '=')" :key="it.id" :label="it.name" :value="it.name"></el-option>
-                  </el-select>
-                </el-col>
-                <el-col :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
-                  <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in routesForm.question.options" :key="(it.ChoiceOptionID).toString()" :label="it.Content" :value="(it.ChoiceOptionID).toString()"></el-option>
-                  </el-select>
-                </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
-                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                  </el-select>
-                </el-col>
-                <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
-                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                  </el-select>
-                </el-col>
-                <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
-                  <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
-                </el-col>
-              </el-row>
-            </el-form-item>
-            <el-form-item class="confirmBtn">
-              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
-            </el-form-item>
-            <el-form-item class="confirmBtn">
-              <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
-            </el-form-item>
+          <!--RouteType为BaseOnQuestion结束-->
+          <!--RouteType为BaseOnAnswer开始-->
+          <div v-else>
+            <div v-if="routesForm.question.TypeID === 3">
+              <el-form-item label="Question">
+                <span>{{routesForm.question.Description}}</span>
+              </el-form-item>
+              <el-form-item label="Insurance Company">
+                <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
+                  <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+                <el-row :gutter="10">
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                    <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in operatorList" :key="it.id" :label="it.name" :value="it.name"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                    <el-input v-model.number="item.Operand" clearable size="small"></el-input>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                    <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                  </el-col>
+                </el-row>
+              </el-form-item>
+              <el-form-item class="confirmBtn">
+                <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+              </el-form-item>
+              <el-form-item class="confirmBtn">
+                <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
+              </el-form-item>
+            </div>
+            <div v-else-if="routesForm.question.TypeID === 6">
+              <el-form-item label="Question">
+                <span>{{routesForm.question.Description}}</span>
+              </el-form-item>
+              <el-form-item label="Insurance Company">
+                <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
+                  <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+                <el-row :gutter="10">
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
+                    <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in operatorList.filter(i => i.name === '=')" :key="it.id" :label="it.name" :value="it.name"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
+                    <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in routesForm.question.options" :key="(it.ChoiceOptionID).toString()" :label="it.Content" :value="(it.ChoiceOptionID).toString()"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                    <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                  </el-col>
+                </el-row>
+              </el-form-item>
+              <el-form-item class="confirmBtn">
+                <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+              </el-form-item>
+              <el-form-item class="confirmBtn">
+                <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
+              </el-form-item>
+            </div>
           </div>
+          <!--RouteType为BaseOnAnswer结束-->
         </el-form>
       </el-dialog>
       <!----------------------------------------------路由编辑弹窗结束------------------------------------------------->
@@ -167,11 +222,21 @@
           <div v-for="(item, index) in editForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span v-if="item.question.TypeID !== 5"><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
-              <span v-else><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Integration}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
             </el-form-item>
-            <el-form-item class="marginLeft20" v-if="[3, 6].indexOf(item.question.TypeID) !== -1">
-              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Routing</el-button>
+            <el-form-item class="marginLeft20">
+              <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
+            </el-form-item>
+            <el-form-item class="marginLeft20" v-if="item.IsRoute">
+              <el-radio-group v-model="item.RouteTypeID">
+                <el-radio :label="1">
+                  <span>Base On Question</span>
+                </el-radio>
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                  <span>Base On Answer</span>
+                </el-radio>
+              </el-radio-group>
+              <el-button icon="el-icon-bottom-right" type="primary" @click="showAddRoutes(item, index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup">Route</el-button>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -182,7 +247,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.TypeID !== 5 ? '(' + item.QuestionID + ') ' + item.Description : '(' + item.QuestionID + ')' + item.Integration" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
@@ -203,6 +268,7 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      routeTypeList: [{id: 1, name: 'Base On Question'}, {id: 2, name: 'Base On Answer'}],
       isLoadingInsuranceCompany: false,
       currentQuestionType: null,
       currentQuestion: null,
@@ -215,7 +281,7 @@ export default {
       addFormVisible: false,
       addForm: {
         Name: null,
-        TypeID: 0,
+        TypeID: 1,
         StatusID: 1,
         blockQuestions: []
       },
@@ -236,7 +302,7 @@ export default {
           Tips: '',
           OutputModeID: 1,
           StatusID: 1,
-          Integration: '',
+          InputType: null,
           fillinParts: [],
           options: []
         },
@@ -249,12 +315,10 @@ export default {
       editForm: {
         BlockID: null,
         Name: null,
-        TypeID: 0,
+        TypeID: 1,
         StatusID: 1,
         blockQuestions: [],
-        IsNew: false,
-        IsNewAdded: false,
-        IsRemoved: false
+        IsNew: false
       },
       editFormRules: {
         Name: [
@@ -323,7 +387,7 @@ export default {
           this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
               console.log('查询单个', res)
-              this.addForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, IsRoute: false, routes: [], question: res.data})
+              this.addForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
               this.currentQuestion = null
             }
             this.isLoading = false
@@ -336,7 +400,7 @@ export default {
           this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
               console.log('查询单个', res)
-              this.editForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, IsRoute: false, routes: [], question: res.data})
+              this.editForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
               this.currentQuestion = null
             }
             this.isLoading = false
@@ -422,11 +486,11 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          // 按顺序添加SequenceNo，有routing的IsRoute赋true
+          // 按顺序添加SequenceNo，如果IsRoute为false，routes赋为[]
           for (let i = 0; i < this.addForm.blockQuestions.length; i++) {
             this.addForm.blockQuestions[i].SequenceNo = i + 1
-            if (this.addForm.blockQuestions[i].routes.length > 0) {
-              this.addForm.blockQuestions[i].IsRoute = true
+            if (!this.addForm.blockQuestions[i].IsRoute) {
+              this.addForm.blockQuestions[i].routes = []
             }
           }
           this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.addForm)}).then(res => {
@@ -466,7 +530,7 @@ export default {
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
         this.routesForm = JSON.parse(JSON.stringify(blockQuestion))
         this.routesFormBeforeEdit = JSON.parse(JSON.stringify(blockQuestion))
-        this.currentIndex = JSON.parse(JSON.stringify(index))
+        this.currentIndex = index
       })
     },
     // 添加一行比较属性
@@ -493,9 +557,9 @@ export default {
         type: 'warning'
       }).then(() => {
         if (this.addFormVisible) {
-          this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.addForm.blockQuestions[this.currentIndex] = this.routesFormBeforeEdit
         } else if (this.editFormVisible) {
-          this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesFormBeforeEdit))
+          this.editForm.blockQuestions[this.currentIndex] = this.routesFormBeforeEdit
         }
         this.$refs['routesForm'].resetFields()
         this.currentInsuranceCompany = null
@@ -508,23 +572,23 @@ export default {
     addRoutes: function () {
       if (this.addFormVisible) {
         let tempList = this.routesForm.routes.map(item => { return item.InsuranceCorpID + '|' + item.Operator + '|' + item.Operand })
-        if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
+        if (this.routesForm.RouteTypeID === 2 && this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
           this.$message({
             type: 'warning',
             message: 'Please Input Operand'
           })
-        } else if (this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
+        } else if (this.routesForm.RouteTypeID === 2 && this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
           this.$message({
             type: 'warning',
             message: 'Please Select Option'
           })
-        } else if (new Set(tempList).size !== tempList.length) { // 重复选项
+        } else if (this.routesForm.RouteTypeID === 2 && new Set(tempList).size !== tempList.length) { // 重复选项
           this.$message({
             type: 'warning',
             message: 'Duplicate options'
           })
         } else {
-          this.addForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesForm))
+          this.addForm.blockQuestions[this.currentIndex].routes = JSON.parse(JSON.stringify(this.routesForm.routes))
           this.$refs['routesForm'].resetFields()
           this.currentInsuranceCompany = null
           this.currentIndex = 0
@@ -533,23 +597,23 @@ export default {
         }
       } else if (this.editFormVisible) {
         let tempList = this.routesForm.routes.map(item => { return item.InsuranceCorpID + '|' + item.Operator + '|' + item.Operand })
-        if (this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
+        if (this.routesForm.RouteTypeID === 2 && this.routesForm.question.TypeID === 3 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未输入操作数
           this.$message({
             type: 'warning',
             message: 'Please Input Operand'
           })
-        } else if (this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
+        } else if (this.routesForm.RouteTypeID === 2 && this.routesForm.question.TypeID === 6 && this.routesForm.routes.length > 0 && (this.routesForm.routes.filter(item => item.Operand === null).length > 0 || this.routesForm.routes.filter(item => item.Operand === '').length > 0)) { // 未选择选项
           this.$message({
             type: 'warning',
             message: 'Please Select Option'
           })
-        } else if (new Set(tempList).size !== tempList.length) { // 重复选项
+        } else if (this.routesForm.RouteTypeID === 2 && new Set(tempList).size !== tempList.length) { // 重复选项
           this.$message({
             type: 'warning',
             message: 'Duplicate options'
           })
         } else {
-          this.editForm.blockQuestions[this.currentIndex] = JSON.parse(JSON.stringify(this.routesForm))
+          this.editForm.blockQuestions[this.currentIndex].routes = JSON.parse(JSON.stringify(this.routesForm.routes))
           this.$refs['routesForm'].resetFields()
           this.currentInsuranceCompany = null
           this.currentIndex = 0
@@ -599,11 +663,11 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          // 按顺序添加SequenceNo，有routing的IsRoute赋true
+          // 按顺序添加SequenceNo，如果IsRoute为false，routes赋为[]
           for (let i = 0; i < this.editForm.blockQuestions.length; i++) {
             this.editForm.blockQuestions[i].SequenceNo = i + 1
-            if (this.editForm.blockQuestions[i].routes.length > 0) {
-              this.editForm.blockQuestions[i].IsRoute = true
+            if (!this.editForm.blockQuestions[i].IsRoute) {
+              this.editForm.blockQuestions[i].routes = []
             }
           }
           this.axios.post('/api/Services/memoservice.asmx/SaveBlock', {block: JSON.stringify(this.editForm)}).then(res => {
