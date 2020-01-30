@@ -122,9 +122,7 @@ export default {
         StatusID: 1,
         Title: null,
         templateBlocks: [],
-        IsNew: false,
-        IsNewAdded: false,
-        IsRemoved: false
+        IsNew: false
       },
       editFormRules: {
         Title: [

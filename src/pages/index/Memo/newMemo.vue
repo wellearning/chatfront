@@ -179,7 +179,7 @@ export default {
             if (res) {
               console.log('添加Templates', res)
               let temp = res.data
-              // 对所有问题赋值value，选择题的每个选项赋值AdditionContent
+              // 对所有问题赋值value、isSkip，选择题的每个选项赋值AdditionContent
               for (let p = 0; p < temp.templateBlocks.length; p++) {
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
                   temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
@@ -194,6 +194,23 @@ export default {
                   } else {
                     temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
+                  }
+                }
+              }
+              // 根据保险公司，跳过baseOnQuestion的问题
+              for (let p = 0; p < temp.templateBlocks.length; p++) {
+                for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
+                  if (temp.templateBlocks[p].block.blockQuestions[q].RouteTypeID === 1) {
+                    let skipNumber = 1
+                    let routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
+                    if (routes !== undefined) {
+                      skipNumber = routes.MoveStep
+                      if (skipNumber > 1) { // 如果跳过个数（n）大于1，isSkip属性赋true值
+                        for (let i = 1; i < skipNumber; i++) {
+                          temp.templateBlocks[p].block.blockQuestions[q + i].question.isSkip = true
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -231,19 +248,19 @@ export default {
               skipNumber = 1
             }
           } else { // false代表是有效数字，数字比较
-            if (routes[i].Operator === '=' && parseInt(value) === parseInt(routes[i].Operand)) {
+            if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>' && parseInt(value) > parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '<' && parseInt(value) < parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>=' && parseInt(value) >= parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '<=' && parseFloat(value) <= parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
             } else {
@@ -255,8 +272,8 @@ export default {
       // singleChoice
       if (question.question.TypeID === 6) {
         // 单选题判断答案所属routes，得出跳过个数
-        if (routes.find(item => parseInt(item.Operand) === value) !== undefined) {
-          skipNumber = routes.find(item => parseInt(item.Operand) === value).MoveStep
+        if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
+          skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
         } else {
           skipNumber = 1
         }
@@ -294,47 +311,47 @@ export default {
           let templates = JSON.parse(JSON.stringify(this.currentTemplates))
           templates = templates.map(item => { return { TemplateID: item.TemplateID, memoBlocks: item.templateBlocks } })
           for (let i = 0; i < templates.length; i++) {
-            templates[i].memoBlocks = templates[i].memoBlocks.map(item => { return { BlockID: item.BlockID, answers: item.block.blockQuestions } })
+            templates[i].memoBlocks = templates[i].memoBlocks.map(item => { return { BlockID: item.BlockID, normalAnswers: item.block.blockQuestions } })
             for (let j = 0; j < templates[i].memoBlocks.length; j++) {
-              for (let k = 0; k < templates[i].memoBlocks[j].answers.length; k++) {
-                if (templates[i].memoBlocks[j].answers[k].question.TypeID === 3) { // property
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 4) { // simpleAnswer
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 5) { // fillIn
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.map(it => {
+              for (let k = 0; k < templates[i].memoBlocks[j].normalAnswers.length; k++) {
+                if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 3) { // property
+                  templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = templates[i].memoBlocks[j].normalAnswers[k].question.value
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 4) { // simpleAnswer
+                  templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = templates[i].memoBlocks[j].normalAnswers[k].question.value
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 5) { // fillIn
+                  templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = templates[i].memoBlocks[j].normalAnswers[k].question.fillinParts.map(it => {
                     return { FillinPartID: it.FillinPartID, IsFillin: it.IsFillin, Part: it.Part, FillinContent: it.FillinContent }
                   })
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 6) { // single
-                  if (templates[i].memoBlocks[j].answers[k].question.value !== null) {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = {
-                      ChoiceOptionID: templates[i].memoBlocks[j].answers[k].question.value,
-                      OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
-                      Content: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Content,
-                      Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Outputs,
-                      AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).AdditionContent
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 6) { // single
+                  if (templates[i].memoBlocks[j].normalAnswers[k].question.value !== null) {
+                    templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = {
+                      ChoiceOptionID: templates[i].memoBlocks[j].normalAnswers[k].question.value,
+                      OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                      Content: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).Content,
+                      Outputs: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).Outputs,
+                      AdditionContent: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
                     }
                   } else {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+                    templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = null
                   }
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 7) { // multiple
-                  if (templates[i].memoBlocks[j].answers[k].question.value.length > 0) {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value.map(it => {
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 7) { // multiple
+                  if (templates[i].memoBlocks[j].normalAnswers[k].question.value.length > 0) {
+                    templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = templates[i].memoBlocks[j].normalAnswers[k].question.value.map(it => {
                       return {
                         ChoiceOptionID: it,
-                        OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
-                        Content: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
-                        Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
-                        AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent
+                        OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                        Content: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
+                        Outputs: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
+                        AdditionContent: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent
                       }
                     })
                   } else {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+                    templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = null
                   }
                 } else { // title, reminder
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+                  templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc = null
                 }
-                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, QuestionDesc: templates[i].memoBlocks[j].answers[k].question.Description, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: templates[i].memoBlocks[j].answers[k].question.Label, Outputs: templates[i].memoBlocks[j].answers[k].question.TypeID + '|' + templates[i].memoBlocks[j].answers[k].question.isSkip}
+                templates[i].memoBlocks[j].normalAnswers[k] = {QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID, QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].normalAnswers[k].question.AnswerDesc), Addition: templates[i].memoBlocks[j].normalAnswers[k].question.Label, Outputs: templates[i].memoBlocks[j].normalAnswers[k].question.TypeID + '|' + templates[i].memoBlocks[j].normalAnswers[k].question.isSkip}
               }
             }
           }

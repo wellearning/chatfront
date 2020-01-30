@@ -419,7 +419,7 @@ html {
   font-size: 28px;
   color: #303133;
   font-weight: bold;
-  text-align: center;
+  /*text-align: center;*/
 }
 .answerMemo .typeReminder {
   font-size: 20px;
@@ -443,9 +443,16 @@ html {
   font-size: 14px;
   padding: 0 5px;
   background: transparent;
+  text-align: left;
 }
 .answer .propertyQuestion .additionContent .el-input__suffix{
   right: 0;
+}
+.answer .propertyQuestion .additionContent .el-input-number__decrease, .answer .propertyQuestion .additionContent .el-input-number__increase {
+  display: none;
+}
+.answer .propertyQuestion .additionContent .el-input__prefix {
+  display: none;
 }
 .answer .propertyQuestion .additionContent.is-disabled .el-input__inner {
   border-bottom: none;

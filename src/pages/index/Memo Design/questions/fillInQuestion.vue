@@ -137,7 +137,6 @@ export default {
       addFormVisible: false,
       addForm: {
         TypeID: 5,
-        Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
@@ -155,7 +154,6 @@ export default {
       editForm: {
         QuestionID: null,
         TypeID: 5,
-        Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
