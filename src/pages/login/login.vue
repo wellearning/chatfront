@@ -128,30 +128,25 @@ export default {
                           redirect: '/titles',
                           children: [
                             {
-                              id: 1310,
+                              id: 1311,
                               path: '/titles',
                               name: 'Titles',
                               componentPath: 'pages/index/Memo Design/questions/titles'
                             }, {
-                              id: 1311,
+                              id: 1312,
                               path: '/reminders',
                               name: 'Reminders',
                               componentPath: 'pages/index/Memo Design/questions/reminders'
                             }, {
-                              id: 1312,
+                              id: 1313,
                               path: '/properties',
                               name: 'Properties',
                               componentPath: 'pages/index/Memo Design/questions/properties'
                             }, {
-                              id: 1313,
-                              path: '/singleChoiceQuestion',
-                              name: 'Single Choice Question',
-                              componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
-                            }, {
                               id: 1314,
-                              path: '/multipleChoiceQuestion',
-                              name: 'Multiple Choice Question',
-                              componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
+                              path: '/simpleAnswer',
+                              name: 'Simple Answer',
+                              componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
                             }, {
                               id: 1315,
                               path: '/fillInQuestion',
@@ -159,9 +154,14 @@ export default {
                               componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
                             }, {
                               id: 1316,
-                              path: '/simpleAnswer',
-                              name: 'Simple Answer',
-                              componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
+                              path: '/singleChoiceQuestion',
+                              name: 'Single Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
+                            }, {
+                              id: 1317,
+                              path: '/multipleChoiceQuestion',
+                              name: 'Multiple Choice Question',
+                              componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
                             }
                           ]
                         }, {

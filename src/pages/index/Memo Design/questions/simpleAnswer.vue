@@ -81,7 +81,7 @@ export default {
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: null,
         fillinParts: null,
         options: null
       },

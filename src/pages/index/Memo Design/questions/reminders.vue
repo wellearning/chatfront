@@ -38,6 +38,13 @@
           <el-form-item label="Content" prop="Description">
             <el-input v-model="addForm.Description" clearable type="textarea" :autosize="{ minRows: 5, maxRows: 20}"></el-input>
           </el-form-item>
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="addForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
           </el-form-item>
@@ -49,6 +56,13 @@
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
           <el-form-item label="Content" prop="Description">
             <el-input v-model="editForm.Description" clearable type="textarea" :autosize="{ minRows: 5, maxRows: 20}"></el-input>
+          </el-form-item>
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="editForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
@@ -65,6 +79,7 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
       // 新增
       addFormVisible: false,
       addForm: {
@@ -73,7 +88,7 @@ export default {
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: null,
         fillinParts: null,
         options: null
       },
@@ -92,12 +107,10 @@ export default {
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: null,
         fillinParts: null,
         options: null,
-        IsNew: false,
-        IsNewAdded: false,
-        IsRemoved: false
+        IsNew: false
       },
       editFormRules: {
         Description: [

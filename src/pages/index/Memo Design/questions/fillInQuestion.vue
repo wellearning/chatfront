@@ -44,16 +44,28 @@
             <!--<el-form-item label="Part" :prop="'fillinParts.' + index + '.Part'" :rules="item.IsFillin ? [{ required: true, message: 'Please Enter', trigger: 'blur'}, { type: 'number', message: 'Number Only', trigger: 'blur'}] : [{ required: true, message: 'Please Enter', trigger: 'blur'}]">-->
               <!--<el-input v-model="item.Part" clearable></el-input>-->
             <!--</el-form-item>-->
+            <el-form-item label="Is Fillin">
+              <el-checkbox v-model="item.IsFillin">if it is fillin, fill the length of the characters.</el-checkbox>
+            </el-form-item>
             <el-form-item label="Part">
               <el-input v-model="item.Part" clearable size="small"></el-input>
             </el-form-item>
-            <el-form-item class="marginLeft20">
-              <el-checkbox v-model="item.IsFillin">Is Fill In</el-checkbox>
-              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
+            <el-form-item :label="item.IsFillin ? 'Input Type' : ''" :class="{'marginLeft20': !item.IsFillin}">
+              <el-radio-group v-model="item.InputType" v-show="item.IsFillin">
+                <el-radio v-for="it in inputTypeList" :label="it.value" :key="it.id">
+                  <span>{{it.name}}</span>
+                </el-radio>
+              </el-radio-group>
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
               <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
               <el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
             </el-form-item>
+            <!--<el-form-item class="marginLeft20">-->
+              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
+              <!--<el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+              <!--<el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+              <!--<el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+            <!--</el-form-item>-->
           </div>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
@@ -71,16 +83,28 @@
       <el-dialog title="Edit Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <div v-for="(item, index) in editForm.fillinParts" :key="index" class="choice">
+            <el-form-item label="Is Fillin">
+              <el-checkbox v-model="item.IsFillin">if it is fillin, fill the length of the characters.</el-checkbox>
+            </el-form-item>
             <el-form-item label="Part">
               <el-input v-model.number="item.Part" clearable size="small"></el-input>
             </el-form-item>
-            <el-form-item class="marginLeft20">
-              <el-checkbox v-model="item.IsFillin">Is Fill In</el-checkbox>
-              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
+            <el-form-item :label="item.IsFillin ? 'Input Type' : ''" :class="{'marginLeft20': !item.IsFillin}">
+              <el-radio-group v-model="item.InputType" v-show="item.IsFillin">
+                <el-radio v-for="it in inputTypeList" :label="it.value" :key="it.id">
+                  <span>{{it.name}}</span>
+                </el-radio>
+              </el-radio-group>
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
               <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
               <el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
             </el-form-item>
+            <!--<el-form-item class="marginLeft20">-->
+              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
+              <!--<el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+              <!--<el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+              <!--<el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
+            <!--</el-form-item>-->
           </div>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
@@ -108,6 +132,7 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}],
       // 新增
       addFormVisible: false,
       addForm: {
@@ -116,7 +141,7 @@ export default {
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: null,
         fillinParts: [],
         options: null
       },
@@ -134,7 +159,7 @@ export default {
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: null,
         fillinParts: [],
         options: null
       },
@@ -163,9 +188,9 @@ export default {
     // 添加一行
     addChoice: function (form) {
       if (form === 'addForm') {
-        this.addForm.fillinParts.push({Part: null, IsFillin: false, SequenceNo: 0})
+        this.addForm.fillinParts.push({Part: null, IsFillin: false, InputType: 'text', SequenceNo: 0})
       } else if (form === 'editForm') {
-        this.editForm.fillinParts.push({Part: null, IsFillin: false, SequenceNo: 0})
+        this.editForm.fillinParts.push({Part: null, IsFillin: false, InputType: 'text', SequenceNo: 0})
       }
     },
     // 删除一行
@@ -201,7 +226,7 @@ export default {
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Integration.indexOf(this.searchName) !== -1)
+            this.list = this.list.filter(item => item.Description.indexOf(this.searchName) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -253,7 +278,7 @@ export default {
               this.addForm.fillinParts = []
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Integration.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }
@@ -319,7 +344,7 @@ export default {
               this.editForm.fillinParts = []
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Integration.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
                 this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)

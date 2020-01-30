@@ -10,7 +10,7 @@
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Property Name" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
@@ -22,27 +22,29 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Property ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Property Name" min-width="300">
-          <template slot-scope="scope">
-            <el-input v-model="scope.row.Description" :disabled="!(scope.row.QuestionID === currentId)"></el-input>
-          </template>
-        </el-table-column>
+        <el-table-column label="Content" prop="Description" min-width="300"></el-table-column>
+        <el-table-column label="Input Type" prop="InputType" width="100"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="currentId === null && !(scope.row.QuestionID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID, scope.row.Description)" :loading="isLoading" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.QuestionID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
-            <el-button v-if="scope.row.QuestionID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
-            <el-button v-if="scope.row.QuestionID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.QuestionID)" :loading="isLoading" plain size="small">Cancel</el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small">Edit</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Property" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Reminder" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item label="Property" prop="Description">
+          <el-form-item label="Content" prop="Description">
             <el-input v-model="addForm.Description" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Input Type" prop="InputType">
+            <el-radio-group v-model="addForm.InputType">
+              <el-radio v-for="item in inputTypeList" :label="item.value" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
@@ -50,6 +52,25 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
+      <!----------------------------------------------修改弹窗开始----------------------------------------------------->
+      <el-dialog title="Edit Reminder" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+        <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="Content" prop="Description">
+            <el-input v-model="editForm.Description" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Input Type" prop="InputType">
+            <el-radio-group v-model="editForm.InputType">
+              <el-radio v-for="item in inputTypeList" :label="item.value" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------修改弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -59,28 +80,16 @@ export default {
   data: function () {
     return {
       isLoading: false,
-      currentId: null,
-      currentDescription: null,
-      // 搜索
-      searchForm: {
-        name: null
-      },
-      searchName: null,
-      // 列表
-      list: [],
-      pageSize: 20,
-      pagerCount: 5,
-      currentPage: 1,
-      total: 0,
+      inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}],
       // 新增
       addFormVisible: false,
       addForm: {
-        TypeID: 3,
+        TypeID: 2,
         Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        Integration: null,
+        InputType: '0',
         fillinParts: null,
         options: null
       },
@@ -89,7 +98,39 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
-      }
+      },
+      // 修改
+      editFormVisible: false,
+      editForm: {
+        QuestionID: null,
+        TypeID: 2,
+        Description: null,
+        Tips: null,
+        OutputModeID: 1,
+        StatusID: 1,
+        InputType: null,
+        fillinParts: null,
+        options: null,
+        IsNew: false
+      },
+      editFormRules: {
+        Description: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ]
+      },
+      // 搜索
+      searchForm: {
+        name: null
+      },
+      searchName: null,
+      // 列表
+      tempList: [],
+      list: [],
+      pageSize: 20,
+      pagerCount: 5,
+      currentPage: 1,
+      total: 0
     }
   },
   mounted: function () {
@@ -121,81 +162,6 @@ export default {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
       this.search(null)
-    },
-    // 显示修改
-    showEdit: function (id, description) {
-      this.currentId = id
-      this.currentDescription = description
-    },
-    // 删除
-    del: function (id) {
-      this.$confirm('Are you sure to delete it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/RemoveQuestion', {questionid: id}).then(res => {
-          if (res) {
-            console.log('删除', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.list = this.list.filter(item => item.QuestionID !== id)
-            this.total = this.list.length
-          }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoading = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
-      })
-    },
-    // 修改
-    edit: function (obj) {
-      let rule = '^.{1,512}$'
-      if (!new RegExp(rule).test(obj.Description)) {
-        this.$message({
-          type: 'error',
-          message: 'Format Error'
-        })
-      } else {
-        this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(obj)}).then(res => {
-          if (res) {
-            console.log('修改', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.currentId = null
-            this.currentDescription = null
-            // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-            if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
-              this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
-            } else {
-              this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
-              this.total = this.list.length
-            }
-          }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('修改出错', err)
-          this.isLoading = false
-        })
-      }
-    },
-    // 取消修改
-    cancel: function (id) {
-      this.currentId = null
-      this.list.find(item => item.QuestionID === id).Description = this.currentDescription
-      this.currentDescription = null
     },
     // 显示新增弹窗
     showAdd: function () {
@@ -243,6 +209,99 @@ export default {
             message: 'Format Error'
           })
         }
+      })
+    },
+    // 修改弹窗
+    showEdit: function (id) {
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.editFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            this.editForm = res.data
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
+      })
+    },
+    // 关闭修改
+    closeEdit: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$refs['editForm'].resetFields()
+        done()
+      }).catch(() => {})
+    },
+    // 修改
+    edit: function () {
+      this.$refs['editForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+            if (res) {
+              console.log('修改', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['editForm'].resetFields()
+              this.editFormVisible = false
+              // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+                this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
+              } else {
+                this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
+                this.total = this.list.length
+              }
+            }
+            this.isLoading = false
+          }).catch(err => {
+            console.log('修改出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
+      })
+    },
+    // 删除
+    del: function (id) {
+      this.$confirm('Are you sure to delete it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/memoservice.asmx/RemoveQuestion', {questionid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list = this.list.filter(item => item.QuestionID !== id)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
       })
     }
   }

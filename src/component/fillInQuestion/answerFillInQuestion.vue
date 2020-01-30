@@ -7,7 +7,11 @@
           <!--<i :class="{'nextLine' : item.isNextLine}"></i>-->
           <template v-if="item.IsFillin === false">{{item.Part}}</template>
           <!--todo: v-model中的答案未定义-->
-          <template v-else><el-input class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}"></el-input></template>
+          <template v-else>
+            <el-input v-if="item.InputType === 'text'" class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Text"></el-input>
+            <el-date-picker v-else-if="item.InputType === 'date'" class="additionContent" v-model="item.FillinContent" type="datetime" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Date"></el-date-picker>
+            <el-input-number v-else-if="item.InputType === 'number'" class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Number"></el-input-number>
+          </template>
         </span>
       </div>
       <div class="questionTips">{{question.Tips}}</div>

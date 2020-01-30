@@ -322,9 +322,16 @@ html {
   font-size: 14px;
   padding: 0 5px;
   background: transparent;
+  text-align: left;
 }
 .answer .fillInQuestion .question .part .additionContent .el-input__suffix{
   right: 0;
+}
+.answer .fillInQuestion .question .part .additionContent .el-input-number__decrease, .answer .fillInQuestion .question .part .additionContent .el-input-number__increase {
+  display: none;
+}
+.answer .fillInQuestion .question .part .additionContent .el-input__prefix {
+  display: none;
 }
 .answer .fillInQuestion .question .part .nextLine {
   display: block;
