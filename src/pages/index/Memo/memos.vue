@@ -35,8 +35,11 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="viewFormVisible" width="1000px" center :before-close="closeView">
-        <div class="viewMemo">
+      <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
+        <div>
+          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.Author)" :loading="isLoading || isLoadingInsuranceCompany" size="small">To PDF</el-button>
+        </div>
+        <div class="viewMemo" id="pdfDom">
           <div class="viewMemo-title">{{viewForm.Title}}</div>
           <el-row :gutter="20">
             <el-col :span="4">
@@ -77,53 +80,68 @@
           <div class="viewMemo-content">
             <div v-for="i in viewForm.memoTemplates" :key="i.MemoTemplateID">
               <div v-for="it in i.memoBlocks" :key="it.MemoBlockID">
-                <div class="viewMemo-content-answer" v-for="item in it.answers" :key="item.AnswerID">
-                  <div v-if="item.Outputs === '1|false'" class="title">
-                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                <div class="viewMemo-content-answer" v-for="(item, index) in it.normalAnswers" :key="index">
+                  <!--问题类型为：Title-->
+                  <div v-if="item.QuestionType === 'Title'" class="title">
+                    <div class="question">{{item.QuestionDesc}}</div>
                   </div>
-                  <div v-if="item.Outputs === '2|false'">
-                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                  <!--问题类型为：Reminder todo:GetMemo没有传OutputMode-->
+                  <div v-else-if="item.QuestionType === 'Reminder'">
+                    <div class="question">{{item.QuestionDesc}}</div>
                   </div>
-                  <div v-else-if="item.Outputs === '3|false' || item.Outputs === '4|false'">
-                    <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
-                    <div class="answer" v-if="JSON.parse(item.AnswerDesc) !== null">
-                      <span class="content">{{JSON.parse(item.AnswerDesc)}}</span>
+                  <!--问题类型为：Property-->
+                  <div v-else-if="item.QuestionType === 'Property'">
+                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="answer" v-if="item.AnswerDesc !== undefined && item.AnswerDesc !== null && item.AnswerDesc !== ''">
+                      <span class="content">{{item.AnswerDesc}}</span>
                     </div>
                     <div class="answer" v-else>
                       <span class="noAnswer">No Answer</span>
                     </div>
                   </div>
-                  <div v-else-if="item.Outputs === '5|false'">
+                  <!--问题类型为：SimpleAnswer-->
+                  <div v-else-if="item.QuestionType === 'SimpleAnswer'">
+                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="answer" v-if="item.AnswerDesc !== undefined && item.AnswerDesc !== null && item.AnswerDesc !== ''">
+                      <span class="content">{{item.AnswerDesc}}</span>
+                    </div>
+                    <div class="answer" v-else>
+                      <span class="noAnswer">No Answer</span>
+                    </div>
+                  </div>
+                  <!--问题类型为：Fillin-->
+                  <div v-else-if="item.QuestionType === 'Fillin'">
                     <div class="question">
-                      <span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>
-                      <span v-for="(part, index) in JSON.parse(item.AnswerDesc)" :key="index">
+                      <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
                         <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== undefined && part.FillinContent !== null && part.FillinContent !== '')">{{part.FillinContent}}</span>
                         <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === undefined || part.FillinContent === null || part.FillinContent === '')">No Answer</span>
                         <span v-else>{{part.Part}}</span>
                       </span>
                     </div>
                   </div>
-                  <div v-else-if="item.Outputs === '6|false'">
-                    <div v-if="JSON.parse(item.AnswerDesc) === null || (JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID !== 3)">
-                      <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                  <!--问题类型为：SingleChoice-->
+                  <div v-else-if="item.QuestionType === 'SingleChoice'">
+                    <div v-if="item.optionAnswer === {} || item.optionAnswer === null || item.optionAnswer.OutputModeID === 1 || item.optionAnswer.OutputModeID === 2">
+                      <div class="question">{{item.QuestionDesc}}</div>
                       <div class="answer">
-                        <span v-if="JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID === 1">
-                          <span class="content">{{JSON.parse(item.AnswerDesc).Content}}</span>
-                          <i class="addition" v-if="JSON.parse(item.AnswerDesc).AdditionContent !== null">Addition:<b>{{JSON.parse(item.AnswerDesc).AdditionContent}}</b></i>
+                        <span v-if="item.optionAnswer !== {} && item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
+                          <span class="content">{{item.optionAnswer.Content}}</span>
+                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
-                        <span v-else-if="JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).OutputModeID === 2">
-                          <span class="content">{{JSON.parse(item.AnswerDesc).Outputs}}</span>
-                          <i class="addition" v-if="JSON.parse(item.AnswerDesc).AdditionContent !== null">Addition:<b>{{JSON.parse(item.AnswerDesc).AdditionContent}}</b></i>
+                        <span v-else-if="item.optionAnswer !== {} && item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
+                          <span class="content">{{item.optionAnswer.Outputs}}</span>
+                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
-                        <span class="noAnswer" v-else-if="JSON.parse(item.AnswerDesc) === null">No Answer</span>
+                        <span class="noAnswer" v-else-if="item.optionAnswer === {} || item.optionAnswer === null">No Answer</span>
                       </div>
                     </div>
                   </div>
-                  <div v-else-if="item.Outputs === '7|false'">
-                    <div v-if="JSON.parse(item.AnswerDesc) === null || (JSON.parse(item.AnswerDesc) !== null && JSON.parse(item.AnswerDesc).filter(option => option.OutputModeID === 3).length === 0)">
-                      <div class="question"><span v-if="item.Addition !== undefined && item.Addition !== null && item.Addition !== ''">{{item.Addition}}&nbsp;&nbsp;</span>{{item.QuestionDesc}}</div>
+                  <!--问题类型为：MultipleChoice-->
+                  <div v-else-if="item.QuestionType === 'MultipleChoice'">
+                    <div v-if="item.optionAnswers.length === 0 || (item.optionAnswers.length > 0 && item.optionAnswers.filter(option => option.OutputModeID === 3).length === 0)">
+                      <div class="question">{{item.QuestionDesc}}</div>
                       <div class="answer">
-                        <div v-for="(option, index) in JSON.parse(item.AnswerDesc)" :key="index">
+                        <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
                           <span v-if="option.OutputModeID === 1">
                             <span class="content">{{option.Content}}</span>
                             <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
@@ -133,7 +151,7 @@
                             <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
                           </span>
                         </div>
-                        <div class="noAnswer" v-if="JSON.parse(item.AnswerDesc) === null">No Answer</div>
+                        <div class="noAnswer" v-if="item.optionAnswers.length === 0">No Answer</div>
                       </div>
                     </div>
                   </div>
@@ -154,6 +172,7 @@ import moment from 'moment'
 export default {
   data: function () {
     return {
+      htmlTitle: 'null', // pdf文件名
       isLoading: false,
       // isLoadingStaffs: false,
       isLoadingInsuranceCompany: false,
@@ -265,6 +284,11 @@ export default {
     closeView: function (done) {
       this.viewForm = {}
       done()
+    },
+    // 转pdf
+    pdf: function (title, author) {
+      this.htmlTitle = title + '( ' + author + ')'
+      this.getPdf('#pdfDom')
     }
   }
 }

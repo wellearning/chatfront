@@ -477,7 +477,7 @@ html {
 /*newMemo结束*/
 /*myMemo开始*/
 .viewMemo {
-  padding: 0 30px;
+  padding: 50px;
 }
 .viewMemo .viewMemo-title{
   font-size: 36px;
