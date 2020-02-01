@@ -17,10 +17,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Insurance Company" prop="InsuranceCorpID">
-            <el-select v-model="memoForm.InsuranceCorpID" placeholder="Insurance Company" no-data-text="No Record" filterable @change="changeInsuranceCompany()">
-              <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
-            </el-select>
+          <el-form-item label="Request Date" prop="RequestDate">
+            <el-date-picker v-model="memoForm.RequestDate" type="date" placeholder="Request Date" disabled></el-date-picker>
           </el-form-item>
         </el-col>
       </el-row>
@@ -28,6 +26,20 @@
         <el-col :span="12">
           <el-form-item label="Policy Number" prop="PolicyNumber">
             <el-input v-model="memoForm.PolicyNumber" placeholder="Policy Number"></el-input>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="NameInsured(s)" prop="NameInsured">
+            <el-input v-model="memoForm.NameInsured" placeholder="NameInsured(s)"></el-input>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20" class="subtitle">
+        <el-col :span="12">
+          <el-form-item label="Insurance Company" prop="InsuranceCorpID">
+            <el-select v-model="memoForm.InsuranceCorpID" placeholder="Insurance Company" no-data-text="No Record" filterable @change="changeInsuranceCompany()">
+              <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -103,6 +115,7 @@ export default {
         PolicyNumber: null,
         StatusID: 1,
         RequestDate: moment(new Date()),
+        NameInsured: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
         Templates: null
@@ -124,6 +137,9 @@ export default {
         ],
         Templates: [
           { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        NameInsured: [
+          { required: true, message: 'Please Enter', trigger: 'blur' }
         ]
       },
       templatesList: [],

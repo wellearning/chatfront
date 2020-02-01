@@ -484,18 +484,38 @@ html {
   text-align: center;
   color: #303133;
   font-weight: bold;
-  margin-bottom: 30px;
+  margin-bottom: 50px;
 }
 .viewMemo .viewMemo-subtitle{
   font-size: 18px;
   color: #303133;
   font-weight: bold;
 }
+.viewMemo .viewMemo-subtitle.head{
+  color: #606266;
+  text-decoration: underline;
+}
+.viewMemo .foot {
+  margin-top: 50px;
+}
 .viewMemo .viewMemo-subtitle span{
-  font-size: 20px;
+  font-size: 18px;
   font-weight: normal;
   color: #606266;
   text-decoration: underline;
+}
+.viewMemo .viewMemo-subtitle i {
+  display: inline-block;
+  width: 100px;
+  font-style: normal;
+  color: #303133;
+  text-decoration: unset;
+}
+.viewMemo .viewMemo-subtitle i.long {
+  width: 200px;
+}
+.viewMemo .viewMemo-subtitle b {
+  font-weight: normal;
 }
 .viewMemo .viewMemo-content {
   margin-top: 30px;
@@ -510,12 +530,12 @@ html {
   text-align: center;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question {
-  font-size: 20px;
+  font-size: 18px;
   color: #303133;
   font-weight: bold;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question .fillInPart {
-  font-size: 20px;
+  font-size: 18px;
   color: #606266;
   font-weight: normal;
   margin-left: 10px;
@@ -523,12 +543,12 @@ html {
   text-decoration: underline;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .content {
-  font-size: 20px;
+  font-size: 18px;
   color: #606266;
   text-decoration: underline;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .addition {
-  font-size: 20px;
+  font-size: 18px;
   color: #606266;
   font-style: normal;
   margin-left: 30px;
@@ -539,7 +559,7 @@ html {
   text-decoration: underline;
 }
 .noAnswer {
-  font-size: 20px;
+  font-size: 18px;
   color: #909399 !important;
   font-style: italic;
   text-decoration: underline;

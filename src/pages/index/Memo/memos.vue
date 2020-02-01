@@ -40,6 +40,17 @@
           <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.Author)" :loading="isLoading || isLoadingInsuranceCompany" size="small">To PDF</el-button>
         </div>
         <div class="viewMemo" id="pdfDom">
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="viewMemo-subtitle head"><i>Branch: </i><b>{{viewForm.branch.Name}}</b></div>
+              <div class="viewMemo-subtitle head"><i>Address: </i><b>{{viewForm.branch.Address}}</b></div>
+              <div class="viewMemo-subtitle head"><i>Phone: </i><b>{{viewForm.branch.Telphone}}</b></div>
+            </el-col>
+            <el-col :span="12">
+              <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.corpbroker.corp.Name}}</b></div>
+              <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.corpbroker.BrokerCode}}</b></div>
+            </el-col>
+          </el-row>
           <div class="viewMemo-title">{{viewForm.Title}}</div>
           <el-row :gutter="20">
             <el-col :span="4">
@@ -49,10 +60,10 @@
               <div class="viewMemo-subtitle"><span>{{viewForm.EffectiveDate}}</span></div>
             </el-col>
             <el-col :span="4">
-              <div class="viewMemo-subtitle">InsuranceCorp:</div>
+              <div class="viewMemo-subtitle">RequestDate:</div>
             </el-col>
             <el-col :span="8">
-              <div class="viewMemo-subtitle"><span>{{viewForm.InsuranceCorp}}</span></div>
+              <div class="viewMemo-subtitle"><span>{{viewForm.RequestDate}}</span></div>
             </el-col>
           </el-row>
           <el-row :gutter="20">
@@ -62,19 +73,11 @@
             <el-col :span="8">
               <div class="viewMemo-subtitle"><span>{{viewForm.PolicyNumber}}</span></div>
             </el-col>
-          </el-row>
-          <el-row :gutter="20">
             <el-col :span="4">
-              <div class="viewMemo-subtitle">Author:</div>
+              <div class="viewMemo-subtitle">NameInsured(s):</div>
             </el-col>
             <el-col :span="8">
-              <div class="viewMemo-subtitle"><span>{{viewForm.Author}}</span></div>
-            </el-col>
-            <el-col :span="4">
-              <div class="viewMemo-subtitle">RequestDate:</div>
-            </el-col>
-            <el-col :span="8">
-              <div class="viewMemo-subtitle"><span>{{viewForm.RequestDate}}</span></div>
+              <div class="viewMemo-subtitle"><span>{{viewForm.NameInsured}}</span></div>
             </el-col>
           </el-row>
           <div class="viewMemo-content">
@@ -159,6 +162,14 @@
               </div>
             </div>
           </div>
+          <el-row :gutter="20" class="foot">
+            <el-col :span="12">
+              <div class="viewMemo-subtitle foot">______________________________(Signature of Insureds)</div>
+            </el-col>
+            <el-col :span="12">
+              <div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>
+            </el-col>
+          </el-row>
         </div>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
@@ -198,6 +209,17 @@ export default {
         InsuranceCorp: null,
         PolicyNumber: null,
         Author: null,
+        branch: {
+          Name: null,
+          Address: null,
+          Telphone: null
+        },
+        corpbroker: {
+          BrokerCode: null,
+          corp: {
+            Name: null
+          }
+        },
         RequestDate: null,
         memoTemplates: [{
           memoBlocks: [{
@@ -269,7 +291,6 @@ export default {
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.viewForm = res.data
             this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
-            this.viewForm.Author = 'TODO' // todo
             this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
           })
@@ -282,7 +303,31 @@ export default {
     },
     // 关闭查阅
     closeView: function (done) {
-      this.viewForm = {}
+      this.viewForm = {
+        Title: null,
+        EffectiveDate: null,
+        InsuranceCorp: null,
+        PolicyNumber: null,
+        Author: null,
+        branch: {
+          Name: null,
+          Address: null,
+          Telphone: null
+        },
+        corpbroker: {
+          BrokerCode: null,
+          corp: {
+            Name: null
+          }
+        },
+        RequestDate: null,
+        memoTemplates: [{
+          memoBlocks: [{
+            answers: []
+          }]
+        }],
+        answerList: []
+      }
       done()
     },
     // 转pdf
