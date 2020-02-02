@@ -115,86 +115,105 @@ export default {
                       ]
                     }, {
                       id: 13,
+                      path: '/myAccount',
+                      name: 'MyAccount',
+                      componentPath: 'pages/index/My Account/myAccount',
+                      redirect: '/personalInformation',
+                      children: [
+                        {
+                          id: 121,
+                          path: '/personalInformation',
+                          name: 'Personal Information',
+                          componentPath: 'pages/index/My Account/personalInformation'
+                        }, {
+                          id: 122,
+                          path: '/changePassword',
+                          name: 'Change Password',
+                          componentPath: 'pages/index/My Account/changePassword'
+                        }
+                      ]
+                    }, {
+                      id: 14,
                       path: '/memoDesign',
                       name: 'Memo Design',
                       componentPath: 'pages/index/Memo Design/memoDesign',
                       redirect: '/questions',
                       children: [
                         {
-                          id: 131,
+                          id: 141,
                           path: '/questions',
                           name: 'Questions',
                           componentPath: 'pages/index/Memo Design/questions/questions',
                           redirect: '/titles',
                           children: [
                             {
-                              id: 1311,
+                              id: 1411,
                               path: '/titles',
                               name: 'Titles',
                               componentPath: 'pages/index/Memo Design/questions/titles'
                             }, {
-                              id: 1312,
+                              id: 1412,
                               path: '/reminders',
                               name: 'Reminders',
                               componentPath: 'pages/index/Memo Design/questions/reminders'
                             }, {
-                              id: 1313,
+                              id: 1413,
                               path: '/properties',
                               name: 'Properties',
                               componentPath: 'pages/index/Memo Design/questions/properties'
                             }, {
-                              id: 1314,
+                              id: 1414,
                               path: '/simpleAnswer',
                               name: 'Simple Answer',
                               componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
                             }, {
-                              id: 1315,
+                              id: 1415,
                               path: '/fillInQuestion',
                               name: 'Fill In Question',
                               componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
                             }, {
-                              id: 1316,
+                              id: 1416,
                               path: '/singleChoiceQuestion',
                               name: 'Single Choice Question',
                               componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
                             }, {
-                              id: 1317,
+                              id: 1417,
                               path: '/multipleChoiceQuestion',
                               name: 'Multiple Choice Question',
                               componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
                             }
                           ]
                         }, {
-                          id: 132,
+                          id: 142,
                           path: '/blocks',
                           name: 'Blocks',
                           componentPath: 'pages/index/Memo Design/blocks/blocks'
                         }, {
-                          id: 133,
+                          id: 143,
                           path: '/templates',
                           name: 'Templates',
                           componentPath: 'pages/index/Memo Design/templates/templates'
                         }
                       ]
                     }, {
-                      id: 14,
+                      id: 15,
                       path: '/memo',
                       name: 'Memo',
                       componentPath: 'pages/index/Memo/memo',
                       redirect: '/newMemo',
                       children: [
                         {
-                          id: 141,
+                          id: 151,
                           path: '/newMemo',
                           name: 'New Memo',
                           componentPath: 'pages/index/Memo/newMemo'
                         }, {
-                          id: 142,
+                          id: 152,
                           path: '/myMemos',
                           name: 'My Memos',
                           componentPath: 'pages/index/Memo/myMemos'
                         }, {
-                          id: 143,
+                          id: 153,
                           path: '/memos',
                           name: 'Memos',
                           componentPath: 'pages/index/Memo/memos'

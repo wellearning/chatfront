@@ -27,7 +27,7 @@
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broken Code</el-button>
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>
         </el-table-column>
@@ -77,9 +77,9 @@
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------权限弹窗开始----------------------------------------------------->
-      <el-dialog title="Broker Code" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
+      <el-dialog title="BrokerCode" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
         <el-form class="form">
-          <el-form-item v-for="(item, index) in organizationList" :label="item.Name" :key="index">
+          <el-form-item v-for="(item, index) in BrokerCodeList" :label="item.Name + '(' + item.BranchCode + ')'" :key="index">
             <el-input v-model="item.BrokerCode" clearable maxlength="20"></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -113,6 +113,10 @@ export default {
       // 权限
       privilegesVisible: false,
       organizationList: [],
+      BrokerCodeList: [],
+      isPost: false,
+      totalNum: 0,
+      finishNum: 0,
       // 新增
       addFormVisible: false,
       addForm: {
@@ -175,6 +179,22 @@ export default {
     this.search(null)
     this.initOrganization()
   },
+  watch: {
+    finishNum (val) {
+      if (val === this.totalNum && this.isPost) {
+        this.$message({
+          type: 'success',
+          message: 'Operation Succeeded'
+        })
+        this.BrokerCodeList = []
+        this.totalNum = 0
+        this.finishNum = 0
+        this.isPost = false
+        this.privilegesVisible = false
+        this.isLoading = false
+      }
+    }
+  },
   methods: {
     // 查询组织架构
     initOrganization: function () {
@@ -182,7 +202,7 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetInstitutions', {}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.organizationList = res.data.filter(item => item.TypeID === 2).map(item => { return {BranchCode: item.InstitutionID, Name: item.Name, BrokerCode: null, InsuranceCorpBrokerID: null} })
+          this.organizationList = res.data.filter(item => item.TypeID === 2)
         }
         this.isLoadingOrganization = false
       }).catch(err => {
@@ -219,15 +239,16 @@ export default {
     // 显示权限弹窗
     showPrivilege: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpBrokers', {corpid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
-          this.editFormVisible = true
+          this.privilegesVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            this.BrokerCodeList = JSON.parse(JSON.stringify(this.organizationList)).map(item => { return {InsuranceCorpID: id, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
             for (let i = 0; i < res.data.length; i++) {
-              if (this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode) !== undefined) {
-                this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode).InsuranceCorpBrokerID = res.data[i].InsuranceCorpBrokerID
-                this.organizationList.find(item => item.BranchCode === res.data[i].BranchCode).BrokerCode = res.data[i].BrokerCode
+              if (this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode) !== undefined) {
+                this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode).InsuranceCorpBrokerID = res.data[i].InsuranceCorpBrokerID
+                this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode).BrokerCode = res.data[i].BrokerCode
               }
             }
           })
@@ -245,31 +266,27 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        this.$refs['codeForm'].resetFields()
+        this.BrokerCodeList = []
         done()
       }).catch(() => {})
     },
-    // 提交权限
+    // 提交BrokerCode
     privileges: function () {
-      this.isLoading = true
-      this.axios.post('/api', {}).then(res => { // todo
-        if (res) {
-          console.log('提交权限', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          for (let i = 0; i < this.organizationList.length; i++) {
-            this.organizationList[i].InsuranceCorpBrokerID = null
-            this.organizationList[i].BrokerCode = null
+      this.BrokerCodeList = this.BrokerCodeList.filter(item => item.BrokerCode !== null)
+      this.isPost = true
+      this.totalNum = this.BrokerCodeList.length
+      for (let i = 0; i < this.BrokerCodeList.length; i++) {
+        this.isLoading = true
+        this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorpBroker', {corpbroker: JSON.stringify(this.BrokerCodeList[i])}).then(res => {
+          if (res) {
+            console.log('提交BrokerCode', res)
+            this.finishNum = this.finishNum + 1
           }
-          this.privilegesVisible = false
-        }
-        this.isLoading = false
-      }).catch(err => {
-        console.log('提交权限出错', err)
-        this.isLoading = false
-      })
+        }).catch(err => {
+          console.log('提交BrokerCode出错', err)
+          this.isLoading = false
+        })
+      }
     },
     // 删除
     del: function (id) {
@@ -279,7 +296,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/baseservice.asmx/RemoveInsuranceCorp', {insuranceCorpid: id}).then(res => { // todo: 删除接口
+        this.axios.post('/api/Services/baseservice.asmx/RemoveInsuranceCorp', {corpid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -302,28 +319,20 @@ export default {
       })
     },
     // 修改弹窗
-    showEdit: function (obj) {
-      // this.isLoading = true
-      // this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorp', {insuranceCorpid: id}).then(res => { // todo
-      //   if (res) {
-      //     console.log('查询单个', res)
-      //     this.editFormVisible = true
-      //     this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //       this.editForm = res.data
-      //     })
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询单个出错', err)
-      //   this.isLoading = false
-      // })
-      this.editFormVisible = true
-      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.editForm.InsuranceCorpID = obj.InsuranceCorpID
-        this.editForm.Name = obj.Name
-        this.editForm.ShortName = obj.ShortName
-        this.editForm.AutoBindingAuthority = obj.AutoBindingAuthority
-        this.editForm.PropertyBindingAuthority = obj.PropertyBindingAuthority
+    showEdit: function (id) {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorp', {corpid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.editFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            this.editForm = res.data
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
       })
     },
     // 关闭修改
@@ -342,7 +351,7 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {insuranceCorp: JSON.stringify(this.editForm)}).then(res => { // todo
+          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {corp: JSON.stringify(this.editForm)}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -392,7 +401,7 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {insuranceCorp: JSON.stringify(this.editForm)}).then(res => { // todo
+          this.axios.post('/api/Services/baseservice.asmx/SaveInsuranceCorp', {corp: JSON.stringify(this.addForm)}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({

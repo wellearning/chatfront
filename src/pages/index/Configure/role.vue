@@ -115,12 +115,14 @@ export default {
     showPrivilege: function (id) {
       // this.isLoading = true
       // this.axios.get('/api/get?id=' + id).then(res => { // todo: 根据id显示权限接口
-      //   console.log('查询单个权限', res)
-      //   this.privilegesVisible = true
-      //   this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //     this.currentPrivileges = id
-      //     this.menuList = res.data.data
-      //   })
+      //   if (res) {
+      //     console.log('查询单个权限', res)
+      //     this.privilegesVisible = true
+      //     this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+      //       this.currentPrivileges = id
+      //       this.menuList = res.data.data
+      //     })
+      //   }
       //   this.isLoading = false
       // }).catch(err => {
       //   console.log('查询单个权限出错', err)
@@ -150,13 +152,15 @@ export default {
       this.isLoading = true
       this.axios.post('/api/', {id: this.currentPrivileges, list: [...this.$refs.tree.getHalfCheckedKeys(), ...this.$refs.tree.getCheckedKeys()]}).then(res => { // todo: 提交权限接口，半选和全选全部传递
         console.log('提交权限', res)
-        this.$message({
-          type: 'success',
-          message: 'Operation Succeeded'
-        })
-        this.currentPrivileges = null
-        this.menuList = []
-        this.privilegesVisible = false
+        if (res) {
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.currentPrivileges = null
+          this.menuList = []
+          this.privilegesVisible = false
+        }
         this.isLoading = false
       }).catch(err => {
         console.log('提交权限出错', err)

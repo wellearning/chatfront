@@ -22,17 +22,17 @@
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
-                <el-form-item prop="status" label="Status" v-show="false">
-                  <el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">
-                    <el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="" prop="name">
-                  <el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>
-                </el-form-item>
-                <el-form-item>
-                  <el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>
-                </el-form-item>
+                <!--<el-form-item prop="status" label="Status" v-show="false">-->
+                  <!--<el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">-->
+                    <!--<el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>-->
+                  <!--</el-select>-->
+                <!--</el-form-item>-->
+                <!--<el-form-item label="" prop="name">-->
+                  <!--<el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>-->
+                <!--</el-form-item>-->
+                <!--<el-form-item>-->
+                  <!--<el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>-->
+                <!--</el-form-item>-->
                 <el-form-item>
                   <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Reset</el-button>
                 </el-form-item>
@@ -41,21 +41,22 @@
             <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
               <el-table-column label="User ID" prop="StaffID" width="100" fixed="left"></el-table-column>
               <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
-              <el-table-column label="Organization" prop="organizationName" min-width="100"></el-table-column>
-              <el-table-column label="Role" prop="roles.Name" min-width="100"></el-table-column>
+              <el-table-column label="BranchCode" prop="institution.BranchCode" min-width="100"></el-table-column>
               <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
               <el-table-column label="Email" prop="Email" min-width="100"></el-table-column>
-              <el-table-column label="Status" width="100">
-                <template slot-scope="scope">
-                  <el-tag v-if="scope.row.StatusID === 1" size="medium">Normal</el-tag>
-                  <el-tag v-else type="danger" size="medium">Inactive</el-tag>
-                </template>
-              </el-table-column>
+              <!--<el-table-column label="Status" width="100">-->
+                <!--<template slot-scope="scope">-->
+                  <!--<el-tag v-if="scope.row.StatusID === 1" size="medium">Normal</el-tag>-->
+                  <!--<el-tag v-else type="danger" size="medium">Inactive</el-tag>-->
+                <!--</template>-->
+              <!--</el-table-column>-->
+              <el-table-column label="ProducerCode" prop="ProducerCode" min-width="100"></el-table-column>
+              <el-table-column label="Role" prop="RoleName" min-width="100"></el-table-column>
               <el-table-column label="Action" width="200" fixed="right">
                 <template slot-scope="scope">
                   <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                   <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
-                  <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  <!--<el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>-->
                 </template>
               </el-table-column>
             </el-table>
@@ -67,28 +68,31 @@
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New User" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item label="User Name" prop="name">
-            <el-input v-model.trim="addForm.name" clearable></el-input>
+          <el-form-item label="Institution" prop="institution">
+            <SelectTree :value="addForm.institution" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueAdd"></SelectTree>
           </el-form-item>
-          <el-form-item label="Password" prop="password">
-            <el-input v-model.trim="addForm.password" clearable></el-input>
-          </el-form-item>
-          <el-form-item label="Belong To" prop="organizationId">
-            <SelectTree :value="addForm.organizationId" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueAdd"></SelectTree>
-          </el-form-item>
-          <el-form-item label="Role" prop="roleId">
-            <el-select v-model="addForm.roleId" placeholder="Please Select" filterable clearable>
+          <el-form-item label="Role" prop="role">
+            <el-select v-model="addForm.role" placeholder="Please Select" filterable clearable>
               <el-option v-for="item in roleIdOptions" :key="item.RoleID" :label="item.Name" :value="item.RoleID"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="Mobile" prop="mobile">
-            <el-input v-model="addForm.mobile" clearable></el-input>
+          <el-form-item label="Name" prop="Name">
+            <el-input v-model.trim="addForm.Name" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Email" prop="email">
-            <el-input v-model="addForm.email" clearable></el-input>
+          <el-form-item label="Email" prop="Email">
+            <el-input v-model="addForm.Email" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Status" prop="status">
-            <el-radio-group v-model="addForm.status">
+          <el-form-item label="Password" prop="Password">
+            <el-input v-model.trim="addForm.Password" clearable type="password"></el-input>
+          </el-form-item>
+          <el-form-item label="Mobile" prop="Mobile">
+            <el-input v-model="addForm.Mobile" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="ProducerCode" prop="ProducerCode">
+            <el-input v-model="addForm.ProducerCode" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID" v-show="false">
+            <el-radio-group v-model="addForm.StatusID">
               <el-radio v-for="item in statusOptions" :label="item.id" :key="item.id">
                 <span>{{item.name}}</span>
               </el-radio>
@@ -103,28 +107,31 @@
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit User" :visible.sync="editFormVisible" width="600px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
-          <el-form-item label="Id" prop="id" v-show="false">
-            <el-input v-model="editForm.id" disabled></el-input>
+          <el-form-item label="Id" prop="StaffID" v-show="false">
+            <el-input v-model="editForm.StaffID" disabled></el-input>
           </el-form-item>
-          <el-form-item label="User Name" prop="name">
-            <el-input v-model.trim="editForm.name" clearable></el-input>
+          <el-form-item label="Institution" prop="institution">
+            <SelectTree :value="editForm.institution" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit"></SelectTree>
           </el-form-item>
-          <el-form-item label="Belong To" prop="organizationId">
-            <SelectTree :value="editForm.organizationId" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit"></SelectTree>
-          </el-form-item>
-          <el-form-item label="Role" prop="roleId">
-            <el-select v-model="editForm.roleId" placeholder="Please Select" filterable clearable>
+          <el-form-item label="Role" prop="role">
+            <el-select v-model="editForm.role" placeholder="Please Select" filterable clearable>
               <el-option v-for="item in roleIdOptions" :key="item.RoleID" :label="item.Name" :value="item.RoleID"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="Mobile" prop="mobile">
-            <el-input v-model="editForm.mobile" clearable></el-input>
+          <el-form-item label="Name" prop="Name">
+            <el-input v-model.trim="editForm.Name" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Email" prop="email">
-            <el-input v-model="editForm.email" clearable></el-input>
+          <el-form-item label="Email" prop="Email">
+            <el-input v-model="editForm.Email" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Status" prop="status">
-            <el-radio-group v-model="editForm.status">
+          <el-form-item label="Mobile" prop="Mobile">
+            <el-input v-model="editForm.Mobile" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="ProducerCode" prop="ProducerCode">
+            <el-input v-model="editForm.ProducerCode" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID" v-show="false">
+            <el-radio-group v-model="editForm.StatusID">
               <el-radio v-for="item in statusOptions" :label="item.id" :key="item.id">
                 <span>{{item.name}}</span>
               </el-radio>
@@ -139,11 +146,11 @@
       <!----------------------------------------------重置密码弹窗开始------------------------------------------------->
       <el-dialog title="Password Reset" :visible.sync="passFormVisible" width="600px" center :before-close="closePass">
         <el-form :model="passForm" ref="passForm" :rules="passFormRules" class="form">
-          <el-form-item label="Id" prop="id" v-show="false">
-            <el-input v-model="passForm.id" disabled></el-input>
+          <el-form-item label="Id" prop="StaffID" v-show="false">
+            <el-input v-model="passForm.StaffID" disabled></el-input>
           </el-form-item>
-          <el-form-item label="New Password" prop="password">
-            <el-input v-model.trim="passForm.password" clearable type="password"></el-input>
+          <el-form-item label="New Password" prop="Password">
+            <el-input v-model.trim="passForm.Password" clearable type="password"></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="pass()" :loading="isLoading || isLoadingOrganization || isLoadingRole">Confirm</el-button>
@@ -175,13 +182,14 @@ export default {
       // 新增
       addFormVisible: false,
       addForm: {
-        name: null,
-        password: null,
-        organizationId: null,
-        roleId: null,
-        mobile: null,
-        email: null,
-        status: 1
+        Name: null,
+        Password: null,
+        institution: null,
+        role: null,
+        Mobile: null,
+        Email: null,
+        ProducerCode: null,
+        StatusID: 1
       },
       organizationProps: {
         value: 'InstitutionID',
@@ -191,58 +199,65 @@ export default {
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Normal'}, {id: 2, name: 'Inactive'}],
       addFormRules: {
-        name: [
+        Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
         ],
-        password: [
+        Password: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
         ],
-        organizationId: [
+        institution: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
-        roleId: [
+        role: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
-        mobile: [
+        Mobile: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ],
-        email: [
+        Email: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'email', message: 'Format Error', trigger: 'blur' }
+        ],
+        ProducerCode: [
+          { max: 20, message: 'Within 100 Characters', trigger: 'blur' }
         ]
       },
       // 修改
       editFormVisible: false,
       editForm: {
-        id: null,
-        name: null,
-        organizationId: null,
-        roleId: null,
-        mobile: null,
-        email: null,
-        status: 1
+        StaffID: null,
+        Name: null,
+        institution: null,
+        role: null,
+        Mobile: null,
+        Email: null,
+        ProducerCode: null,
+        StatusID: 1
       },
       editFormRules: {
-        name: [
+        Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
         ],
-        organizationId: [
+        institution: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
-        roleId: [
+        role: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
-        mobile: [
+        Mobile: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ],
-        email: [
+        Email: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'email', message: 'Format Error', trigger: 'blur' }
+        ],
+        ProducerCode: [
+          { max: 20, message: 'Within 100 Characters', trigger: 'blur' }
         ]
       },
       // 搜索
@@ -263,11 +278,11 @@ export default {
       // 重置密码
       passFormVisible: false,
       passForm: {
-        id: null,
-        password: null
+        StaffID: null,
+        Password: null
       },
       passFormRules: {
-        password: [
+        Password: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ]
@@ -282,10 +297,10 @@ export default {
   methods: {
     // selectTree返回值
     getValueAdd (value) {
-      this.addForm.organizationId = value
+      this.addForm.institution = value
     },
     getValueEdit (value) {
-      this.editForm.organizationId = value
+      this.editForm.institution = value
     },
     // 组织列表
     initOrganization: function () {
@@ -318,26 +333,46 @@ export default {
     // 树状选择当前组织
     nodeChange: function (data) {
       this.searchOrganization = data.InstitutionID
-      this.addForm.organizationId = data.InstitutionID
+      this.addForm.institution = data.InstitutionID
       this.$refs.organizationTree.setCurrentKey(data.InstitutionID) // 设置节点高亮
+      this.search(this.searchStatus, this.searchName)
     },
     // 查询
-    search: function (status, name) {
+    search: function (status, name, page) {
       this.isLoading = true
       this.searchStatus = status
       this.searchName = name
-      this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: 1}).then(res => {
-        if (res) {
-          console.log('查询树', res)
-          this.list = res.data
-          this.total = this.list.length
-          this.currentPage = 1
-        }
-        this.isLoading = false
-      }).catch(err => {
-        console.log('查询树出错', err)
-        this.isLoading = false
-      })
+      let goPage = 1
+      if (page !== undefined) {
+        goPage = page
+      }
+      if (this.searchOrganization === null) {
+        this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {}).then(res => {
+          if (res) {
+            console.log('查询树', res)
+            this.list = res.data
+            this.total = this.list.length
+            this.currentPage = goPage
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('查询树出错', err)
+          this.isLoading = false
+        })
+      } else {
+        this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: this.searchOrganization}).then(res => {
+          if (res) {
+            console.log('查询树', res)
+            this.list = res.data
+            this.total = this.list.length
+            this.currentPage = goPage
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('查询树出错', err)
+          this.isLoading = false
+        })
+      }
     },
     // 重置查询
     resetSearch: function () {
@@ -345,7 +380,7 @@ export default {
       this.searchName = null
       this.searchStatus = null
       this.searchOrganization = null
-      this.addForm.organizationId = null
+      this.addForm.institution = null
       this.$refs.organizationTree.setCurrentKey(null) // 取消节点高亮
       this.search(null, null)
     },
@@ -369,15 +404,20 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/', this.addForm).then(res => { // todo: 新增接口
-            console.log('新增', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.$refs['addForm'].resetFields()
-            this.addFormVisible = false
-            this.search(this.searchStatus, this.searchName)
+          let form = JSON.parse(JSON.stringify(this.addForm))
+          form.institution = {InstitutionID: form.institution}
+          form.role = {RoleID: form.role}
+          this.axios.post('/api/Services/baseservice.asmx/SaveStaff', {staff: JSON.stringify(form)}).then(res => {
+            if (res) {
+              console.log('新增', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['addForm'].resetFields()
+              this.addFormVisible = false
+              this.search(this.searchStatus, this.searchName, this.currentPage)
+            }
             this.isLoading = false
           }).catch(err => {
             console.log('新增出错', err)
@@ -393,21 +433,22 @@ export default {
     },
     // 修改弹窗
     showEdit: function (id) {
-      // this.isLoading = true
-      // this.axios.get('/api/get?id=' + id).then(res => { // todo: 根据id查询单个信息接口
-      //   console.log('查询单个', res)
-      //   this.editFormVisible = true
-      //   this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //     this.editForm = res.data.data
-      //   })
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询单个出错', err)
-      //   this.isLoading = false
-      // })
-      this.editFormVisible = true
-      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.editForm = {id: 1, name: 'Jerry', organizationId: 112, roleId: 3, mobile: '14444657871', email: '1@a.com', status: 2}
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetStaff', {staffid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.editFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            let form = JSON.parse(JSON.stringify(res.data))
+            form.institution = form.institution.InstitutionID
+            form.role = form.roles[0].RoleID
+            this.editForm = form
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
       })
     },
     // 关闭修改
@@ -426,15 +467,20 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/', this.editForm).then(res => { // todo: 修改接口
-            console.log('修改', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.$refs['editForm'].resetFields()
-            this.editFormVisible = false
-            this.search(this.searchStatus, this.searchName)
+          let form = JSON.parse(JSON.stringify(this.editForm))
+          form.institution = {InstitutionID: form.institution}
+          form.role = {RoleID: form.role}
+          this.axios.post('/api/Services/baseservice.asmx/SaveStaff', {staff: JSON.stringify(form)}).then(res => {
+            if (res) {
+              console.log('修改', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['editForm'].resetFields()
+              this.editFormVisible = false
+              this.search(this.searchStatus, this.searchName, this.currentPage)
+            }
             this.isLoading = false
           }).catch(err => {
             console.log('修改出错', err)
@@ -456,13 +502,15 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/?id=' + id).then(res => { // todo: 删除接口
-          console.log('删除', res)
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-          this.search(this.searchStatus, this.searchName)
+        this.axios.post('/api/Services/baseservice.asmx/RemoveStaff', {staffid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.search(this.searchStatus, this.searchName)
+          }
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
@@ -477,47 +525,47 @@ export default {
     },
     // 重置密码弹窗
     showPass: function (id) {
-      this.passFormVisible = true
-      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.passForm.id = id
-      })
+      // this.passFormVisible = true
+      // this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+      //   this.passForm.id = id
+      // })
     },
     // 关闭重置密码
     closePass: function (done) {
-      this.$confirm('Are you sure to close it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        this.$refs['passForm'].resetFields()
-        done()
-      }).catch(() => {})
+      // this.$confirm('Are you sure to close it?', 'Confirm', {
+      //   confirmButtonText: 'Confirm',
+      //   cancelButtonText: 'Cancel',
+      //   type: 'warning'
+      // }).then(() => {
+      //   this.$refs['passForm'].resetFields()
+      //   done()
+      // }).catch(() => {})
     },
     // 重置密码
     pass: function () {
-      this.$refs['passForm'].validate((valid) => {
-        if (valid) {
-          this.isLoading = true
-          this.axios.post('/api/', this.passForm).then(res => { // todo: 修改接口
-            console.log('重置密码', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.$refs['passForm'].resetFields()
-            this.passFormVisible = false
-            this.isLoading = false
-          }).catch(err => {
-            console.log('重置密码出错', err)
-            this.isLoading = false
-          })
-        } else {
-          this.$message({
-            type: 'error',
-            message: 'Format Error'
-          })
-        }
-      })
+      // this.$refs['passForm'].validate((valid) => {
+      //   if (valid) {
+      //     this.isLoading = true
+      //     this.axios.post('/api/', this.passForm).then(res => {
+      //       console.log('重置密码', res)
+      //       this.$message({
+      //         type: 'success',
+      //         message: 'Operation Succeeded'
+      //       })
+      //       this.$refs['passForm'].resetFields()
+      //       this.passFormVisible = false
+      //       this.isLoading = false
+      //     }).catch(err => {
+      //       console.log('重置密码出错', err)
+      //       this.isLoading = false
+      //     })
+      //   } else {
+      //     this.$message({
+      //       type: 'error',
+      //       message: 'Format Error'
+      //     })
+      //   }
+      // })
     }
   }
 }

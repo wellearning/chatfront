@@ -48,6 +48,18 @@
                 <el-form-item label="Name" prop="Name">
                   <el-input v-model="form.Name"></el-input>
                 </el-form-item>
+                <el-form-item label="BranchCode" prop="BranchCode">
+                  <el-input v-model="form.BranchCode"></el-input>
+                </el-form-item>
+                <el-form-item label="Telphone" prop="Telphone">
+                  <el-input v-model="form.Telphone"></el-input>
+                </el-form-item>
+                <el-form-item label="Address" prop="Address">
+                  <el-input v-model="form.Address"></el-input>
+                </el-form-item>
+                <el-form-item label="PostCode" prop="PostCode">
+                  <el-input v-model="form.PostCode"></el-input>
+                </el-form-item>
               </el-form>
             </div>
           </div>
@@ -79,11 +91,27 @@ export default {
         ParentID: 0,
         Parent: null,
         TypeID: 1,
-        Name: null
+        Name: null,
+        BranchCode: null,
+        Telphone: null,
+        Address: null,
+        PostCode: null
       },
       formRules: {
         Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        BranchCode: [
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        Telphone: [
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        Address: [
+          { max: 100, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        PostCode: [
           { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
         ]
       }
@@ -135,6 +163,10 @@ export default {
       }
       this.form.TypeID = data.TypeID
       this.form.Name = data.Name
+      this.form.BranchCode = data.BranchCode
+      this.form.Telphone = data.Telphone
+      this.form.Address = data.Address
+      this.form.PostCode = data.PostCode
     },
     // 显示新增
     showAdd: function () {
@@ -151,7 +183,7 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1}
+          let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode}
           this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
             if (res) {
               console.log('新增', res)
@@ -184,7 +216,7 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1, IsNew: false, IsNewAdded: false, IsRemoved: false}
+          let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1, IsNew: false, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode}
           this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
             if (res) {
               console.log('修改', res)
@@ -216,7 +248,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/baseservice.asmx/RemoveInstitution' + {institutionid: this.currentNode}).then(res => { // todo: 删除接口
+        this.axios.post('/api/Services/baseservice.asmx/RemoveInstitution', {institutionid: this.currentNode}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
