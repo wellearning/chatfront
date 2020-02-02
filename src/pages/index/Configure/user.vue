@@ -43,15 +43,15 @@
               <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
               <el-table-column label="BranchCode" prop="institution.BranchCode" min-width="100"></el-table-column>
               <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
-              <el-table-column label="Email" prop="Email" min-width="100"></el-table-column>
+              <el-table-column label="Email" prop="Email" min-width="150"></el-table-column>
               <!--<el-table-column label="Status" width="100">-->
                 <!--<template slot-scope="scope">-->
                   <!--<el-tag v-if="scope.row.StatusID === 1" size="medium">Normal</el-tag>-->
                   <!--<el-tag v-else type="danger" size="medium">Inactive</el-tag>-->
                 <!--</template>-->
               <!--</el-table-column>-->
-              <el-table-column label="ProducerCode" prop="ProducerCode" min-width="100"></el-table-column>
-              <el-table-column label="Role" prop="RoleName" min-width="100"></el-table-column>
+              <el-table-column label="ProducerCode" prop="ProducerCode" min-width="110"></el-table-column>
+              <el-table-column label="Role" prop="RoleName" min-width="110"></el-table-column>
               <el-table-column label="Action" width="200" fixed="right">
                 <template slot-scope="scope">
                   <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
@@ -509,7 +509,7 @@ export default {
               type: 'success',
               message: 'Operation Succeeded'
             })
-            this.search(this.searchStatus, this.searchName)
+            this.search(this.searchStatus, this.searchName, this.currentPage)
           }
           this.isLoading = false
         }).catch(err => {
