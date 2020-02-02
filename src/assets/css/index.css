@@ -32,8 +32,8 @@ html {
 .pageHeader {
   background-color: #409EFF;
   text-align: right;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
 }
 .pageHeader .pageTitle {
   float: left;

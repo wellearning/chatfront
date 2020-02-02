@@ -147,7 +147,7 @@ export default {
           console.log('查询单个', res)
           let form = JSON.parse(JSON.stringify(res.data))
           form.institution = form.institution.InstitutionID
-          form.role = form.roles[0].RoleID
+          form.role = form.role.RoleID
           this.editForm = form
         }
         this.isLoading = false
