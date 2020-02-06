@@ -31,12 +31,25 @@ Vue.config.productionTip = false
 
 // 递归遍历树
 function translateTreeMain (arr) {
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].componentPath !== undefined) {
-      arr[i].component = resolve => require(['@/' + arr[i].componentPath + ''], resolve)
-      if (arr[i].children !== undefined && arr[i].children.length > 0) {
-        translateTreeMain(arr[i].children, arr)
-      }
+  for (let i = arr.length - 1; i > -1; i--) {
+    if (arr[i].id === 141) {
+      arr[i].path = '/questions'
+      arr[i].componentPath = 'pages/index/Memo Design/questions/questions'
+      arr[i].redirect = '/titles'
+    }
+    // 过滤掉DataItemAdmin，WebPage，WebService，Menu
+    if (arr[i].id === 0) {
+      arr.splice(i, 1)
+      continue
+    }
+    if (arr[i].redirect === '') {
+      delete arr[i].redirect
+    }
+    arr[i].component = resolve => require(['@/' + arr[i].componentPath + ''], resolve)
+    if (arr[i].children !== undefined && arr[i].children !== null && arr[i].children.length > 0) {
+      translateTreeMain(arr[i].children)
+    } else {
+      delete arr[i].children
     }
   }
   return arr

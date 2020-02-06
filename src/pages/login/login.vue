@@ -71,159 +71,160 @@ export default {
                 duration: 1000
               })
               // this.initPermissionList()
-              let arr = [
-                {
-                  id: 1,
-                  path: '/',
-                  name: 'Index',
-                  componentPath: 'pages/index/index',
-                  redirect: '/home',
-                  children: [
-                    {
-                      id: 11,
-                      path: '/home',
-                      name: 'Home',
-                      componentPath: 'pages/index/Home/home'
-                    }, {
-                      id: 12,
-                      path: '/configure',
-                      name: 'Configure',
-                      componentPath: 'pages/index/Configure/configure',
-                      redirect: '/organization',
-                      children: [
-                        {
-                          id: 121,
-                          path: '/organization',
-                          name: 'Organization',
-                          componentPath: 'pages/index/Configure/organization'
-                        }, {
-                          id: 122,
-                          path: '/user',
-                          name: 'User',
-                          componentPath: 'pages/index/Configure/user'
-                        }, {
-                          id: 123,
-                          path: '/role',
-                          name: 'Role',
-                          componentPath: 'pages/index/Configure/role'
-                        }, {
-                          id: 124,
-                          path: '/insuranceCompany',
-                          name: 'Insurance Company',
-                          componentPath: 'pages/index/Configure/insuranceCompany'
-                        }
-                      ]
-                    }, {
-                      id: 13,
-                      path: '/myAccount',
-                      name: 'MyAccount',
-                      componentPath: 'pages/index/My Account/myAccount',
-                      redirect: '/personalInformation',
-                      children: [
-                        {
-                          id: 121,
-                          path: '/personalInformation',
-                          name: 'Personal Information',
-                          componentPath: 'pages/index/My Account/personalInformation'
-                        }, {
-                          id: 122,
-                          path: '/changePassword',
-                          name: 'Change Password',
-                          componentPath: 'pages/index/My Account/changePassword'
-                        }
-                      ]
-                    }, {
-                      id: 14,
-                      path: '/memoDesign',
-                      name: 'Memo Design',
-                      componentPath: 'pages/index/Memo Design/memoDesign',
-                      redirect: '/questions',
-                      children: [
-                        {
-                          id: 141,
-                          path: '/questions',
-                          name: 'Questions',
-                          componentPath: 'pages/index/Memo Design/questions/questions',
-                          redirect: '/titles',
-                          children: [
-                            {
-                              id: 1411,
-                              path: '/titles',
-                              name: 'Titles',
-                              componentPath: 'pages/index/Memo Design/questions/titles'
-                            }, {
-                              id: 1412,
-                              path: '/reminders',
-                              name: 'Reminders',
-                              componentPath: 'pages/index/Memo Design/questions/reminders'
-                            }, {
-                              id: 1413,
-                              path: '/properties',
-                              name: 'Properties',
-                              componentPath: 'pages/index/Memo Design/questions/properties'
-                            }, {
-                              id: 1414,
-                              path: '/simpleAnswer',
-                              name: 'Simple Answer',
-                              componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
-                            }, {
-                              id: 1415,
-                              path: '/fillInQuestion',
-                              name: 'Fill In Question',
-                              componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
-                            }, {
-                              id: 1416,
-                              path: '/singleChoiceQuestion',
-                              name: 'Single Choice Question',
-                              componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
-                            }, {
-                              id: 1417,
-                              path: '/multipleChoiceQuestion',
-                              name: 'Multiple Choice Question',
-                              componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
-                            }
-                          ]
-                        }, {
-                          id: 142,
-                          path: '/blocks',
-                          name: 'Blocks',
-                          componentPath: 'pages/index/Memo Design/blocks/blocks'
-                        }, {
-                          id: 143,
-                          path: '/templates',
-                          name: 'Templates',
-                          componentPath: 'pages/index/Memo Design/templates/templates'
-                        }
-                      ]
-                    }, {
-                      id: 15,
-                      path: '/memo',
-                      name: 'Memo',
-                      componentPath: 'pages/index/Memo/memo',
-                      redirect: '/newMemo',
-                      children: [
-                        {
-                          id: 151,
-                          path: '/newMemo',
-                          name: 'New Memo',
-                          componentPath: 'pages/index/Memo/newMemo'
-                        }, {
-                          id: 152,
-                          path: '/myMemos',
-                          name: 'My Memos',
-                          componentPath: 'pages/index/Memo/myMemos'
-                        }, {
-                          id: 153,
-                          path: '/memos',
-                          name: 'Memos',
-                          componentPath: 'pages/index/Memo/memos'
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-              this.$store.dispatch('asynSetPermissionList', JSON.stringify(arr))
+              let arr = res.data.role.routetree
+              // let arr = [
+              //   {
+              //     id: 1,
+              //     path: '/',
+              //     name: 'Index',
+              //     componentPath: 'pages/index/index',
+              //     redirect: '/home',
+              //     children: [
+              //       {
+              //         id: 11,
+              //         path: '/home',
+              //         name: 'Home',
+              //         componentPath: 'pages/index/Home/home'
+              //       }, {
+              //         id: 12,
+              //         path: '/configure',
+              //         name: 'Configure',
+              //         componentPath: 'pages/index/Configure/configure',
+              //         redirect: '/organization',
+              //         children: [
+              //           {
+              //             id: 121,
+              //             path: '/organization',
+              //             name: 'Organization',
+              //             componentPath: 'pages/index/Configure/organization'
+              //           }, {
+              //             id: 122,
+              //             path: '/user',
+              //             name: 'User',
+              //             componentPath: 'pages/index/Configure/user'
+              //           }, {
+              //             id: 123,
+              //             path: '/role',
+              //             name: 'Role',
+              //             componentPath: 'pages/index/Configure/role'
+              //           }, {
+              //             id: 124,
+              //             path: '/insuranceCompany',
+              //             name: 'Insurance Company',
+              //             componentPath: 'pages/index/Configure/insuranceCompany'
+              //           }
+              //         ]
+              //       }, {
+              //         id: 13,
+              //         path: '/myAccount',
+              //         name: 'MyAccount',
+              //         componentPath: 'pages/index/My Account/myAccount',
+              //         redirect: '/personalInformation',
+              //         children: [
+              //           {
+              //             id: 121,
+              //             path: '/personalInformation',
+              //             name: 'Personal Information',
+              //             componentPath: 'pages/index/My Account/personalInformation'
+              //           }, {
+              //             id: 122,
+              //             path: '/changePassword',
+              //             name: 'Change Password',
+              //             componentPath: 'pages/index/My Account/changePassword'
+              //           }
+              //         ]
+              //       }, {
+              //         id: 14,
+              //         path: '/memoDesign',
+              //         name: 'Memo Design',
+              //         componentPath: 'pages/index/Memo Design/memoDesign',
+              //         redirect: '/questions',
+              //         children: [
+              //           {
+              //             id: 141,
+              //             path: '/questions',
+              //             name: 'Questions',
+              //             componentPath: 'pages/index/Memo Design/questions/questions',
+              //             redirect: '/titles',
+              //             children: [
+              //               {
+              //                 id: 1411,
+              //                 path: '/titles',
+              //                 name: 'Titles',
+              //                 componentPath: 'pages/index/Memo Design/questions/titles'
+              //               }, {
+              //                 id: 1412,
+              //                 path: '/reminders',
+              //                 name: 'Reminders',
+              //                 componentPath: 'pages/index/Memo Design/questions/reminders'
+              //               }, {
+              //                 id: 1413,
+              //                 path: '/properties',
+              //                 name: 'Properties',
+              //                 componentPath: 'pages/index/Memo Design/questions/properties'
+              //               }, {
+              //                 id: 1414,
+              //                 path: '/simpleAnswer',
+              //                 name: 'Simple Answer',
+              //                 componentPath: 'pages/index/Memo Design/questions/simpleAnswer'
+              //               }, {
+              //                 id: 1415,
+              //                 path: '/fillInQuestion',
+              //                 name: 'Fill In Question',
+              //                 componentPath: 'pages/index/Memo Design/questions/fillInQuestion'
+              //               }, {
+              //                 id: 1416,
+              //                 path: '/singleChoiceQuestion',
+              //                 name: 'Single Choice Question',
+              //                 componentPath: 'pages/index/Memo Design/questions/singleChoiceQuestion'
+              //               }, {
+              //                 id: 1417,
+              //                 path: '/multipleChoiceQuestion',
+              //                 name: 'Multiple Choice Question',
+              //                 componentPath: 'pages/index/Memo Design/questions/multipleChoiceQuestion'
+              //               }
+              //             ]
+              //           }, {
+              //             id: 142,
+              //             path: '/blocks',
+              //             name: 'Blocks',
+              //             componentPath: 'pages/index/Memo Design/blocks/blocks'
+              //           }, {
+              //             id: 143,
+              //             path: '/templates',
+              //             name: 'Templates',
+              //             componentPath: 'pages/index/Memo Design/templates/templates'
+              //           }
+              //         ]
+              //       }, {
+              //         id: 15,
+              //         path: '/memo',
+              //         name: 'Memo',
+              //         componentPath: 'pages/index/Memo/memo',
+              //         redirect: '/newMemo',
+              //         children: [
+              //           {
+              //             id: 151,
+              //             path: '/newMemo',
+              //             name: 'New Memo',
+              //             componentPath: 'pages/index/Memo/newMemo'
+              //           }, {
+              //             id: 152,
+              //             path: '/myMemos',
+              //             name: 'My Memos',
+              //             componentPath: 'pages/index/Memo/myMemos'
+              //           }, {
+              //             id: 153,
+              //             path: '/memos',
+              //             name: 'Memos',
+              //             componentPath: 'pages/index/Memo/memos'
+              //           }
+              //         ]
+              //       }
+              //     ]
+              //   }
+              // ]
+              this.$store.dispatch('asynSetPermissionList', JSON.stringify(this.translateTreeForStore(arr)))
               this.$router.addRoutes(this.translateTree(arr))
               this.$router.push({ path: '/' })
             }
@@ -278,12 +279,48 @@ export default {
     // },
     // 递归遍历树
     translateTree: function (arr) {
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i].componentPath !== undefined) {
-          arr[i].component = resolve => require(['@/' + arr[i].componentPath + ''], resolve)
-          if (arr[i].children !== undefined && arr[i].children.length > 0) {
-            this.translateTree(arr[i].children)
-          }
+      for (let i = arr.length - 1; i > -1; i--) {
+        if (arr[i].id === 141) {
+          arr[i].path = '/questions'
+          arr[i].componentPath = 'pages/index/Memo Design/questions/questions'
+          arr[i].redirect = '/titles'
+        }
+        // 过滤掉DataItemAdmin，WebPage，WebService，Menu
+        if (arr[i].id === 0) {
+          arr.splice(i, 1)
+          continue
+        }
+        if (arr[i].redirect === '') {
+          delete arr[i].redirect
+        }
+        arr[i].component = resolve => require(['@/' + arr[i].componentPath + ''], resolve)
+        if (arr[i].children !== undefined && arr[i].children !== null && arr[i].children.length > 0) {
+          this.translateTree(arr[i].children)
+        } else {
+          delete arr[i].children
+        }
+      }
+      return arr
+    },
+    translateTreeForStore: function (arr) {
+      for (let i = arr.length - 1; i > -1; i--) {
+        if (arr[i].id === 141) {
+          arr[i].path = '/questions'
+          arr[i].componentPath = 'pages/index/Memo Design/questions/questions'
+          arr[i].redirect = '/titles'
+        }
+        // 过滤掉DataItemAdmin，WebPage，WebService，Menu
+        if (arr[i].id === 0) {
+          arr.splice(i, 1)
+          continue
+        }
+        if (arr[i].redirect === '') {
+          delete arr[i].redirect
+        }
+        if (arr[i].children !== undefined && arr[i].children !== null && arr[i].children.length > 0) {
+          this.translateTreeForStore(arr[i].children)
+        } else {
+          delete arr[i].children
         }
       }
       return arr
