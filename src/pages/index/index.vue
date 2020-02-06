@@ -2,8 +2,8 @@
   <div>
     <el-container>
       <el-header class="pageHeader">
-        <span class="pageTitle">Chatin Memo</span>
-        <span class="welcome">welcome, {{account}}</span>
+        <span class="pageTitle">Inteligent Borker</span>
+        <span class="welcome">Welcome, {{account}}</span>
         <el-button icon="el-icon-switch-button" type="primary" round @click="logout()" :loading="isLoading"></el-button>
       </el-header>
       <el-container>

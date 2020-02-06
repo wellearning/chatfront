@@ -301,7 +301,7 @@ html {
   right: 0;
 }
 .answer .choiceQuestion .choice .additionContent.is-disabled .el-input__inner {
-  border-bottom: none;
+  /*border-bottom: none;*/
 }
 /*choiceQuestion结束*/
 /*fillInQuestion开始*/
@@ -455,7 +455,7 @@ html {
   display: none;
 }
 .answer .propertyQuestion .additionContent.is-disabled .el-input__inner {
-  border-bottom: none;
+  /*border-bottom: none;*/
 }
 .answer .textAreaWithLine {
   background: url(../images/textAreaWithLine.png);

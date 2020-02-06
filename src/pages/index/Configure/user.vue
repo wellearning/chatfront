@@ -22,17 +22,17 @@
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
-                <!--<el-form-item prop="status" label="Status" v-show="false">-->
-                  <!--<el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">-->
-                    <!--<el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>-->
-                  <!--</el-select>-->
-                <!--</el-form-item>-->
-                <!--<el-form-item label="" prop="name">-->
-                  <!--<el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>-->
-                <!--</el-form-item>-->
-                <!--<el-form-item>-->
-                  <!--<el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>-->
-                <!--</el-form-item>-->
+                <el-form-item prop="status" label="Status" v-show="false">
+                  <el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">
+                    <el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="" prop="name">
+                  <el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>
+                </el-form-item>
+                <el-form-item>
+                  <el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>
+                </el-form-item>
                 <el-form-item>
                   <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Reset</el-button>
                 </el-form-item>
@@ -51,12 +51,12 @@
                 <!--</template>-->
               <!--</el-table-column>-->
               <el-table-column label="ProducerCode" prop="ProducerCode" min-width="110"></el-table-column>
-              <el-table-column label="Role" prop="RoleName" min-width="110"></el-table-column>
+              <el-table-column label="Role" prop="role.Name" min-width="110"></el-table-column>
               <el-table-column label="Action" width="200" fixed="right">
                 <template slot-scope="scope">
                   <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                   <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
-                  <!--<el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>-->
+                  <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -351,6 +351,9 @@ export default {
           if (res) {
             console.log('查询树', res)
             this.list = res.data
+            if (this.searchName !== null) {
+              this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+            }
             this.total = this.list.length
             this.currentPage = goPage
           }
@@ -364,6 +367,9 @@ export default {
           if (res) {
             console.log('查询树', res)
             this.list = res.data
+            if (this.searchName !== null) {
+              this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+            }
             this.total = this.list.length
             this.currentPage = goPage
           }
@@ -525,21 +531,21 @@ export default {
     },
     // 重置密码弹窗
     showPass: function (id) {
-      // this.passFormVisible = true
-      // this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //   this.passForm.id = id
-      // })
+      this.passFormVisible = true
+      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+        this.passForm.id = id
+      })
     },
     // 关闭重置密码
     closePass: function (done) {
-      // this.$confirm('Are you sure to close it?', 'Confirm', {
-      //   confirmButtonText: 'Confirm',
-      //   cancelButtonText: 'Cancel',
-      //   type: 'warning'
-      // }).then(() => {
-      //   this.$refs['passForm'].resetFields()
-      //   done()
-      // }).catch(() => {})
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.$refs['passForm'].resetFields()
+        done()
+      }).catch(() => {})
     },
     // 重置密码
     pass: function () {
