@@ -39,24 +39,33 @@
               </el-form>
             </div>
             <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
-              <el-table-column label="User ID" prop="StaffID" width="100" fixed="left"></el-table-column>
+              <el-table-column label="User ID" prop="StaffID" width="80" fixed="left"></el-table-column>
               <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
               <el-table-column label="BranchCode" prop="institution.BranchCode" min-width="100"></el-table-column>
               <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
               <el-table-column label="Email" prop="Email" min-width="150"></el-table-column>
-              <!--<el-table-column label="Status" width="100">-->
-                <!--<template slot-scope="scope">-->
-                  <!--<el-tag v-if="scope.row.StatusID === 1" size="medium">Normal</el-tag>-->
-                  <!--<el-tag v-else type="danger" size="medium">Inactive</el-tag>-->
-                <!--</template>-->
-              <!--</el-table-column>-->
+              <el-table-column label="Status" width="100">
+                <template slot-scope="scope">
+                  <el-tag v-if="scope.row.StatusID === 1" size="medium">Active</el-tag>
+                  <el-tag v-else type="danger" size="medium">Inactive</el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="ProducerCode" prop="ProducerCode" min-width="110"></el-table-column>
               <el-table-column label="Role" prop="role.Name" min-width="110"></el-table-column>
-              <el-table-column label="Action" width="200" fixed="right">
+              <el-table-column label="Action" width="250" fixed="right">
                 <template slot-scope="scope">
-                  <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
-                  <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
-                  <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  <el-tooltip class="item" effect="dark" :content="scope.row.StatusID === 2 ? 'Set Active' : 'Set Inactive'" placement="top-end">
+                    <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="Reset Password" placement="top-end">
+                    <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="Edit" placement="top-end">
+                    <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="Delete" placement="top-end">
+                    <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  </el-tooltip>
                 </template>
               </el-table-column>
             </el-table>
@@ -197,7 +206,7 @@ export default {
         label: 'Name'
       },
       roleIdOptions: [],
-      statusOptions: [{id: 1, name: 'Normal'}, {id: 2, name: 'Inactive'}],
+      statusOptions: [{id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
       addFormRules: {
         Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
@@ -265,7 +274,7 @@ export default {
         status: 0,
         name: null
       },
-      searchStatusOptions: [{id: 0, name: 'All'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Inactive'}],
+      searchStatusOptions: [{id: 0, name: 'All'}, {id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
       searchOrganization: null,
       searchStatus: null,
       searchName: null,
@@ -533,7 +542,7 @@ export default {
     showPass: function (id) {
       this.passFormVisible = true
       this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.passForm.id = id
+        this.passForm.StaffID = id
       })
     },
     // 关闭重置密码
@@ -549,29 +558,60 @@ export default {
     },
     // 重置密码
     pass: function () {
-      // this.$refs['passForm'].validate((valid) => {
-      //   if (valid) {
-      //     this.isLoading = true
-      //     this.axios.post('/api/', this.passForm).then(res => {
-      //       console.log('重置密码', res)
-      //       this.$message({
-      //         type: 'success',
-      //         message: 'Operation Succeeded'
-      //       })
-      //       this.$refs['passForm'].resetFields()
-      //       this.passFormVisible = false
-      //       this.isLoading = false
-      //     }).catch(err => {
-      //       console.log('重置密码出错', err)
-      //       this.isLoading = false
-      //     })
-      //   } else {
-      //     this.$message({
-      //       type: 'error',
-      //       message: 'Format Error'
-      //     })
-      //   }
-      // })
+      this.$refs['passForm'].validate((valid) => {
+        if (valid) {
+          this.isLoading = true
+          this.axios.post('/api/Services/baseservice.asmx/ResetPassword', {staffid: this.passForm.StaffID, password: this.passForm.Password}).then(res => {
+            if (res) {
+              console.log('重置密码', res)
+              this.$message({
+                type: 'success',
+                message: 'Operation Succeeded'
+              })
+              this.$refs['passForm'].resetFields()
+              this.passFormVisible = false
+            }
+            this.isLoading = false
+          }).catch(err => {
+            console.log('重置密码出错', err)
+            this.isLoading = false
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
+      })
+    },
+    // 切换状态
+    switchStatus: function (id) {
+      this.$confirm('Are you sure to switch status?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/baseservice.asmx/SwitchStaffStatus', {staffid: id}).then(res => {
+          if (res) {
+            console.log('切换', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.search(this.searchStatus, this.searchName, this.currentPage)
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('切换出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
     }
   }
 }
