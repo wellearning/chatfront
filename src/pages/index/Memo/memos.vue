@@ -21,12 +21,15 @@
         <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
         <el-table-column label="Author" prop="Author" min-width="150"></el-table-column>
+        <el-table-column label="CorpName" prop="CorpName" min-width="200"></el-table-column>
+        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200"></el-table-column>
+        <el-table-column label="NameInsured(s)" prop="NameInsured" min-width="200"></el-table-column>
         <el-table-column label="RequestDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="Action" width="150" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
           </template>
@@ -82,79 +85,71 @@
           </el-row>
           <div class="viewMemo-content">
             <div v-for="i in viewForm.memoTemplates" :key="i.MemoTemplateID">
+              <div v-if="viewForm.memoTemplates.length > 1" class="newMemo-content-template-title">{{i.Title}}</div>
               <div v-for="it in i.memoBlocks" :key="it.MemoBlockID">
                 <div class="viewMemo-content-answer" v-for="(item, index) in it.normalAnswers" :key="index">
                   <!--问题类型为：Title-->
-                  <div v-if="item.QuestionType === 'Title'" class="title">
+                  <div v-if="item.QuestionType === 'Title' && item.OutputModeID !== 3" class="title">
                     <div class="question">{{item.QuestionDesc}}</div>
                   </div>
-                  <!--问题类型为：Reminder todo:GetMemo没有传OutputMode-->
-                  <div v-else-if="item.QuestionType === 'Reminder'">
+                  <!--问题类型为：Reminder-->
+                  <div v-else-if="item.QuestionType === 'Reminder && item.OutputModeID !== 3'">
                     <div class="question">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Property-->
-                  <div v-else-if="item.QuestionType === 'Property'">
+                  <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
-                    <div class="answer" v-if="item.AnswerDesc !== undefined && item.AnswerDesc !== null && item.AnswerDesc !== ''">
+                    <div class="answer">
                       <span class="content">{{item.AnswerDesc}}</span>
-                    </div>
-                    <div class="answer" v-else>
-                      <span class="noAnswer">No Answer</span>
                     </div>
                   </div>
                   <!--问题类型为：SimpleAnswer-->
-                  <div v-else-if="item.QuestionType === 'SimpleAnswer'">
+                  <div v-else-if="item.QuestionType === 'SimpleAnswer' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
-                    <div class="answer" v-if="item.AnswerDesc !== undefined && item.AnswerDesc !== null && item.AnswerDesc !== ''">
+                    <div class="answer">
                       <span class="content">{{item.AnswerDesc}}</span>
-                    </div>
-                    <div class="answer" v-else>
-                      <span class="noAnswer">No Answer</span>
                     </div>
                   </div>
                   <!--问题类型为：Fillin-->
-                  <div v-else-if="item.QuestionType === 'Fillin'">
+                  <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
                     <div class="question">
                       <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
-                        <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== undefined && part.FillinContent !== null && part.FillinContent !== '')">{{part.FillinContent}}</span>
-                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === undefined || part.FillinContent === null || part.FillinContent === '')">No Answer</span>
+                        <span class="fillInPart" v-if="part.IsFillin">{{part.FillinContent}}</span>
                         <span v-else>{{part.Part}}</span>
                       </span>
                     </div>
                   </div>
                   <!--问题类型为：SingleChoice-->
-                  <div v-else-if="item.QuestionType === 'SingleChoice'">
-                    <div v-if="item.optionAnswer === {} || item.optionAnswer === null || item.optionAnswer.OutputModeID === 1 || item.optionAnswer.OutputModeID === 2">
+                  <div v-else-if="item.QuestionType === 'SingleChoice' && item.OutputModeID !== 3">
+                    <div>
                       <div class="question">{{item.QuestionDesc}}</div>
                       <div class="answer">
-                        <span v-if="item.optionAnswer !== {} && item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
+                        <span v-if="item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
+                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
-                        <span v-else-if="item.optionAnswer !== {} && item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
+                        <span v-else-if="item.optionAnswer.OutputModeID === 2">
                           <span class="content">{{item.optionAnswer.Outputs}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
+                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
-                        <span class="noAnswer" v-else-if="item.optionAnswer === {} || item.optionAnswer === null">No Answer</span>
                       </div>
                     </div>
                   </div>
                   <!--问题类型为：MultipleChoice-->
-                  <div v-else-if="item.QuestionType === 'MultipleChoice'">
-                    <div v-if="item.optionAnswers.length === 0 || (item.optionAnswers.length > 0 && item.optionAnswers.filter(option => option.OutputModeID === 3).length === 0)">
+                  <div v-else-if="item.QuestionType === 'MultipleChoice' && item.OutputModeID !== 3">
+                    <div>
                       <div class="question">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
                           <span v-if="option.OutputModeID === 1">
                             <span class="content">{{option.Content}}</span>
-                            <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
+                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
                           </span>
                           <span v-else-if="option.OutputModeID === 2">
                             <span class="content">{{option.Outputs}}</span>
-                            <i class="addition" v-if="option.AdditionContent !== null">Addition:<b>{{option.AdditionContent}}</b></i>
+                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
                           </span>
                         </div>
-                        <div class="noAnswer" v-if="item.optionAnswers.length === 0">No Answer</div>
                       </div>
                     </div>
                   </div>

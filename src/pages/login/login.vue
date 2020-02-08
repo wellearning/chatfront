@@ -236,7 +236,6 @@ export default {
         }
       })
     },
-    // todo: 权限
     // // 初始化菜单
     // initPermissionList: function () {
     //   this.isLoading = true

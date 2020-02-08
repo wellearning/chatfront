@@ -527,7 +527,7 @@ html {
   font-size: 28px;
   font-weight: bold;
   color: #303133;
-  text-align: center;
+  /*text-align: center;*/
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question {
   font-size: 18px;
@@ -563,5 +563,12 @@ html {
   color: #909399 !important;
   font-style: italic;
   text-decoration: underline;
+}
+.newMemo-content-template-title {
+  font-size: 36px;
+  text-align: center;
+  color: #303133;
+  font-weight: bold;
+  margin-bottom: 50px;
 }
 /*myMemo结束*/
