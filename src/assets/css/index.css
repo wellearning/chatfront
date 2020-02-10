@@ -350,7 +350,7 @@ html {
 }
 .questionRightBtnSingle {
   float: right;
-  margin: 0 10% 0 10px;
+  margin: 0 10% 0 10px !important;
 }
 .marginLeft10 {
   margin-left: 10% !important;

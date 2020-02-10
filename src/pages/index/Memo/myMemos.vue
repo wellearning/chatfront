@@ -80,7 +80,7 @@
           </el-row>
         </el-form>
         <div class="newMemo-content" v-for="item in currentTemplates" :key="item.TemplateID">
-          <!--<div class="newMemo-content-template-title">{{item.Title}}</div>-->
+          <div v-if="memoForm.Templates.length > 1" class="newMemo-content-template-title">{{item.Title}}</div>
           <div v-for="it in item.templateBlocks" :key="it.BlockID">
             <!--<div class="newMemo-content-block-title">{{item.BlockName}}</div>-->
             <div v-for="i in it.block.blockQuestions" :key="i.BlockQuestionID">
@@ -456,8 +456,14 @@ export default {
             if (res) {
               console.log('添加Templates', res)
               let temp = res.data
-              // 对所有问题赋值value，选择题的每个选项赋值AdditionContent
+              // 对所有问题赋值value、isSkip，选择题的每个选项赋值AdditionContent
+              // 修改相对于新增，需要的额外字段
+              temp.IsNew = true
+              // 修改相对于新增，需要的额外字段
               for (let p = 0; p < temp.templateBlocks.length; p++) {
+                // 修改相对于新增，需要的额外字段
+                temp.templateBlocks[p].block.IsNew = true
+                // 修改相对于新增，需要的额外字段
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
                   temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
                   if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) {
@@ -474,39 +480,74 @@ export default {
                   }
                 }
               }
+              // 根据保险公司，跳过baseOnQuestion的问题
+              for (let p = 0; p < temp.templateBlocks.length; p++) {
+                for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
+                  if (temp.templateBlocks[p].block.blockQuestions[q].RouteTypeID === 1) {
+                    let skipNumber = 1
+                    let routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
+                    if (routes !== undefined) {
+                      skipNumber = routes.MoveStep
+                      if (skipNumber > 1) { // 如果跳过个数（n）大于1，isSkip属性赋true值
+                        for (let i = 1; i < skipNumber; i++) {
+                          temp.templateBlocks[p].block.blockQuestions[q + i].question.isSkip = true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
               // 将答案填充
               if (isAnswer === 'Answer') {
+                if (this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]) !== undefined) {
+                  // 修改相对于新增，需要的额外字段
+                  temp.IsNew = false
+                  temp.MemoTemplateID = this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]).MemoTemplateID
+                  temp.MemoID = this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]).MemoID
+                  // 修改相对于新增，需要的额外字段
+                }
                 let blocks = this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]).memoBlocks
                 for (let p = 0; p < blocks.length; p++) {
-                  for (let q = 0; q < blocks[p].answers.length; q++) {
-                    blocks[p].answers[q].AnswerDesc = JSON.parse(blocks[p].answers[q].AnswerDesc)
-                    if (blocks[p].answers[q].Outputs.indexOf('true') > -1) {
-                      temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
-                    }
-                    if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 3) { // property
-                      temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc
-                    } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 4) { // simpleAnswer
-                      temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc
-                    } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 5) { // fillIn
-                      for (let a = 0; a < blocks[p].answers[q].AnswerDesc.length; a++) {
-                        if (blocks[p].answers[q].AnswerDesc[a].IsFillin && blocks[p].answers[q].AnswerDesc[a].FillinContent !== undefined) {
-                          temp.templateBlocks[p].block.blockQuestions[q].question.fillinParts.find(it => it.FillinPartID === blocks[p].answers[q].AnswerDesc[a].FillinPartID).FillinContent = blocks[p].answers[q].AnswerDesc[a].FillinContent
+                  // 先将GetMemo和template都有的block中的所有问题的isShip置为true
+                  let matchBlock = temp.templateBlocks.find(item => item.BlockID === blocks[p].BlockID).block
+                  // 修改相对于新增，需要的额外字段
+                  matchBlock.IsNew = false
+                  matchBlock.MemoBlockID = blocks[p].MemoBlockID
+                  matchBlock.MemoTemplateID = blocks[p].MemoTemplateID
+                  matchBlock.SequenceNo = blocks[p].SequenceNo
+                  matchBlock.answers = blocks[p].answers
+                  // 修改相对于新增，需要的额外字段
+                  for (let question = 0; question < matchBlock.blockQuestions.length; question++) {
+                    matchBlock.blockQuestions[question].question.isSkip = true
+                  }
+                  // 再将此block中，GetMemo有回答的问题isShip置为false，并赋予回答
+                  for (let q = 0; q < blocks[p].normalAnswers.length; q++) {
+                    let matchQuestion = matchBlock.blockQuestions.find(item => item.QuestionID === blocks[p].normalAnswers[q].QuestionID)
+                    matchQuestion.question.isSkip = false
+                    // 修改相对于新增，需要的额外字段
+                    matchQuestion.question.AnswerID = blocks[p].normalAnswers[q].AnswerID
+                    matchQuestion.question.MemoBlockID = blocks[p].normalAnswers[q].MemoBlockID
+                    // 修改相对于新增，需要的额外字段
+                    // if (blocks[p].normalAnswers[q].QuestionType === 'Title') {
+                    // } else if (blocks[p].normalAnswers[q].QuestionType === 'Reminder') {
+                    if (blocks[p].normalAnswers[q].QuestionType === 'Property') {
+                      matchQuestion.question.value = blocks[p].normalAnswers[q].AnswerDesc
+                    } else if (blocks[p].normalAnswers[q].QuestionType === 'SimpleAnswer') {
+                      matchQuestion.question.value = blocks[p].normalAnswers[q].AnswerDesc
+                    } else if (blocks[p].normalAnswers[q].QuestionType === 'Fillin') {
+                      for (let a = 0; a < blocks[p].normalAnswers[q].fillinAnswers.length; a++) {
+                        if (blocks[p].normalAnswers[q].fillinAnswers[a].IsFillin) {
+                          matchQuestion.question.fillinParts.find(it => it.FillinPartID === blocks[p].normalAnswers[q].fillinAnswers[a].FillinPartID).FillinContent = blocks[p].normalAnswers[q].fillinAnswers[a].FillinContent
                         }
                       }
-                    } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) { // single
-                      if (blocks[p].answers[q].AnswerDesc !== null) {
-                        temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc.ChoiceOptionID
-                        temp.templateBlocks[p].block.blockQuestions[q].question.options.find(it => it.ChoiceOptionID === blocks[p].answers[q].AnswerDesc.ChoiceOptionID).AdditionContent = blocks[p].answers[q].AnswerDesc.AdditionContent
+                    } else if (blocks[p].normalAnswers[q].QuestionType === 'SingleChoice') {
+                      matchQuestion.question.value = blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID
+                      matchQuestion.question.options.find(it => it.ChoiceOptionID === blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID).AdditionContent = blocks[p].normalAnswers[q].optionAnswer.AdditionContent
+                    } else if (blocks[p].normalAnswers[q].QuestionType === 'MultipleChoice') {
+                      matchQuestion.question.value = blocks[p].normalAnswers[q].optionAnswers.map(it => it.ChoiceOptionID)
+                      for (let a = 0; a < matchQuestion.question.value.length; a++) {
+                        matchQuestion.question.options.find(it => it.ChoiceOptionID === matchQuestion.question.value[a]).AdditionContent = blocks[p].normalAnswers[q].optionAnswers.find(it => it.ChoiceOptionID === matchQuestion.question.value[a]).AdditionContent
                       }
-                    } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 7) { // multiple
-                      if (blocks[p].answers[q].AnswerDesc !== null && blocks[p].answers[q].AnswerDesc.length > 0) {
-                        temp.templateBlocks[p].block.blockQuestions[q].question.value = blocks[p].answers[q].AnswerDesc.map(it => it.ChoiceOptionID)
-                        for (let a = 0; a < temp.templateBlocks[p].block.blockQuestions[q].question.value.length; a++) {
-                          temp.templateBlocks[p].block.blockQuestions[q].question.options.find(it => it.ChoiceOptionID === temp.templateBlocks[p].block.blockQuestions[q].question.value[a]).AdditionContent = blocks[p].answers[q].AnswerDesc.find(it => it.ChoiceOptionID === temp.templateBlocks[p].block.blockQuestions[q].question.value[a]).AdditionContent
-                        }
-                      }
-                    } else { // title, reminder
-                      temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                     }
                   }
                 }
@@ -526,6 +567,15 @@ export default {
           this.currentTemplates = this.currentTemplates.filter(item => item.TemplateID !== oldArray[i])
         }
       }
+      // 自动填充title
+      if (array.length === 0) {
+        this.memoForm.Title = null
+      } else if (array.length === 1) {
+        this.memoForm.Title = this.templatesList.find(item => item.TemplateID === array[0]).Title
+      } else {
+        this.memoForm.Title = 'Multiple Changes'
+      }
+      // console.log('完整问题', this.currentTemplates)
     },
     // 更新跳过个数
     countShipNumber: function (TemplateID, blockSequenceNo, questionSequenceNo, value) {
@@ -545,16 +595,16 @@ export default {
               skipNumber = 1
             }
           } else { // false代表是有效数字，数字比较
-            if (routes[i].Operator === '=' && parseInt(value) === parseInt(routes[i].Operand)) {
+            if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>' && parseInt(value) > parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '<' && parseInt(value) < parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>=' && parseInt(value) >= parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(routes[i].Operand)) {
               skipNumber = routes[i].MoveStep
               break
             } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(routes[i].Operand)) {
@@ -569,8 +619,8 @@ export default {
       // singleChoice
       if (question.question.TypeID === 6) {
         // 单选题判断答案所属routes，得出跳过个数
-        if (routes.find(item => parseInt(item.Operand) === value) !== undefined) {
-          skipNumber = routes.find(item => parseInt(item.Operand) === value).MoveStep
+        if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
+          skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
         } else {
           skipNumber = 1
         }
@@ -637,89 +687,232 @@ export default {
     submit: function () {
       this.$refs['memoForm'].validate((valid) => {
         if (valid) {
+          // 校验全部回答
+          let allAnswer = true
           // form
           let form = JSON.parse(JSON.stringify(this.memoForm))
           // templates
           let templates = JSON.parse(JSON.stringify(this.currentTemplates))
-          templates = templates.map(item => { return { TemplateID: item.TemplateID, memoBlocks: item.templateBlocks } })
+          // 修改相对于新增，需要的额外字段
+          templates = templates.map(item => { return { TemplateID: item.TemplateID, Title: item.Title, memoBlocks: item.templateBlocks, IsNew: item.IsNew, MemoTemplateID: item.MemoTemplateID, MemoID: item.MemoID } })
+          templates.forEach(item => {
+            if (item.MemoTemplateID === undefined) {
+              delete item.MemoTemplateID
+            }
+            if (item.MemoID === undefined) {
+              delete item.MemoID
+            }
+          })
+          // 修改相对于新增，需要的额外字段
           for (let i = 0; i < templates.length; i++) {
-            templates[i].memoBlocks = templates[i].memoBlocks.map(item => { return { BlockID: item.BlockID, answers: item.block.blockQuestions } })
+            // 过滤掉被隐藏的问题
+            // 修改相对于新增，需要的额外字段
+            templates[i].memoBlocks = templates[i].memoBlocks.map(item => { return { BlockID: item.BlockID, IsNew: item.block.IsNew, MemoBlockID: item.block.MemoBlockID, MemoTemplateID: item.block.MemoTemplateID, SequenceNo: item.block.SequenceNo, answers: item.block.answers, normalAnswers: item.block.blockQuestions.filter(it => it.question.isSkip === false) } })
+            templates[i].memoBlocks.forEach(item => {
+              if (item.MemoBlockID === undefined) {
+                delete item.MemoBlockID
+              }
+              if (item.MemoTemplateID === undefined) {
+                delete item.MemoTemplateID
+              }
+              if (item.SequenceNo === undefined) {
+                delete item.SequenceNo
+              }
+              if (item.answers === undefined) {
+                delete item.answers
+              }
+            })
+            // 修改相对于新增，需要的额外字段
             for (let j = 0; j < templates[i].memoBlocks.length; j++) {
-              for (let k = 0; k < templates[i].memoBlocks[j].answers.length; k++) {
-                if (templates[i].memoBlocks[j].answers[k].question.TypeID === 3) { // property
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 4) { // simpleAnswer
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 5) { // fillIn
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.fillinParts.map(it => {
-                    return { FillinPartID: it.FillinPartID, IsFillin: it.IsFillin, Part: it.Part, FillinContent: it.FillinContent }
-                  })
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 6) { // single
-                  if (templates[i].memoBlocks[j].answers[k].question.value !== null) {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = {
-                      ChoiceOptionID: templates[i].memoBlocks[j].answers[k].question.value,
-                      OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
-                      Content: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Content,
-                      Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).Outputs,
-                      AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].answers[k].question.value).AdditionContent
-                    }
-                  } else {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+              for (let k = 0; k < templates[i].memoBlocks[j].normalAnswers.length; k++) {
+                if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 1) {
+                  // 问题类型为：Title
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: null,
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'Title',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }
-                } else if (templates[i].memoBlocks[j].answers[k].question.TypeID === 7) { // multiple
-                  if (templates[i].memoBlocks[j].answers[k].question.value.length > 0) {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = templates[i].memoBlocks[j].answers[k].question.value.map(it => {
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 2) {
+                  // 问题类型为：Reminder
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: null,
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'Reminder',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 3) {
+                  // 问题类型为：Property
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: templates[i].memoBlocks[j].normalAnswers[k].question.value,
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'Property',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
+                  // 未回答
+                  if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
+                    allAnswer = false
+                  }
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 4) {
+                  // 问题类型为：SimpleAnswer
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: templates[i].memoBlocks[j].normalAnswers[k].question.value,
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'SimpleAnswer',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
+                  // 未回答
+                  if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
+                    allAnswer = false
+                  }
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 5) {
+                  // 问题类型为：Fillin
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    fillinAnswers: templates[i].memoBlocks[j].normalAnswers[k].question.fillinParts.map(it => {
+                      return { FillinPartID: it.FillinPartID, IsFillin: it.IsFillin, Part: it.Part, FillinContent: it.FillinContent !== undefined ? it.FillinContent : '' }
+                    }),
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: '',
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'Fillin',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
+                  // 未回答
+                  if (templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|') !== undefined || templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|null') !== undefined) {
+                    allAnswer = false
+                  }
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 6) {
+                  // 问题类型为：SingleChoice
+                  let optionAnswer = {}
+                  if (templates[i].memoBlocks[j].normalAnswers[k].question.value !== null) {
+                    optionAnswer = {
+                      ChoiceOptionID: templates[i].memoBlocks[j].normalAnswers[k].question.value,
+                      OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                      Content: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).Content,
+                      Outputs: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).Outputs,
+                      AdditionContent: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
+                    }
+                    // NeedAddition为true但是未填写AdditionContent
+                    let NeedAddition = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).NeedAddition
+                    let AdditionContent = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
+                    if (NeedAddition && (AdditionContent === null || AdditionContent === '')) {
+                      allAnswer = false
+                    }
+                  } else { // 未回答
+                    allAnswer = false
+                  }
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    optionAnswer: optionAnswer,
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: '',
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'SingleChoice',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
+                } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 7) {
+                  // 问题类型为：MultipleChoice
+                  let optionAnswers = []
+                  if (templates[i].memoBlocks[j].normalAnswers[k].question.value.length > 0) {
+                    optionAnswers = templates[i].memoBlocks[j].normalAnswers[k].question.value.map(it => {
                       return {
                         ChoiceOptionID: it,
-                        OutputModeID: templates[i].memoBlocks[j].answers[k].question.OutputModeID,
-                        Content: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
-                        Outputs: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
-                        AdditionContent: templates[i].memoBlocks[j].answers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent
+                        OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                        Content: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).Content,
+                        Outputs: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).Outputs,
+                        AdditionContent: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).AdditionContent,
+                        SequenceNo: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).SequenceNo,
+                        NeedAddition: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(i => i.ChoiceOptionID === it).NeedAddition
                       }
                     })
-                  } else {
-                    templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+                    // 按SequenceNo排序
+                    optionAnswers = optionAnswers.slice().sort((a, b) => { return a.SequenceNo - b.SequenceNo })
+                    // NeedAddition为true但是未填写AdditionContent
+                    if (optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|') !== undefined || optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null') !== undefined) {
+                      allAnswer = false
+                    }
+                    optionAnswers = optionAnswers.map(it => {
+                      return {
+                        ChoiceOptionID: it.ChoiceOptionID,
+                        OutputModeID: it.OutputModeID,
+                        Content: it.Content,
+                        Outputs: it.Outputs,
+                        AdditionContent: it.AdditionContent
+                      }
+                    })
+                  } else { // 未回答
+                    allAnswer = false
                   }
-                } else { // title, reminder
-                  templates[i].memoBlocks[j].answers[k].question.AnswerDesc = null
+                  templates[i].memoBlocks[j].normalAnswers[k] = {
+                    optionAnswers: optionAnswers,
+                    QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
+                    BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
+                    QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
+                    AnswerDesc: '',
+                    OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
+                    QuestionType: 'MultipleChoice',
+                    AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
+                    MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
+                  }
                 }
-                templates[i].memoBlocks[j].answers[k] = {QuestionID: templates[i].memoBlocks[j].answers[k].QuestionID, BlockQuestionID: templates[i].memoBlocks[j].answers[k].BlockQuestionID, QuestionDesc: templates[i].memoBlocks[j].answers[k].question.Description, AnswerDesc: JSON.stringify(templates[i].memoBlocks[j].answers[k].question.AnswerDesc), Addition: templates[i].memoBlocks[j].answers[k].question.Label, Outputs: templates[i].memoBlocks[j].answers[k].question.TypeID + '|' + templates[i].memoBlocks[j].answers[k].question.isSkip}
+                // 修改相对于新增，需要的额外字段
+                if (templates[i].memoBlocks[j].normalAnswers[k].AnswerID === undefined) {
+                  delete templates[i].memoBlocks[j].normalAnswers[k].AnswerID
+                }
+                if (templates[i].memoBlocks[j].normalAnswers[k].MemoBlockID === undefined) {
+                  delete templates[i].memoBlocks[j].normalAnswers[k].MemoBlockID
+                }
+                // 修改相对于新增，需要的额外字段
               }
             }
           }
-          // TODO: 如果选用的templates能修改，则全部使用新增的templates（即this.currentTemplates）；如果不能修改的话，可以使用for循环对应更新AnswerDesc（必须结构完全一样才能对应ijk）
-          form.memoTemplates = templates
-          // for (let i = 0; i < form.memoTemplates.length; i++) {
-          //   for (let j = 0; j < form.memoTemplates[i].memoBlocks.length; j++) {
-          //     for (let k = 0; k < form.memoTemplates[i].memoBlocks[j].answers.length; k++) {
-          //       form.memoTemplates[i].memoBlocks[j].answers[k].AnswerDesc = templates[i].memoBlocks[j].answers[k].AnswerDesc
-          //     }
-          //   }
-          // }
-          this.isLoading = true
-          this.axios.post('/api/Services/memoservice.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
-            if (res) {
-              console.log('提交', res)
-              this.$message({
-                type: 'success',
-                message: 'Operation Succeeded'
-              })
-              this.$refs['memoForm'].resetFields()
-              this.currentTemplates = []
-              this.memoFormVisible = false
-              // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Title.indexOf(this.searchName) !== -1)) {
-                this.list = this.list.map(item => { return item.MemoID === res.data.MemoID ? res.data : item })
-              } else {
-                this.list = this.list.filter(item => item.MemoID !== res.data.MemoID)
-                this.total = this.list.length
+          if (allAnswer) {
+            form.memoTemplates = templates
+            // console.log('提交问题', form)
+            this.isLoading = true
+            this.axios.post('/api/Services/memoservice.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
+              if (res) {
+                console.log('修改', res)
+                this.$message({
+                  type: 'success',
+                  message: 'Operation Succeeded'
+                })
+                this.$refs['memoForm'].resetFields()
+                this.currentTemplates = []
+                this.memoFormVisible = false
               }
-            }
-            this.isLoading = false
-          }).catch(err => {
-            console.log('提交出错', err)
-            this.isLoading = false
-          })
+              this.isLoading = false
+            }).catch(err => {
+              console.log('修改出错', err)
+              this.isLoading = false
+            })
+          } else {
+            this.$message({
+              type: 'warning',
+              message: 'Please Answer All Questions'
+            })
+          }
         } else {
           this.$message({
             type: 'error',

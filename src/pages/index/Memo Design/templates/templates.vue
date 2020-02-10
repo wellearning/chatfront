@@ -40,7 +40,7 @@
           </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{blockList.find(it => it.BlockID === item.BlockID).Name}}</b></span>
+              <span><b>{{item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -68,7 +68,7 @@
           </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{blockList.find(it => it.BlockID === item.BlockID).Name}}</b></span>
+              <span><b>{{item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -156,6 +156,12 @@ export default {
         if (res) {
           console.log('blocks列表', res)
           this.blockList = res.data
+          // 同一个template中，同一个block只能有一个
+          if (this.addFormVisible) {
+            this.blockList = this.blockList.filter(item => (this.addForm.templateBlocks.map(it => it.BlockID)).indexOf(item.BlockID) === -1)
+          } else if (this.editFormVisible) {
+            this.blockList = this.blockList.filter(item => (this.editForm.templateBlocks.map(it => it.BlockID)).indexOf(item.BlockID) === -1)
+          }
         }
         this.isLoadingBlock = false
       }).catch(err => {
@@ -172,12 +178,12 @@ export default {
         })
       } else {
         if (form === 'addForm') {
-          this.addForm.templateBlocks.push({BlockID: this.currentBlock})
+          this.addForm.templateBlocks.push({BlockID: this.currentBlock, BlockName: this.blockList.find(it => it.BlockID === this.currentBlock).Name})
         } else if (form === 'editForm') {
-          this.editForm.templateBlocks.push({BlockID: this.currentBlock})
+          this.editForm.templateBlocks.push({BlockID: this.currentBlock, BlockName: this.blockList.find(it => it.BlockID === this.currentBlock).Name})
         }
-        console.log('hello', this.addForm.templateBlocks)
         this.currentBlock = null
+        this.initBlock()
       }
     },
     // 删除一行
@@ -187,6 +193,7 @@ export default {
       } else if (form === 'editForm') {
         this.editForm.templateBlocks.splice(index, 1)
       }
+      this.initBlock()
     },
     // 上移一行
     upChoice: function (form, index) {
@@ -299,6 +306,7 @@ export default {
             this.editForm = res.data
             if (this.editForm.templateBlocks !== null && this.editForm.templateBlocks.length > 0) {
               this.editForm.templateBlocks = this.editForm.templateBlocks.slice().sort((a, b) => { return a.SequenceNo - b.SequenceNo })
+              this.initBlock()
             }
           })
         }

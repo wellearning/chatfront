@@ -367,6 +367,12 @@ export default {
         if (res) {
           console.log('查询', res)
           this.questionList = res.data
+          // 同一个block中，同一个question只能有一个
+          if (this.addFormVisible) {
+            this.questionList = this.questionList.filter(item => this.addForm.blockQuestions.map(it => it.QuestionID).indexOf(item.QuestionID) === -1)
+          } else if (this.editFormVisible) {
+            this.questionList = this.questionList.filter(item => this.editForm.blockQuestions.map(it => it.QuestionID).indexOf(item.QuestionID) === -1)
+          }
         }
         this.isLoading = false
       }).catch(err => {
@@ -389,6 +395,7 @@ export default {
               console.log('查询单个', res)
               this.addForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
               this.currentQuestion = null
+              this.changeQuestionType(this.currentQuestionType)
             }
             this.isLoading = false
           }).catch(err => {
@@ -402,6 +409,7 @@ export default {
               console.log('查询单个', res)
               this.editForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
               this.currentQuestion = null
+              this.changeQuestionType(this.currentQuestionType)
             }
             this.isLoading = false
           }).catch(err => {
@@ -418,6 +426,7 @@ export default {
       } else if (form === 'editForm') {
         this.editForm.blockQuestions.splice(index, 1)
       }
+      this.changeQuestionType(this.currentQuestionType)
     },
     // 上移一行
     upChoice: function (form, index) {
