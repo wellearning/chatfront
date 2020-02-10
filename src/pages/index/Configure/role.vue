@@ -3,7 +3,7 @@
     <div class="inPageTitle">
       <span class="inPageNav">Role</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTree">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -16,11 +16,11 @@
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
-            <!--<el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.RoleID)" :loading="isLoading" size="small">Privileges</el-button>-->
-            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading" size="small">Delete</el-button>
-            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
-            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.RoleID)" :loading="isLoading" plain size="small">Cancel</el-button>
+            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Privileges</el-button>
+            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
+            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Delete</el-button>
+            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading || isLoadingTree" size="small">Confirm</el-button>
+            <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.RoleID)" :loading="isLoading || isLoadingTree" plain size="small">Cancel</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -33,7 +33,7 @@
             <el-input v-model="addForm.Name" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingTree">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -42,14 +42,14 @@
       <el-dialog title="Privileges" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
         <el-form class="form">
           <el-form-item class="confirmBtn">
-            <el-tree :data="menuList" :props="defaultProps" default-expand-all :expand-on-click-node="false" show-checkbox node-key="id" empty-text="No Record" ref="tree">
+            <el-tree :data="menuList" :props="defaultProps" default-expand-all :expand-on-click-node="false" show-checkbox node-key="MenuItemID" empty-text="No Record" ref="tree">
               <span slot-scope="{ node, data }">
                 <span>{{ node.label }}</span>
               </span>
             </el-tree>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="privileges()" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="privileges()" :loading="isLoading || isLoadingTree">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -63,6 +63,7 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      isLoadingTree: false,
       currentId: null,
       currentDescription: null,
       list: [],
@@ -76,7 +77,7 @@ export default {
       menuList: [],
       defaultProps: {
         children: 'children',
-        label: 'name'
+        label: 'Name'
       },
       // 新增
       addFormVisible: false,
@@ -92,9 +93,44 @@ export default {
     }
   },
   mounted: function () {
+    this.getMenuTree()
     this.search()
   },
   methods: {
+    // 递归遍历树
+    translateTree: function (arr) {
+      for (let i = arr.length - 1; i > -1; i--) {
+        // 过滤掉DataItemAdmin，WebPage，WebService，Menu
+        if (arr[i].ClientPageID === 0) {
+          arr.splice(i, 1)
+          continue
+        }
+        if (arr[i].Redirect === '') {
+          delete arr[i].Redirect
+        }
+        if (arr[i].children !== undefined && arr[i].children !== null && arr[i].children.length > 0) {
+          this.translateTree(arr[i].children)
+        } else {
+          delete arr[i].children
+        }
+      }
+      return arr
+    },
+    // 完整权限树
+    getMenuTree: function () {
+      this.isLoadingTree = true
+      this.axios.post('/api/Services/baseservice.asmx/GetMenuTree', {}).then(res => {
+        if (res) {
+          console.log('查询树', res)
+          this.menuList = res.data
+          this.translateTree(this.menuList)
+        }
+        this.isLoadingTree = false
+      }).catch(err => {
+        console.log('查询树出错', err)
+        this.isLoadingTree = false
+      })
+    },
     // 查询
     search: function () {
       this.isLoading = true
@@ -113,26 +149,20 @@ export default {
     },
     // 显示权限弹窗
     showPrivilege: function (id) {
-      // this.isLoading = true
-      // this.axios.get('/api/get?id=' + id).then(res => { // todo: 根据id显示权限接口
-      //   if (res) {
-      //     console.log('查询单个权限', res)
-      //     this.privilegesVisible = true
-      //     this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-      //       this.currentPrivileges = id
-      //       this.menuList = res.data.data
-      //     })
-      //   }
-      //   this.isLoading = false
-      // }).catch(err => {
-      //   console.log('查询单个权限出错', err)
-      //   this.isLoading = false
-      // })
-      this.privilegesVisible = true
-      this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-        this.currentPrivileges = id
-        this.menuList = (JSON.parse(this.$store.getters.getPermissionList))[0].children
-        this.$refs.tree.setCheckedKeys([11, 121, 122, 123])
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetRoleMenus', {roleid: id}).then(res => {
+        if (res) {
+          console.log('查询单个权限', res)
+          this.privilegesVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            this.currentPrivileges = id
+            this.$refs.tree.setCheckedKeys(res.data.map(item => { return item.MenuItemID }))
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个权限出错', err)
+        this.isLoading = false
       })
     },
     // 隐藏权限弹窗
@@ -143,14 +173,13 @@ export default {
         type: 'warning'
       }).then(() => {
         this.currentPrivileges = null
-        this.menuList = []
         done()
       }).catch(() => {})
     },
     // 提交权限
     privileges: function () {
       this.isLoading = true
-      this.axios.post('/api/', {id: this.currentPrivileges, list: [...this.$refs.tree.getHalfCheckedKeys(), ...this.$refs.tree.getCheckedKeys()]}).then(res => { // todo: 提交权限接口，半选和全选全部传递
+      this.axios.post('/api/Services/baseservice.asmx/SaveRoleMenus', {roleid: this.currentPrivileges, menuitemids: '[' + (this.$refs.tree.getCheckedKeys()).toString() + ']'}).then(res => { // 半选+全选?
         console.log('提交权限', res)
         if (res) {
           this.$message({
@@ -158,7 +187,6 @@ export default {
             message: 'Operation Succeeded'
           })
           this.currentPrivileges = null
-          this.menuList = []
           this.privilegesVisible = false
         }
         this.isLoading = false

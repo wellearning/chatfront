@@ -279,11 +279,6 @@ export default {
     // 递归遍历树
     translateTree: function (arr) {
       for (let i = arr.length - 1; i > -1; i--) {
-        if (arr[i].id === 141) {
-          arr[i].path = '/questions'
-          arr[i].componentPath = 'pages/index/Memo Design/questions/questions'
-          arr[i].redirect = '/titles'
-        }
         // 过滤掉DataItemAdmin，WebPage，WebService，Menu
         if (arr[i].id === 0) {
           arr.splice(i, 1)
@@ -303,11 +298,6 @@ export default {
     },
     translateTreeForStore: function (arr) {
       for (let i = arr.length - 1; i > -1; i--) {
-        if (arr[i].id === 141) {
-          arr[i].path = '/questions'
-          arr[i].componentPath = 'pages/index/Memo Design/questions/questions'
-          arr[i].redirect = '/titles'
-        }
         // 过滤掉DataItemAdmin，WebPage，WebService，Menu
         if (arr[i].id === 0) {
           arr.splice(i, 1)

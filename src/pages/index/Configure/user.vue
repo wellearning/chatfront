@@ -455,8 +455,12 @@ export default {
           this.editFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             let form = JSON.parse(JSON.stringify(res.data))
-            form.institution = form.institution.InstitutionID
-            form.role = form.role.RoleID
+            if (form.institution !== null) {
+              form.institution = form.institution.InstitutionID
+            }
+            if (form.role !== null) {
+              form.role = form.role.RoleID
+            }
             this.editForm = form
           })
         }
