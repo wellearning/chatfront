@@ -20,14 +20,14 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="200"></el-table-column>
+        <el-table-column label="EffectiveDate" min-width="150">
+          <template slot-scope="scope">
+            <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="CorpName" prop="CorpName" min-width="200"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200"></el-table-column>
         <el-table-column label="NameInsured(s)" prop="NameInsured" min-width="200"></el-table-column>
-        <el-table-column label="RequestDate" min-width="150">
-          <template slot-scope="scope">
-            <span>{{dateFormat(scope.row.RequestDate)}}</span>
-          </template>
-        </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
@@ -115,19 +115,22 @@
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
-        <div>
-          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.Author)" :loading="isLoading || isLoadingInsuranceCompany" size="small">To PDF</el-button>
+        <div class="printDiv">
+          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">To PDF</el-button>
+          <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
         </div>
         <div class="viewMemo" id="pdfDom">
+          <!--<div class="printDate">Print Date: {{printDate}}</div>-->
           <el-row :gutter="20">
             <el-col :span="12">
-              <div class="viewMemo-subtitle head"><i>Branch: </i><b>{{viewForm.branch.Name}}</b></div>
-              <div class="viewMemo-subtitle head"><i>Address: </i><b>{{viewForm.branch.Address}}</b></div>
-              <div class="viewMemo-subtitle head"><i>Phone: </i><b>{{viewForm.branch.Telphone}}</b></div>
+              <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{viewForm.branch.Address}}</i></div>
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{viewForm.branch.Telphone}}</i></div>
             </el-col>
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.corpbroker.corp.Name}}</b></div>
               <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.corpbroker.BrokerCode}}</b></div>
+              <div class="viewMemo-subtitle head"><i class="long">Print Date: </i><b>{{printDate}}</b></div>
             </el-col>
           </el-row>
           <div class="viewMemo-title">{{viewForm.Title}}</div>
@@ -266,6 +269,11 @@ export default {
   },
   data: function () {
     return {
+      printDate: moment(new Date()).format('YYYY-MM-DD'),
+      printObj: {
+        id: 'pdfDom',
+        popTitle: ''
+      },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
       // 搜索
@@ -933,6 +941,7 @@ export default {
             this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+            this.printObj.popTitle = this.viewForm.Title // + '( ' + this.viewForm.Author + ')'
           })
         }
         this.isLoading = false
@@ -971,8 +980,8 @@ export default {
       done()
     },
     // 转pdf
-    pdf: function (title, author) {
-      this.htmlTitle = title + '( ' + author + ')'
+    pdf: function (title, EffectiveDate) {
+      this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#pdfDom')
     }
   }

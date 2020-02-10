@@ -16,12 +16,14 @@ import VueAxios from 'vue-axios'
 import ECharts from 'vue-echarts'
 
 import htmlToPdf from '@/component/utils/htmlToPdf/htmlToPdf'
+import Print from 'vue-print-nb'
 
 Vue.prototype.axios = axios
 Vue.use(VueAxios, axios)
 Vue.use(ElementUI)
 
 Vue.use(htmlToPdf)
+Vue.use(Print)
 
 // 设置语言
 locale.use(lang)
