@@ -7,7 +7,7 @@
         <el-checkbox-group v-model="question.value" @change="resetAdditionContent">
           <el-checkbox v-for="item in question.options" :label="item.ChoiceOptionID" :key="item.ChoiceOptionID">
             <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
-            <el-input class="additionContent" v-if="item.NeedAddition" v-model="item.AdditionContent" :disabled="question.value.indexOf(item.ChoiceOptionID) === -1" size="mini"></el-input>
+            <el-input class="additionContent" v-if="item.NeedAddition" v-model="item.AdditionContent" :disabled="question.value.indexOf(item.ChoiceOptionID) === -1" size="mini" @blur="changeVal('alreadyAnswer')"></el-input>
           </el-checkbox>
         </el-checkbox-group>
       </div>
@@ -21,11 +21,24 @@ export default {
   props: {
     question: {
       type: Object
+    },
+    templateId: {
+      type: Number
+    },
+    blockSequenceNo: {
+      type: Number
+    },
+    questionSequenceNo: {
+      type: Number
     }
   },
   methods: {
     resetAdditionContent: function () {
       this.question.options.forEach(item => { this.question.value.indexOf(item.ChoiceOptionID) === -1 ? item.AdditionContent = null : item.AdditionContent = item.AdditionContent })
+      this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, 'alreadyAnswer')
+    },
+    changeVal: function (value) {
+      this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)
     }
   }
 }

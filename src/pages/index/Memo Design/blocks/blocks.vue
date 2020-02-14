@@ -426,7 +426,9 @@ export default {
       } else if (form === 'editForm') {
         this.editForm.blockQuestions.splice(index, 1)
       }
-      this.changeQuestionType(this.currentQuestionType)
+      if (this.currentQuestionType !== null) {
+        this.changeQuestionType(this.currentQuestionType)
+      }
     },
     // 上移一行
     upChoice: function (form, index) {
