@@ -389,7 +389,7 @@ html {
   margin-right: 10%;
 }
 .labelInput {
-  width: 65px;
+  width: 65px !important;
   margin-right: 20px;
 }
 /*block结束*/
