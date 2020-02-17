@@ -351,7 +351,8 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          let all = [{InsuranceCorpID: 0, Name: 'All Insurance Company'}]
+          this.insuranceCompanyList = [...all, ...res.data]
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {

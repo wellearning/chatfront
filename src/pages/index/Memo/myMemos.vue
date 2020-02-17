@@ -203,11 +203,11 @@
                     <div>
                       <div class="question">{{item.QuestionDesc}}</div>
                       <div class="answer">
-                        <span v-if="item.optionAnswer.OutputModeID === 1">
+                        <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
                           <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
-                        <span v-else-if="item.optionAnswer.OutputModeID === 2">
+                        <span v-else-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
                           <span class="content">{{item.optionAnswer.Outputs}}</span>
                           <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
@@ -498,6 +498,9 @@ export default {
                   if (temp.templateBlocks[p].block.blockQuestions[q].RouteTypeID === 1) {
                     let skipNumber = 1
                     let routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
+                    if (routes === undefined) {
+                      routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === 0)
+                    }
                     if (routes !== undefined) {
                       skipNumber = routes.MoveStep
                       if (skipNumber > 1) { // 如果跳过个数（n）大于1，isSkip属性赋true值
@@ -521,7 +524,6 @@ export default {
                 }
                 let blocks = this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]).memoBlocks
                 for (let p = 0; p < blocks.length; p++) {
-                  // 先将GetMemo和template都有的block中的所有问题的isShip置为true
                   let matchBlock = temp.templateBlocks.find(item => item.BlockID === blocks[p].BlockID).block
                   // 修改相对于新增，需要的额外字段
                   matchBlock.IsNew = false
@@ -530,13 +532,9 @@ export default {
                   matchBlock.SequenceNo = blocks[p].SequenceNo
                   matchBlock.answers = blocks[p].answers
                   // 修改相对于新增，需要的额外字段
-                  for (let question = 0; question < matchBlock.blockQuestions.length; question++) {
-                    matchBlock.blockQuestions[question].question.isSkip = true
-                  }
-                  // 再将此block中，GetMemo有回答的问题isShip置为false，并赋予回答
+                  // 将此block中，GetMemo有回答的问题赋予回答
                   for (let q = 0; q < blocks[p].normalAnswers.length; q++) {
                     let matchQuestion = matchBlock.blockQuestions.find(item => item.QuestionID === blocks[p].normalAnswers[q].QuestionID)
-                    matchQuestion.question.isSkip = false
                     // 修改相对于新增，需要的额外字段
                     matchQuestion.question.AnswerID = blocks[p].normalAnswers[q].AnswerID
                     matchQuestion.question.MemoBlockID = blocks[p].normalAnswers[q].MemoBlockID
@@ -554,8 +552,10 @@ export default {
                         }
                       }
                     } else if (blocks[p].normalAnswers[q].QuestionType === 'SingleChoice') {
-                      matchQuestion.question.value = blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID
-                      matchQuestion.question.options.find(it => it.ChoiceOptionID === blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID).AdditionContent = blocks[p].normalAnswers[q].optionAnswer.AdditionContent
+                      if (blocks[p].normalAnswers[q].optionAnswer !== null) {
+                        matchQuestion.question.value = blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID
+                        matchQuestion.question.options.find(it => it.ChoiceOptionID === blocks[p].normalAnswers[q].optionAnswer.ChoiceOptionID).AdditionContent = blocks[p].normalAnswers[q].optionAnswer.AdditionContent
+                      }
                     } else if (blocks[p].normalAnswers[q].QuestionType === 'MultipleChoice') {
                       matchQuestion.question.value = blocks[p].normalAnswers[q].optionAnswers.map(it => it.ChoiceOptionID)
                       for (let a = 0; a < matchQuestion.question.value.length; a++) {
@@ -565,7 +565,19 @@ export default {
                   }
                 }
               }
+              temp.orderId = i
               this.currentTemplates.push(temp)
+              this.currentTemplates = this.currentTemplates.sort((a, b) => { return a.orderId - b.orderId })
+              // 执行routes
+              for (let a = 0; a < this.currentTemplates.length; a++) {
+                for (let b = 0; b < this.currentTemplates[a].templateBlocks.length; b++) {
+                  for (let c = 0; c < this.currentTemplates[a].templateBlocks[b].block.blockQuestions.length; c++) {
+                    if (this.currentTemplates[a].templateBlocks[b].block.blockQuestions[c].question.TypeID === 3 || this.currentTemplates[a].templateBlocks[b].block.blockQuestions[c].question.TypeID === 6) {
+                      this.countShipNumber(this.currentTemplates[a].TemplateID, this.currentTemplates[a].templateBlocks[b].SequenceNo, this.currentTemplates[a].templateBlocks[b].block.blockQuestions[c].SequenceNo, this.currentTemplates[a].templateBlocks[b].block.blockQuestions[c].question.value)
+                    }
+                  }
+                }
+              }
             }
             this.isLoading = false
           }).catch(err => {
@@ -596,6 +608,9 @@ export default {
       let block = template.templateBlocks.find(item => item.SequenceNo === blockSequenceNo)
       let question = block.block.blockQuestions.find(item => item.SequenceNo === questionSequenceNo)
       let routes = question.routes.filter(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
+      if (routes.length === 0) {
+        routes = question.routes.filter(item => item.InsuranceCorpID === 0)
+      }
       let skipNumber = 1
       // property
       if (question.question.TypeID === 3) {
@@ -785,9 +800,9 @@ export default {
                     MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }
                   // 未回答
-                  if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
-                    allAnswer = false
-                  }
+                  // if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
+                  //   allAnswer = false
+                  // }
                 } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 4) {
                   // 问题类型为：SimpleAnswer
                   templates[i].memoBlocks[j].normalAnswers[k] = {
@@ -801,9 +816,9 @@ export default {
                     MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }
                   // 未回答
-                  if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
-                    allAnswer = false
-                  }
+                  // if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {
+                  //   allAnswer = false
+                  // }
                 } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 5) {
                   // 问题类型为：Fillin
                   templates[i].memoBlocks[j].normalAnswers[k] = {
@@ -820,9 +835,9 @@ export default {
                     MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }
                   // 未回答
-                  if (templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|') !== undefined || templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|null') !== undefined) {
-                    allAnswer = false
-                  }
+                  // if (templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|') !== undefined || templates[i].memoBlocks[j].normalAnswers[k].fillinAnswers.find(item => item.IsFillin + '|' + item.FillinContent === 'true|null') !== undefined) {
+                  //   allAnswer = false
+                  // }
                 } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 6) {
                   // 问题类型为：SingleChoice
                   let optionAnswer = {}
@@ -835,13 +850,14 @@ export default {
                       AdditionContent: templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
                     }
                     // NeedAddition为true但是未填写AdditionContent
-                    let NeedAddition = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).NeedAddition
-                    let AdditionContent = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
-                    if (NeedAddition && (AdditionContent === null || AdditionContent === '')) {
-                      allAnswer = false
-                    }
+                    // let NeedAddition = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).NeedAddition
+                    // let AdditionContent = templates[i].memoBlocks[j].normalAnswers[k].question.options.find(it => it.ChoiceOptionID === templates[i].memoBlocks[j].normalAnswers[k].question.value).AdditionContent
+                    // if (NeedAddition && (AdditionContent === null || AdditionContent === '')) {
+                    //   allAnswer = false
+                    // }
                   } else { // 未回答
-                    allAnswer = false
+                    optionAnswer = null
+                    // allAnswer = false
                   }
                   templates[i].memoBlocks[j].normalAnswers[k] = {
                     optionAnswer: optionAnswer,
@@ -872,9 +888,9 @@ export default {
                     // 按SequenceNo排序
                     optionAnswers = optionAnswers.slice().sort((a, b) => { return a.SequenceNo - b.SequenceNo })
                     // NeedAddition为true但是未填写AdditionContent
-                    if (optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|') !== undefined || optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null') !== undefined) {
-                      allAnswer = false
-                    }
+                    // if (optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|') !== undefined || optionAnswers.find(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null') !== undefined) {
+                    //   allAnswer = false
+                    // }
                     optionAnswers = optionAnswers.map(it => {
                       return {
                         ChoiceOptionID: it.ChoiceOptionID,
@@ -885,7 +901,7 @@ export default {
                       }
                     })
                   } else { // 未回答
-                    allAnswer = false
+                    // allAnswer = false
                   }
                   templates[i].memoBlocks[j].normalAnswers[k] = {
                     optionAnswers: optionAnswers,
