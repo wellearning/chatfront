@@ -125,7 +125,7 @@
                   <!--问题类型为：SingleChoice-->
                   <div v-else-if="item.QuestionType === 'SingleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question">{{item.QuestionDesc}}</div>
+                      <div class="question" v-if="item.optionAnswer.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
@@ -141,7 +141,7 @@
                   <!--问题类型为：MultipleChoice-->
                   <div v-else-if="item.QuestionType === 'MultipleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question">{{item.QuestionDesc}}</div>
+                      <div class="question" v-if="item.optionAnswer.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
                           <span v-if="option.OutputModeID === 1">
