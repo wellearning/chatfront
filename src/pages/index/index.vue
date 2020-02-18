@@ -2,7 +2,7 @@
   <div>
     <el-container>
       <el-header class="pageHeader">
-        <span class="pageTitle">Intelligent Borker</span>
+        <span class="pageTitle">Intelligent Broker</span>
         <span class="welcome">Welcome, {{account}}</span>
         <el-button icon="el-icon-switch-button" type="primary" round @click="logout()" :loading="isLoading"></el-button>
       </el-header>
