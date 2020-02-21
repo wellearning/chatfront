@@ -255,19 +255,19 @@ export default {
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
                   temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
                   if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                     temp.templateBlocks[p].block.blockQuestions[q].question.options.forEach(item => { item.AdditionContent = null })
                   } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 7) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = []
                     temp.templateBlocks[p].block.blockQuestions[q].question.options.forEach(item => { item.AdditionContent = null })
                   } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 5) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                     temp.templateBlocks[p].block.blockQuestions[q].question.fillinParts.forEach(item => { item.FillinContent = null })
                   } else {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                   }
                 }

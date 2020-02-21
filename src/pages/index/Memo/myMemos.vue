@@ -735,7 +735,7 @@ export default {
           } else if (block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.TypeID === 5) {
             block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = null
             block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.fillinParts.forEach(item => { item.FillinContent = null })
-            this.countShipNumber(TemplateID, blockSequenceNo, block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).SequenceNo, null)
+            // this.countShipNumber(TemplateID, blockSequenceNo, block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).SequenceNo, null)
           } else {
             block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = null
             // this.countShipNumber(TemplateID, blockSequenceNo, block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).SequenceNo, null)
