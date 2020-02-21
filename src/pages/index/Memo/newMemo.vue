@@ -42,9 +42,18 @@
             </el-select>
           </el-form-item>
         </el-col>
+      </el-row>
+      <el-row :gutter="20" class="subtitle">
+        <el-col :span="12">
+          <el-form-item label="Template Type" prop="TemplateType">
+            <el-select v-model="memoForm.TemplateType" placeholder="Template Type" no-data-text="No Record" filterable @change="changeTemplateType(memoForm.TemplateType)">
+              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
         <el-col :span="12">
           <el-form-item label="Templates" prop="Templates">
-            <el-select v-model="memoForm.Templates" placeholder="Templates" no-data-text="No Record" filterable multiple collapse-tags :disabled="memoForm.InsuranceCorpID === null" @change="changeTemplates()">
+            <el-select v-model="memoForm.Templates" placeholder="Templates" no-data-text="No Record" filterable multiple collapse-tags :disabled="memoForm.InsuranceCorpID === null || memoForm.TemplateType === null" @change="changeTemplates()">
               <el-option v-for="item in templatesList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
             </el-select>
           </el-form-item>
@@ -119,6 +128,7 @@ export default {
       isLoading: false,
       isLoadingTemplates: false,
       isLoadingInsuranceCompany: false,
+      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
       currentTemplates: [],
       memoForm: {
         Title: null,
@@ -130,6 +140,7 @@ export default {
         NameInsured: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
+        TemplateType: null,
         Templates: null
       },
       memoFormRules: {
@@ -147,6 +158,9 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
+        TemplateType: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
         Templates: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
@@ -159,7 +173,7 @@ export default {
     }
   },
   mounted: function () {
-    this.initTemplates()
+    // this.initTemplates()
     this.initInsuranceCompany()
   },
   watch: {
@@ -176,9 +190,9 @@ export default {
   },
   methods: {
     // Templates列表
-    initTemplates: function () {
+    initTemplates: function (typeid) {
       this.isLoadingTemplates = true
-      this.axios.post('/api/Services/memoservice.asmx/SearchTemplates', {query: ''}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/GetTemplatesByType', {typeid: typeid}).then(res => {
         if (res) {
           console.log('Templates列表', res)
           this.templatesList = res.data
@@ -208,6 +222,12 @@ export default {
       this.memoForm.Templates = []
       this.currentTemplates = []
     },
+    // 选择保险公司
+    changeTemplateType: function (typeid) {
+      this.memoForm.Templates = []
+      this.currentTemplates = []
+      this.initTemplates(typeid)
+    },
     // 选择Templates
     changeTemplates: function () {
       this.isAnswering = false
@@ -235,19 +255,19 @@ export default {
                 for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
                   temp.templateBlocks[p].block.blockQuestions[q].question.Label = temp.templateBlocks[p].block.blockQuestions[q].Label
                   if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 6) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                     temp.templateBlocks[p].block.blockQuestions[q].question.options.forEach(item => { item.AdditionContent = null })
                   } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 7) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = []
                     temp.templateBlocks[p].block.blockQuestions[q].question.options.forEach(item => { item.AdditionContent = null })
                   } else if (temp.templateBlocks[p].block.blockQuestions[q].question.TypeID === 5) {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                     temp.templateBlocks[p].block.blockQuestions[q].question.fillinParts.forEach(item => { item.FillinContent = null })
                   } else {
-                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = true
+                    temp.templateBlocks[p].block.blockQuestions[q].question.isSkip = false
                     temp.templateBlocks[p].block.blockQuestions[q].question.value = null
                   }
                 }

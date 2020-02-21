@@ -103,21 +103,24 @@
                   <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
                     <div class="answer">
-                      <span class="content">{{item.AnswerDesc}}</span>
+                      <span class="content" v-if="item.AnswerDesc !== ''">{{item.AnswerDesc}}</span>
+                      <span class="content noAnswer" v-else>No Answer</span>
                     </div>
                   </div>
                   <!--问题类型为：SimpleAnswer-->
                   <div v-else-if="item.QuestionType === 'SimpleAnswer' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
                     <div class="answer">
-                      <span class="content">{{item.AnswerDesc}}</span>
+                      <span class="content" v-if="item.AnswerDesc !== ''">{{item.AnswerDesc}}</span>
+                      <span class="content noAnswer" v-else>No Answer</span>
                     </div>
                   </div>
                   <!--问题类型为：Fillin-->
                   <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
                     <div class="question">
                       <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
-                        <span class="fillInPart" v-if="part.IsFillin">{{part.FillinContent}}</span>
+                       <span class="fillInPart" v-if="part.IsFillin && part.FillinContent !== ''">{{part.FillinContent}}</span>
+                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && part.FillinContent === ''">No Answer</span>
                         <span v-else>{{part.Part}}</span>
                       </span>
                     </div>
@@ -143,15 +146,20 @@
                     <div>
                       <div class="question" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
-                        <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
+                        <div v-if="item.optionAnswers.length > 0">
+                          <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
                           <span v-if="option.OutputModeID === 1">
                             <span class="content">{{option.Content}}</span>
                             <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
                           </span>
-                          <span v-else-if="option.OutputModeID === 2">
+                            <span v-else-if="option.OutputModeID === 2">
                             <span class="content">{{option.Outputs}}</span>
                             <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
                           </span>
+                          </div>
+                        </div>
+                        <div v-else>
+                          <span class="noAnswer">No Answer</span>
                         </div>
                       </div>
                     </div>
@@ -181,7 +189,7 @@ import moment from 'moment'
 export default {
   data: function () {
     return {
-      printDate: moment(new Date()).format('YYYY-MM-DD'),
+      printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       printObj: {
         id: 'pdfDom',
         popTitle: ''
@@ -286,6 +294,7 @@ export default {
     },
     // 查阅弹窗
     view: function (id) {
+      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
       this.axios.post('/api/Services/memoservice.asmx/GetMemo', {memoid: id}).then(res => {
         if (res) {

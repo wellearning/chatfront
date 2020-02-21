@@ -26,7 +26,7 @@
         <el-table-column label="Short Name" prop="ShortName" min-width="200"></el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broken Code</el-button>
+            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>

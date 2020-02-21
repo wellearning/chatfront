@@ -38,6 +38,11 @@
           <el-form-item label="Title" prop="Title">
             <el-input v-model="addForm.Title" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Type" prop="TypeID">
+            <el-select v-model="addForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <span><b>{{item.BlockName}}</b></span>
@@ -65,6 +70,11 @@
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <el-form-item label="Title" prop="Title">
             <el-input v-model="editForm.Title" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Type" prop="TypeID">
+            <el-select v-model="editForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
           </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
@@ -100,10 +110,11 @@ export default {
       isLoadingBlock: false,
       blockList: [],
       currentBlock: null,
+      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
       // 新增
       addFormVisible: false,
       addForm: {
-        TypeID: 0,
+        TypeID: null,
         StatusID: 1,
         Title: null,
         templateBlocks: []
@@ -112,13 +123,16 @@ export default {
         Title: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       },
       // 修改
       editFormVisible: false,
       editForm: {
         TemplateID: null,
-        TypeID: 0,
+        TypeID: null,
         StatusID: 1,
         Title: null,
         templateBlocks: [],
@@ -128,6 +142,9 @@ export default {
         Title: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       },
       // 搜索
