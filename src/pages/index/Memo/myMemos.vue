@@ -27,7 +27,7 @@
         </el-table-column>
         <el-table-column label="CorpName" prop="CorpName" min-width="200"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200"></el-table-column>
-        <el-table-column label="NameInsured(s)" prop="NameInsured" min-width="200"></el-table-column>
+        <el-table-column label="Name Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
@@ -71,8 +71,8 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="Templates" prop="Templates">
-                <el-select v-model="memoForm.Templates" placeholder="Templates" no-data-text="No Record" filterable multiple collapse-tags disabled>
+              <el-form-item label="Policy Change Type" prop="Templates">
+                <el-select v-model="memoForm.Templates" placeholder="Policy Change Type" no-data-text="No Record" filterable multiple collapse-tags disabled>
                   <el-option v-for="item in templatesList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
                 </el-select>
               </el-form-item>
@@ -109,14 +109,14 @@
           </div>
         </div>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Confirm</el-button>
+          <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Save</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
         <div class="printDiv">
-          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">To PDF</el-button>
+          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
           <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
         </div>
         <div class="viewMemo" id="pdfDom">
@@ -156,7 +156,7 @@
               <div class="viewMemo-subtitle"><span>{{viewForm.PolicyNumber}}</span></div>
             </el-col>
             <el-col :span="4">
-              <div class="viewMemo-subtitle">NameInsured(s):</div>
+              <div class="viewMemo-subtitle">Name Insured(s):</div>
             </el-col>
             <el-col :span="8">
               <div class="viewMemo-subtitle"><span>{{viewForm.NameInsured}}</span></div>

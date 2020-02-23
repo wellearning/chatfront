@@ -29,8 +29,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="NameInsured(s)" prop="NameInsured">
-            <el-input v-model="memoForm.NameInsured" placeholder="NameInsured(s)"></el-input>
+          <el-form-item label="Name Insured(s)" prop="NameInsured">
+            <el-input v-model="memoForm.NameInsured" placeholder="Name Insured(s)"></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -45,15 +45,15 @@
       </el-row>
       <el-row :gutter="20" class="subtitle">
         <el-col :span="12">
-          <el-form-item label="Template Type" prop="TemplateType">
-            <el-select v-model="memoForm.TemplateType" placeholder="Template Type" no-data-text="No Record" filterable @change="changeTemplateType(memoForm.TemplateType)">
+          <el-form-item label="Category" prop="TemplateType">
+            <el-select v-model="memoForm.TemplateType" placeholder="Category" no-data-text="No Record" filterable @change="changeTemplateType(memoForm.TemplateType)">
               <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Templates" prop="Templates">
-            <el-select v-model="memoForm.Templates" placeholder="Templates" no-data-text="No Record" filterable multiple collapse-tags :disabled="memoForm.InsuranceCorpID === null || memoForm.TemplateType === null" @change="changeTemplates()">
+          <el-form-item label="Policy Change Type" prop="Templates">
+            <el-select v-model="memoForm.Templates" placeholder="Policy Change Type" no-data-text="No Record" filterable multiple collapse-tags :disabled="memoForm.InsuranceCorpID === null || memoForm.TemplateType === null" @change="changeTemplates()">
               <el-option v-for="item in templatesList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
             </el-select>
           </el-form-item>
@@ -61,7 +61,7 @@
       </el-row>
     </el-form>
     <div class="newMemo-submit">
-      <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering">Begin To Answer</el-button>
+      <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering">Start</el-button>
     </div>
     <div class="newMemo-content" v-for="item in currentTemplates" :key="item.TemplateID">
       <div v-if="memoForm.Templates.length > 1 && item.templateBlocks[0].block.blockQuestions[0].question.isSkip === false" class="newMemo-content-template-title">{{item.Title}}</div>
@@ -96,7 +96,7 @@
       <!--<el-progress v-if="isAnswering" :text-inside="true" :stroke-width="24" :percentage="(curQuestionNum / totalQuestionNum * 100).toFixed(0)" status="success"></el-progress>-->
     <!--</div>-->
     <div class="newMemo-submit">
-      <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Confirm</el-button>
+      <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
     </div>
   </div>
 </template>
