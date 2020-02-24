@@ -273,8 +273,8 @@ export default {
                 }
               }
               // 根据保险公司，跳过baseOnQuestion的问题
-              for (let p = 0; p < temp.templateBlocks.length; p++) {
-                for (let q = 0; q < temp.templateBlocks[p].block.blockQuestions.length; q++) {
+              for (let p = temp.templateBlocks.length - 1; p > -1; p--) {
+                for (let q = temp.templateBlocks[p].block.blockQuestions.length - 1; q > -1; q--) {
                   if (temp.templateBlocks[p].block.blockQuestions[q].RouteTypeID === 1) {
                     let skipNumber = 1
                     let routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
@@ -282,12 +282,13 @@ export default {
                       routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === 0)
                     }
                     if (routes !== undefined) {
-                      skipNumber = routes.MoveStep
-                      if (skipNumber > 1) { // 如果跳过个数（n）大于1，isSkip属性赋true值
-                        for (let i = 1; i < skipNumber; i++) {
-                          temp.templateBlocks[p].block.blockQuestions[q + i].question.isSkip = true
-                          temp.templateBlocks[p].block.blockQuestions[q + i].question.numType = 'alwaysSkip'
-                        }
+                      skipNumber = routes.MoveStep - 1
+                      if (skipNumber > 0) { // 如果跳过个数（n）大于1，isSkip属性赋true值
+                        temp.templateBlocks[p].block.blockQuestions.splice(q + 1, skipNumber)
+                        // for (let i = 1; i < skipNumber; i++) {
+                        //   temp.templateBlocks[p].block.blockQuestions[q + i].question.isSkip = true
+                        //   temp.templateBlocks[p].block.blockQuestions[q + i].question.numType = 'alwaysSkip'
+                        // }
                       }
                     }
                   }
@@ -407,20 +408,23 @@ export default {
           }
         }
         // 如果跳过个数（n）大于1，对后面（n - 1）个问题赋null值（多选为[]），isSkip属性赋true值，同时执行countShipNumber发放，将这（n - 1）个问题处理的isSkip属性赋true值的问题，isSkip属性赋false值
-        for (let i = 1; i < skipNumber; i++) {
-          if (block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.TypeID === 7) {
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = []
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.options.forEach(item => { item.AdditionContent = null })
-          } else if (block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.TypeID === 6) {
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = null
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.options.forEach(item => { item.AdditionContent = null })
-          } else if (block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.TypeID === 5) {
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = null
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.fillinParts.forEach(item => { item.FillinContent = null })
-          } else {
-            block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.value = null
+        if (skipNumber > 1) {
+          let skipArr = block.block.blockQuestions.filter(item => item.SequenceNo > questionSequenceNo).slice(0, skipNumber - 1)
+          for (let i = 0; i < skipArr.length; i++) {
+            if (skipArr[i].question.TypeID === 7) {
+              skipArr[i].question.value = []
+              skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
+            } else if (skipArr[i].question.TypeID === 6) {
+              skipArr[i].question.value = null
+              skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
+            } else if (skipArr[i].question.TypeID === 5) {
+              skipArr[i].question.value = null
+              skipArr[i].question.fillinParts.forEach(item => { item.FillinContent = null })
+            } else {
+              skipArr[i].question.value = null
+            }
+            skipArr[i].question.isSkip = true
           }
-          block.block.blockQuestions.find(item => item.SequenceNo === (questionSequenceNo + i)).question.isSkip = true
         }
         // 对后面连续的n个SequenceNo大于当前SequenceNo + skipNumber - 1且isSkip为true的问题，isSkip属性赋false值，如果SequenceNo大于当前SequenceNo且isSkip为false，跳出循环，避免影响后续的跳过（1跳过2，4跳过5,3的时候停止，不然5会被恢复可见）
         // for (let i = 0; i < block.block.blockQuestions.length; i++) {

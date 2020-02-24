@@ -103,7 +103,7 @@
                   <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
                     <div class="answer">
-                      <span class="content" v-if="item.AnswerDesc !== ''">{{item.AnswerDesc}}</span>
+                      <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{item.AnswerDesc}}</span>
                       <span class="content noAnswer" v-else>No Answer</span>
                     </div>
                   </div>
@@ -111,7 +111,7 @@
                   <div v-else-if="item.QuestionType === 'SimpleAnswer' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
                     <div class="answer">
-                      <span class="content" v-if="item.AnswerDesc !== ''">{{item.AnswerDesc}}</span>
+                      <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{item.AnswerDesc}}</span>
                       <span class="content noAnswer" v-else>No Answer</span>
                     </div>
                   </div>
@@ -119,8 +119,8 @@
                   <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
                     <div class="question">
                       <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
-                       <span class="fillInPart" v-if="part.IsFillin && part.FillinContent !== ''">{{part.FillinContent}}</span>
-                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && part.FillinContent === ''">No Answer</span>
+                       <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== '' && part.FillinContent !== null)">{{part.FillinContent}}</span>
+                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === '' || part.FillinContent !== null)">No Answer</span>
                         <span v-else>{{part.Part}}</span>
                       </span>
                     </div>
