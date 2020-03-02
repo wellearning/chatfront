@@ -35,6 +35,17 @@ html {
   padding-top: 10px !important;
   padding-bottom: 10px !important;
 }
+.pageHeader .logo {
+  height: 30px;
+  float: left;
+  margin: 5px 0;
+}
+.pageHeader .logo img {
+  width: auto;
+  height: 30px;
+  display: block;
+  margin-right: 20px;
+}
 .pageHeader .pageTitle {
   float: left;
   font-size: 24px;
@@ -485,6 +496,17 @@ html {
 .viewMemo {
   padding: 80px 50px;
   position: relative;
+}
+.viewLogo {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  height: 50px;
+}
+.viewLogo img {
+  width: auto;
+  max-height: 50px;
+  display: block;
 }
 .printDate {
   position: absolute;

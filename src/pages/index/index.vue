@@ -2,7 +2,11 @@
   <div>
     <el-container>
       <el-header class="pageHeader">
-        <span class="pageTitle">Intelligent Broker</span>
+        <el-image class="logo" :src="logo">
+          <div slot="error" class="image-slot">
+          </div>
+        </el-image>
+        <span class="pageTitle">Intelli Broker</span>
         <span class="welcome">Welcome, {{account}}</span>
         <el-button icon="el-icon-switch-button" type="primary" round @click="logout()" :loading="isLoading"></el-button>
       </el-header>
@@ -33,7 +37,8 @@ export default {
       innerWidth: window.innerWidth,
       isCollapse: false, // todo: 折叠后导航会报Maximum call stack size exceeded
       account: JSON.parse(this.$store.getters.getAccount).Name,
-      menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children
+      menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children,
+      logo: 'http://134.175.142.102:8080' + JSON.parse(this.$store.getters.getAccount).institution.LogoUrl
     }
   },
   mounted: function () {

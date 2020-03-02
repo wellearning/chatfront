@@ -110,17 +110,23 @@
         </div>
         <div class="newMemo-submit">
           <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Save</el-button>
+          <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="memoForm.StatusID === 1">Save & Print</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
-        <div class="printDiv">
+        <div class="printDiv" v-if="viewForm.StatusID === 1">
           <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
           <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
         </div>
         <div class="viewMemo" id="pdfDom">
           <!--<div class="printDate">Print Date: {{printDate}}</div>-->
+          <img :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
+          <!--<el-image class="viewLogo" :src="logo">-->
+            <!--<div slot="error" class="image-slot">-->
+            <!--</div>-->
+          <!--</el-image>-->
           <el-row :gutter="20">
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
@@ -281,6 +287,7 @@ export default {
       isPost: false,
       totalNum: 0,
       finishNum: 0,
+      totalQuestionNum: 1,
       AnsweredArr: [],
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       printObj: {
@@ -314,7 +321,7 @@ export default {
         EffectiveDate: null,
         InsuranceCorpID: null,
         PolicyNumber: null,
-        StatusID: 1,
+        StatusID: 0,
         RequestDate: moment(new Date()),
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Templates: null
@@ -346,6 +353,7 @@ export default {
         InsuranceCorp: null,
         PolicyNumber: null,
         Author: null,
+        StatusID: 0,
         branch: {
           Name: null,
           Address: null,
@@ -516,28 +524,6 @@ export default {
                 }
               }
             }
-            // 根据保险公司，跳过baseOnQuestion的问题
-            for (let p = temp.templateBlocks.length - 1; p > -1; p--) {
-              for (let q = temp.templateBlocks[p].block.blockQuestions.length - 1; q > -1; q--) {
-                if (temp.templateBlocks[p].block.blockQuestions[q].RouteTypeID === 1) {
-                  let skipNumber = 1
-                  let routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
-                  if (routes === undefined) {
-                    routes = temp.templateBlocks[p].block.blockQuestions[q].routes.find(item => item.InsuranceCorpID === 0)
-                  }
-                  if (routes !== undefined) {
-                    skipNumber = routes.MoveStep - 1
-                    if (skipNumber > 0) { // 如果跳过个数（n）大于1，isSkip属性赋true值
-                      temp.templateBlocks[p].block.blockQuestions.splice(q + 1, skipNumber)
-                      // for (let i = 1; i < skipNumber; i++) {
-                      //   temp.templateBlocks[p].block.blockQuestions[q + i].question.isSkip = true
-                      //   temp.templateBlocks[p].block.blockQuestions[q + i].question.numType = 'alwaysSkip'
-                      // }
-                    }
-                  }
-                }
-              }
-            }
             // 将答案填充
             if (isAnswer === 'Answer') {
               if (this.memoForm.memoTemplates.find(item => item.TemplateID === array[i]) !== undefined) {
@@ -560,7 +546,11 @@ export default {
                 // 将此block中，GetMemo有回答的问题赋予回答
                 for (let q = 0; q < blocks[p].normalAnswers.length; q++) {
                   let matchQuestion = matchBlock.blockQuestions.find(item => item.QuestionID === blocks[p].normalAnswers[q].QuestionID)
-                  this.AnsweredArr.push({template: temp.TemplateID, block: temp.templateBlocks.find(item => item.BlockID === blocks[p].BlockID).SequenceNo, question: matchQuestion.SequenceNo})
+                  let answer = true
+                  if (blocks[p].normalAnswers[q].AnswerDesc === '' || blocks[p].normalAnswers[q].AnswerDesc === null) {
+                    answer = false
+                  }
+                  this.AnsweredArr.push({template: temp.TemplateID, block: temp.templateBlocks.find(item => item.BlockID === blocks[p].BlockID).SequenceNo, question: matchQuestion.SequenceNo, answer: answer})
                   // 修改相对于新增，需要的额外字段
                   matchQuestion.question.isSkip = false
                   matchQuestion.question.AnswerID = blocks[p].normalAnswers[q].AnswerID
@@ -622,7 +612,11 @@ export default {
       this.AnsweredArr = this.AnsweredArr.sort((a, b) => { return b.block - a.block })
       this.AnsweredArr = this.AnsweredArr.filter(item => item.block === this.AnsweredArr[0].block)
       this.AnsweredArr = this.AnsweredArr.sort((a, b) => { return b.question - a.question })
-      this.AnsweredArr = this.AnsweredArr.filter(item => item.question === this.AnsweredArr[0].question)
+      if (this.AnsweredArr.find(item => item.answer) !== undefined) {
+        this.AnsweredArr = this.AnsweredArr.find(item => item.answer)
+      } else {
+        this.AnsweredArr = []
+      }
       // 自动填充title
       let array = this.memoForm.Templates
       if (array.length === 0) {
@@ -632,7 +626,7 @@ export default {
       } else {
         this.memoForm.Title = 'Multiple Changes'
       }
-      // 所有的问题标序（num，numType【alwaysSkip，noAnswer，byStep】），并确定第一个问题
+      // 所有的问题标序（num，numType【noAnswer，byStep】），并确定第一个问题
       let num = 1
       let numFirst = 0
       for (let i = 0; i < this.currentTemplates.length; i++) {
@@ -640,22 +634,16 @@ export default {
           for (let k = 0; k < this.currentTemplates[i].templateBlocks[j].block.blockQuestions.length; k++) {
             let curQuestion = this.currentTemplates[i].templateBlocks[j].block.blockQuestions[k].question
             curQuestion.num = num
-            if (this.currentTemplates[i].TemplateID + '|' + this.currentTemplates[i].templateBlocks[j].SequenceNo + '|' + this.currentTemplates[i].templateBlocks[j].block.blockQuestions[k].SequenceNo === this.AnsweredArr[0].template + '|' + this.AnsweredArr[0].block + '|' + this.AnsweredArr[0].question) {
+            if (this.AnsweredArr.length > 0 && (this.currentTemplates[i].TemplateID + '|' + this.currentTemplates[i].templateBlocks[j].SequenceNo + '|' + this.currentTemplates[i].templateBlocks[j].block.blockQuestions[k].SequenceNo === this.AnsweredArr[0].template + '|' + this.AnsweredArr[0].block + '|' + this.AnsweredArr[0].question)) {
               numFirst = curQuestion.num + 1
             }
-            if (curQuestion.numType === undefined) {
-              if (curQuestion.TypeID === 1 || curQuestion.TypeID === 2) {
-                curQuestion.numType = 'noAnswer'
-              } else {
-                curQuestion.numType = 'byStep'
-              }
+            if (curQuestion.TypeID === 1 || curQuestion.TypeID === 2) {
+              curQuestion.numType = 'noAnswer'
+            } else {
+              curQuestion.numType = 'byStep'
             }
             if (curQuestion.num === numFirst) {
-              // console.log('hello', this.currentTemplates)
-              if (curQuestion.numType === 'alwaysSkip') {
-                curQuestion.isSkip = true
-                numFirst = numFirst + 1
-              } else if (curQuestion.numType === 'noAnswer') {
+              if (curQuestion.numType === 'noAnswer') {
                 curQuestion.isSkip = false
                 numFirst = numFirst + 1
               } else {
@@ -666,94 +654,118 @@ export default {
           }
         }
       }
-      // this.totalQuestionNum = num - 1
+      this.totalQuestionNum = num - 1
     },
     // 更新跳过个数
     countShipNumber: function (TemplateID, blockSequenceNo, questionSequenceNo, value) {
       let template = this.currentTemplates.find(item => item.TemplateID === TemplateID)
       let block = template.templateBlocks.find(item => item.SequenceNo === blockSequenceNo)
       let question = block.block.blockQuestions.find(item => item.SequenceNo === questionSequenceNo)
-      if (value === 'alreadyAnswer') {
-        let curNum = question.question.num
-        this.showNext(curNum)
-      } else {
-        let routes = question.routes.filter(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
-        if (routes.length === 0) {
-          routes = question.routes.filter(item => item.InsuranceCorpID === 0)
-        }
-        let skipNumber = 1
-        // property
-        if (question.question.TypeID === 3) {
-          for (let i = 0; i < routes.length; i++) {
-            if (isNaN(routes[i].Operand)) { // true代表非数字，字符串比较
-              if (routes[i].Operator === '=' && value === routes[i].Operand) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else {
-                skipNumber = 1
-              }
-            } else { // false代表是有效数字，数字比较
-              if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(routes[i].Operand)) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(routes[i].Operand)) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(routes[i].Operand)) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(routes[i].Operand)) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(routes[i].Operand)) {
-                skipNumber = routes[i].MoveStep
-                break
-              } else {
-                skipNumber = 1
-              }
-            }
-          }
-        }
-        // singleChoice
-        if (question.question.TypeID === 6) {
-          // 单选题判断答案所属routes，得出跳过个数
-          if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
-            skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
-          } else {
-            skipNumber = 1
-          }
-        }
-        // 如果跳过个数（n）大于1，对后面（n - 1）个问题赋null值（多选为[]），isSkip属性赋true值，同时执行countShipNumber发放，将这（n - 1）个问题处理的isSkip属性赋true值的问题，isSkip属性赋false值
-        if (skipNumber > 1) {
-          let skipArr = block.block.blockQuestions.filter(item => item.SequenceNo > questionSequenceNo).slice(0, skipNumber - 1)
-          for (let i = 0; i < skipArr.length; i++) {
-            if (skipArr[i].question.TypeID === 7) {
-              skipArr[i].question.value = []
-              skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
-            } else if (skipArr[i].question.TypeID === 6) {
-              skipArr[i].question.value = null
-              skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
-            } else if (skipArr[i].question.TypeID === 5) {
-              skipArr[i].question.value = null
-              skipArr[i].question.fillinParts.forEach(item => { item.FillinContent = null })
+      let routes = question.routes.filter(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID)
+      if (routes.length === 0) {
+        routes = question.routes.filter(item => item.InsuranceCorpID === 0)
+      }
+      let skipNumber = 1
+      if (question.IsRoute && question.RouteTypeID === 1) { // baseOnQuestion
+        skipNumber = routes[0].MoveStep
+      } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
+        for (let i = 0; i < routes.length; i++) {
+          if (isNaN(routes[i].Operand)) { // true代表非数字，字符串比较
+            if (routes[i].Operator === '=' && value === routes[i].Operand) {
+              skipNumber = routes[i].MoveStep
+              break
             } else {
-              skipArr[i].question.value = null
+              skipNumber = 1
             }
-            skipArr[i].question.isSkip = true
+          } else { // false代表是有效数字，数字比较
+            if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(routes[i].Operand)) {
+              skipNumber = routes[i].MoveStep
+              break
+            } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(routes[i].Operand)) {
+              skipNumber = routes[i].MoveStep
+              break
+            } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(routes[i].Operand)) {
+              skipNumber = routes[i].MoveStep
+              break
+            } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(routes[i].Operand)) {
+              skipNumber = routes[i].MoveStep
+              break
+            } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(routes[i].Operand)) {
+              skipNumber = routes[i].MoveStep
+              break
+            } else {
+              skipNumber = 1
+            }
           }
         }
-        // 对后面连续的n个SequenceNo大于当前SequenceNo + skipNumber - 1且isSkip为true的问题，isSkip属性赋false值，如果SequenceNo大于当前SequenceNo且isSkip为false，跳出循环，避免影响后续的跳过（1跳过2，4跳过5,3的时候停止，不然5会被恢复可见）
-        // for (let i = 0; i < block.block.blockQuestions.length; i++) {
-        //   if (block.block.blockQuestions[i].SequenceNo > questionSequenceNo + skipNumber - 1) {
-        //     if (block.block.blockQuestions[i].question.isSkip === true) {
-        //       if (block.block.blockQuestions[i].question.numType !== 'alwaysSkip') {
-        //         block.block.blockQuestions[i].question.isSkip = false
-        //       }
-        //     } else {
-        //       break
-        //     }
-        //   }
-        // }
+      } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 6) { // baseOnAnswer singleChoice
+        // 单选题判断答案所属routes，得出跳过个数
+        if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
+          skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
+        } else {
+          skipNumber = 1
+        }
+      }
+      // 如果跳过个数（n）大于1，对后面（n - 1）个问题赋null值（多选为[]），isSkip属性赋true值，同时执行countShipNumber发放，将这（n - 1）个问题处理的isSkip属性赋true值的问题，isSkip属性赋false值
+      if (skipNumber > 1) {
+        let skipArr = block.block.blockQuestions.filter(item => item.SequenceNo > questionSequenceNo).slice(0, skipNumber - 1)
+        for (let i = 0; i < skipArr.length; i++) {
+          if (skipArr[i].question.TypeID === 7) {
+            skipArr[i].question.value = []
+            skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
+          } else if (skipArr[i].question.TypeID === 6) {
+            skipArr[i].question.value = null
+            skipArr[i].question.options.forEach(item => { item.AdditionContent = null })
+          } else if (skipArr[i].question.TypeID === 5) {
+            skipArr[i].question.value = null
+            skipArr[i].question.fillinParts.forEach(item => { item.FillinContent = null })
+          } else {
+            skipArr[i].question.value = null
+          }
+          skipArr[i].question.isSkip = true
+        }
+      }
+      // 对后面连续的n个SequenceNo大于当前SequenceNo + skipNumber - 1且isSkip为true的问题，isSkip属性赋false值，如果SequenceNo大于当前SequenceNo且isSkip为false，跳出循环，避免影响后续的跳过（1跳过2，4跳过5,3的时候停止，不然5会被恢复可见）
+      // for (let i = 0; i < block.block.blockQuestions.length; i++) {
+      //   if (block.block.blockQuestions[i].SequenceNo > questionSequenceNo + skipNumber - 1) {
+      //     if (block.block.blockQuestions[i].question.isSkip === true) {
+      //       block.block.blockQuestions[i].question.isSkip = false
+      //     } else {
+      //       break
+      //     }
+      //   }
+      // }
+      // 隐藏当前问题之后的所有问题
+      for (let i = 0; i < this.currentTemplates.length; i++) {
+        for (let j = 0; j < this.currentTemplates[i].templateBlocks.length; j++) {
+          for (let k = 0; k < this.currentTemplates[i].templateBlocks[j].block.blockQuestions.length; k++) {
+            let curQuestion = this.currentTemplates[i].templateBlocks[j].block.blockQuestions[k].question
+            if (curQuestion.num > question.question.num) {
+              curQuestion.isSkip = true
+              if (curQuestion.TypeID === 7) {
+                curQuestion.value = []
+                curQuestion.options.forEach(item => { item.AdditionContent = null })
+              } else if (curQuestion.TypeID === 6) {
+                curQuestion.value = null
+                curQuestion.options.forEach(item => { item.AdditionContent = null })
+              } else if (curQuestion.TypeID === 5) {
+                curQuestion.value = null
+                curQuestion.fillinParts.forEach(item => { item.FillinContent = null })
+              } else {
+                curQuestion.value = null
+              }
+            }
+          }
+        }
+      }
+      if (skipNumber === -1) { // 到memo底
+        this.memoForm.StatusID = 1
+      } else {
+        if (this.totalQuestionNum === question.question.num) {
+          this.memoForm.StatusID = 1
+        } else {
+          this.memoForm.StatusID = 0
+        }
         let curNum = question.question.num + skipNumber - 1
         this.showNext(curNum)
       }
@@ -776,12 +788,12 @@ export default {
             }
             let curQuestion = this.currentTemplates[i].templateBlocks[j].block.blockQuestions[k].question
             if (curQuestion.num === nextNum) {
-              if (curQuestion.numType === 'alwaysSkip') {
-                curQuestion.isSkip = true
-                nextNum = nextNum + 1
-              } else if (curQuestion.numType === 'noAnswer') {
+              if (curQuestion.numType === 'noAnswer') {
                 curQuestion.isSkip = false
                 nextNum = nextNum + 1
+                if (this.totalQuestionNum === curQuestion.num) {
+                  this.memoForm.StatusID = 1
+                }
               } else {
                 curQuestion.isSkip = false
                 setNext = true
@@ -825,6 +837,7 @@ export default {
         this.$refs['memoForm'].resetFields()
         this.currentTemplates = []
         this.AnsweredArr = []
+        this.totalQuestionNum = 1
         done()
       }).catch(() => {})
     },
@@ -1046,6 +1059,8 @@ export default {
                 })
                 this.$refs['memoForm'].resetFields()
                 this.currentTemplates = []
+                this.AnsweredArr = []
+                this.totalQuestionNum = 1
                 this.memoFormVisible = false
               }
               this.isLoading = false

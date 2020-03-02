@@ -39,7 +39,7 @@
       </el-pagination>
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
-        <div class="printDiv">
+        <div class="printDiv" v-if="viewForm.StatusID === 1">
           <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
           <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
         </div>
@@ -220,6 +220,7 @@ export default {
         InsuranceCorp: null,
         PolicyNumber: null,
         Author: null,
+        StatusID: 0,
         branch: {
           Name: null,
           Address: null,

@@ -6,7 +6,8 @@ export default{
     Vue.prototype.getPdf = function () {
       var title = this.htmlTitle
       html2Canvas(document.querySelector('#pdfDom'), {
-        allowTaint: true
+        allowTaint: true,
+        useCORS: true
       }).then(function (canvas) {
         let contentWidth = canvas.width
         let contentHeight = canvas.height
