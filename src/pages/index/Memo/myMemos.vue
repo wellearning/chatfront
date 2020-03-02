@@ -122,11 +122,7 @@
         </div>
         <div class="viewMemo" id="pdfDom">
           <!--<div class="printDate">Print Date: {{printDate}}</div>-->
-          <img :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
-          <!--<el-image class="viewLogo" :src="logo">-->
-            <!--<div slot="error" class="image-slot">-->
-            <!--</div>-->
-          <!--</el-image>-->
+          <img v-if="viewForm.branch.LogoUrl !== undefined" class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
           <el-row :gutter="20">
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
