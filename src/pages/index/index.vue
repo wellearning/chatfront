@@ -26,6 +26,7 @@
 
 <script>
 import Sidebar from '@/component/sidebar/sidebar'
+import moment from 'moment'
 
 export default {
   components: {
@@ -38,7 +39,7 @@ export default {
       isCollapse: false, // todo: 折叠后导航会报Maximum call stack size exceeded
       account: JSON.parse(this.$store.getters.getAccount).Name,
       menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children,
-      logo: 'http://134.175.142.102:8080' + JSON.parse(this.$store.getters.getAccount).institution.LogoUrl
+      logo: 'http://134.175.142.102:8080' + JSON.parse(this.$store.getters.getAccount).institution.LogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     }
   },
   mounted: function () {

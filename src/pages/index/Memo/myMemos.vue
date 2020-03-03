@@ -214,7 +214,7 @@
                         </span>
                         <span v-else-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
                           <span class="content">{{item.optionAnswer.Outputs}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
+                          <!--<i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>-->
                         </span>
                       </div>
                     </div>
@@ -232,7 +232,7 @@
                           </span>
                             <span v-else-if="option.OutputModeID === 2">
                             <span class="content">{{option.Outputs}}</span>
-                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
+                            <!--<i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>-->
                           </span>
                           </div>
                         </div>
@@ -246,14 +246,14 @@
               </div>
             </div>
           </div>
-          <el-row :gutter="20" class="foot">
-            <el-col :span="12">
-              <div class="viewMemo-subtitle foot">______________________________(Signature of Insureds)</div>
-            </el-col>
-            <el-col :span="12">
-              <div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>
-            </el-col>
-          </el-row>
+          <!--<el-row :gutter="20" class="foot">-->
+            <!--<el-col :span="12">-->
+              <!--<div class="viewMemo-subtitle foot">______________________________(Signature of Insureds)</div>-->
+            <!--</el-col>-->
+            <!--<el-col :span="12">-->
+              <!--<div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>-->
+            <!--</el-col>-->
+          <!--</el-row>-->
         </div>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
