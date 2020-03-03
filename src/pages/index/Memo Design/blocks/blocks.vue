@@ -102,13 +102,13 @@
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                    <el-option key="-1" label="Move To End" value="-1"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                    <el-option key="-1" label="Move To End" value="-1"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -148,13 +148,13 @@
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                      <el-option key="-1" label="Move To End" value="-1"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                      <el-option key="-1" label="Move To End" value="-1"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -193,13 +193,13 @@
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                      <el-option key="-1" label="Move To End" value="-1"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
-                      <el-option key="-1" label="Move To End" value="-1"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">

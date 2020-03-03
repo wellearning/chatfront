@@ -109,8 +109,8 @@
           </div>
         </div>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Save</el-button>
-          <el-button icon="el-icon-check" type="primary" @click="submit()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="memoForm.StatusID === 1">Save & Print</el-button>
+          <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Save</el-button>
+          <el-button icon="el-icon-check" type="primary" @click="submit('saveAndPrint')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="memoForm.StatusID === 1">Save & Print</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
@@ -122,7 +122,7 @@
         </div>
         <div class="viewMemo" id="pdfDom">
           <!--<div class="printDate">Print Date: {{printDate}}</div>-->
-          <img v-if="viewForm.branch.LogoUrl !== undefined" class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
+          <img v-if="viewForm.branch.LogoUrl !== ''" class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
           <el-row :gutter="20">
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
@@ -286,10 +286,10 @@ export default {
       totalQuestionNum: 1,
       AnsweredArr: [],
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-      printObj: {
-        id: 'pdfDom',
-        popTitle: ''
-      },
+      // printObj: {
+      //   id: 'pdfDom',
+      //   popTitle: ''
+      // },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
       // 搜索
@@ -838,7 +838,7 @@ export default {
       }).catch(() => {})
     },
     // 提交
-    submit: function () {
+    submit: function (type) {
       this.$refs['memoForm'].validate((valid) => {
         if (valid) {
           // 校验全部回答
@@ -1058,6 +1058,9 @@ export default {
                 this.AnsweredArr = []
                 this.totalQuestionNum = 1
                 this.memoFormVisible = false
+                if (type === 'saveAndPrint') {
+                  this.view(res.data.MemoID)
+                }
               }
               this.isLoading = false
             }).catch(err => {
@@ -1091,7 +1094,7 @@ export default {
             this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
-            this.printObj.popTitle = this.viewForm.Title // + '( ' + this.viewForm.Author + ')'
+            // this.printObj.popTitle = this.viewForm.Title // + '( ' + this.viewForm.Author + ')'
           })
         }
         this.isLoading = false
