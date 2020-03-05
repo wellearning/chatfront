@@ -8,7 +8,7 @@
           <template v-if="item.IsFillin === false">{{item.Part}}</template>
           <template v-else>
             <el-input v-if="item.InputType === 'text'" class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Text" @input="changeVal('alreadyAnswer')"></el-input>
-            <el-date-picker v-else-if="item.InputType === 'date'" class="additionContent" v-model="item.FillinContent" type="datetime" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Date" @change="changeVal('alreadyAnswer')"></el-date-picker>
+            <el-date-picker v-else-if="item.InputType === 'date'" class="additionContent" v-model="item.FillinContent" type="date" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="yyyy-mm-dd" @change="changeVal('alreadyAnswer')"></el-date-picker>
               <el-input v-else-if="item.InputType === 'number'" class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Number" @input="changeVal('alreadyAnswer')"></el-input>
             <!--<el-input-number v-else-if="item.InputType === 'number'" class="additionContent" v-model="item.FillinContent" size="mini" :style="{width: item.Part * 10 + 'px'}" placeholder="Number"></el-input-number>-->
           </template>

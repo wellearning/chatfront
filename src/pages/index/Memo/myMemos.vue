@@ -56,7 +56,7 @@
           <el-row :gutter="20" class="subtitle">
             <el-col :span="12">
               <el-form-item label="Effective Date" prop="EffectiveDate">
-                <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="Effective Date"></el-date-picker>
+                <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
               </el-form-item>
             </el-col>
             <el-col :span="12">
