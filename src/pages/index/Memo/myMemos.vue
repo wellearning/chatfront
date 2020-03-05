@@ -414,7 +414,7 @@ export default {
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Title.indexOf(this.searchName) !== -1)
+            this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1

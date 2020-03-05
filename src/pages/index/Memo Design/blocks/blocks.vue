@@ -524,7 +524,7 @@ export default {
               this.currentQuestionType = null
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }
@@ -701,7 +701,7 @@ export default {
               this.currentQuestionType = null
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list = this.list.map(item => { return item.BlockID === res.data.BlockID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.BlockID !== res.data.BlockID)

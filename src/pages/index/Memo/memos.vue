@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Memos</span>
+      <span class="inPageNav">All Memos</span>
     </div>
     <div class="inPageContent">
       <div class="searchBox">

@@ -146,7 +146,7 @@ export default {
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Description.indexOf(this.searchName) !== -1)
+            this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -193,7 +193,7 @@ export default {
               this.$refs['addForm'].resetFields()
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }
@@ -254,7 +254,7 @@ export default {
               this.$refs['editForm'].resetFields()
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
