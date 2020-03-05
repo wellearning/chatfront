@@ -23,6 +23,7 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingBlock" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="Status" prop="StatusID" :formatter="statusName" width="200"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
@@ -41,6 +42,11 @@
           <el-form-item label="Type" prop="TypeID">
             <el-select v-model="addForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
               <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-select v-model="addForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
+              <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
@@ -74,6 +80,11 @@
           <el-form-item label="Type" prop="TypeID">
             <el-select v-model="editForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
               <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-select v-model="editForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
+              <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
@@ -111,11 +122,12 @@ export default {
       blockList: [],
       currentBlock: null,
       typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
+      statusList: [{id: 0, name: 'Draft'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Stopped'}],
       // 新增
       addFormVisible: false,
       addForm: {
         TypeID: null,
-        StatusID: 1,
+        StatusID: 0,
         Title: null,
         templateBlocks: []
       },
@@ -133,7 +145,7 @@ export default {
       editForm: {
         TemplateID: null,
         TypeID: null,
-        StatusID: 1,
+        StatusID: 0,
         Title: null,
         templateBlocks: [],
         IsNew: false
@@ -166,6 +178,15 @@ export default {
     this.initBlock()
   },
   methods: {
+    statusName (row, column) {
+      if (row.StatusID === 0) {
+        return 'Draft'
+      } else if (row.StatusID === 1) {
+        return 'Normal'
+      } else {
+        return 'Stopped'
+      }
+    },
     // blocks列表
     initBlock: function () {
       this.isLoadingBlock = true

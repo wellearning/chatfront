@@ -271,7 +271,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['addForm'].resetFields()
-        this.addForm.options = null
+        this.addForm.options = []
         done()
       }).catch(() => {})
     },
@@ -291,7 +291,7 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['addForm'].resetFields()
-              this.addForm.options = null
+              this.addForm.options = []
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
@@ -341,7 +341,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['editForm'].resetFields()
-        this.editForm.options = null
+        this.editForm.options = []
         done()
       }).catch(() => {})
     },
@@ -361,7 +361,7 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['editForm'].resetFields()
-              this.editForm.options = null
+              this.editForm.options = []
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
