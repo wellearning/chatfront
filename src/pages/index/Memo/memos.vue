@@ -19,7 +19,7 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="Policy Change Type" prop="Title" min-width="300"></el-table-column>
         <el-table-column label="EffectiveDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
