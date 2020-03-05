@@ -55,7 +55,7 @@
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.corpbroker.corp.Name}}</b></div>
               <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.corpbroker.BrokerCode}}</b></div>
-              <div class="viewMemo-subtitle head"><i class="long">Print Date: </i><b>{{printDate}}</b></div>
+              <!--<div class="viewMemo-subtitle head"><i class="long">Print Date: </i><b>{{printDate}}</b></div>-->
             </el-col>
           </el-row>
           <div class="viewMemo-title">{{viewForm.Title}}</div>
@@ -177,6 +177,11 @@
               <!--<div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>-->
             <!--</el-col>-->
           <!--</el-row>-->
+          <el-row :gutter="20" class="foot printDateInFoot">
+            <el-col>
+              <b>{{printDate}}</b>
+            </el-col>
+          </el-row>
         </div>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
