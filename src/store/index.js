@@ -7,7 +7,8 @@ Vue.use(Vuex)
 const state = {
   account: '',
   permissionList: '',
-  cancelTokenArr: []
+  cancelTokenArr: [],
+  MemoID: ''
 }
 
 const getters = { // 实时监听state值的变化(最新状态)

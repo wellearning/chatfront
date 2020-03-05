@@ -77,6 +77,9 @@ html {
 .el-menu {
   border-right: none;
 }
+.el-menu .el-menu-item.is-active {
+  background-color: #ecf5ff;
+}
 .el-menu-item i {
   color: #303133;
 }

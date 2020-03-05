@@ -2,6 +2,9 @@
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">My Memos</span>
+      <div class="rightBtnBox">
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">New</el-button>
+      </div>
     </div>
     <div class="inPageContent">
       <div class="searchBox">
@@ -375,6 +378,10 @@ export default {
     this.search(null)
     this.initTemplates()
     this.initInsuranceCompany()
+    if (this.$store.state.MemoID !== '') {
+      this.view(this.$store.state.MemoID)
+      this.$store.state.MemoID = ''
+    }
   },
   watch: {
     finishNum (val) {
@@ -1136,6 +1143,10 @@ export default {
     pdf: function (title, EffectiveDate) {
       this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#pdfDom')
+    },
+    // 添加memo
+    showAdd: function () {
+      this.$router.push({path: '/newMemo'})
     }
   }
 }

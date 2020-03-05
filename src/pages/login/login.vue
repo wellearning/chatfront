@@ -6,7 +6,7 @@
           <el-col :xs="2" :sm="4" :md="6" :lg="8" :xl="9">&#12288;</el-col>
           <el-col :xs="20" :sm="16" :md="12" :lg="8" :xl="6">
             <div class="loginBox">
-              <h2 class="loginTitle">Welcom to Intelli Broker</h2>
+              <h2 class="loginTitle">Welcome to Intelli Broker</h2>
               <el-form class="loginForm" ref="loginForm" :model="loginForm" :rules="loginFormRules" @keyup.13.native="login()">
                 <el-form-item label prop="username">
                   <el-input v-model.trim="loginForm.username" placeholder="Account" clearable></el-input>
