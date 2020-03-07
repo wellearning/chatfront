@@ -177,7 +177,7 @@
                     <div class="question">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Reminder-->
-                  <div v-else-if="item.QuestionType === 'Reminder && item.OutputModeID !== 3'">
+                  <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
                     <div class="question">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Property-->
@@ -1025,7 +1025,7 @@ export default {
               }
             }
           }
-          if (allAnswer) {
+          if (type === 'save' || (type === 'saveAndPrint' && allAnswer)) {
             form.memoTemplates = templates
             // console.log('提交问题', form)
             this.isLoading = true

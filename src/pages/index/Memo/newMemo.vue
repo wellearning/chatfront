@@ -601,7 +601,7 @@ export default {
               }
             }
           }
-          if (allAnswer) {
+          if (type === 'save' || (type === 'saveAndPrint' && allAnswer)) {
             form.memoTemplates = templates
             this.isLoading = true
             this.axios.post('/api/Services/memoservice.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
