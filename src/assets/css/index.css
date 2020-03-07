@@ -439,6 +439,7 @@ html {
   font-size: 20px;
   color: #303133;
   font-weight: bold;
+  white-space: pre-line;
 }
 .answer .propertyQuestion .question {
   font-size: 20px;
@@ -499,6 +500,7 @@ html {
 .viewMemo {
   padding: 120px 80px;
   position: relative;
+  white-space: pre-line;
 }
 .viewLogo {
   position: absolute;
