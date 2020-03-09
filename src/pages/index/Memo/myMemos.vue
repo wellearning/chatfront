@@ -683,40 +683,44 @@ export default {
         skipNumber = routes[0].MoveStep
       } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
-          // 变量转换为具体值
+          // 变量转换为具体值，定义OperandCurrent，避免修改EffectiveDate时，无法再次匹配到{EffectiveDate}
           if (routes[i].Operand === '{AutoBindingAuthority}') {
-            routes[i].Operand = this.AutoBindingAuthority
+            routes[i].OperandCurrent = this.AutoBindingAuthority
           } else if (routes[i].Operand === '{PropertyBindingAuthority}') {
-            routes[i].Operand = this.PropertyBindingAuthority
+            routes[i].OperandCurrent = this.PropertyBindingAuthority
           } else if (routes[i].Operand === '{EffectiveDate}') {
-            routes[i].Operand = this.EffectiveDate
+            routes[i].OperandCurrent = this.EffectiveDate
+          }
+          let Operand = routes[i].Operand
+          if (routes[i].OperandCurrent !== undefined) {
+            Operand = routes[i].OperandCurrent
           }
           // 日期型property把operand和value转成时间戳
           if (sign === 'date') {
-            routes[i].Operand = moment(routes[i].Operand).valueOf()
+            Operand = moment(Operand).valueOf()
             value = moment(value).valueOf()
           }
-          if (isNaN(routes[i].Operand)) { // true代表非数字，字符串比较
-            if (routes[i].Operator === '=' && value === routes[i].Operand) {
+          if (isNaN(Operand)) { // true代表非数字，字符串比较
+            if (routes[i].Operator === '=' && value === Operand) {
               skipNumber = routes[i].MoveStep
               break
             } else {
               skipNumber = 1
             }
           } else { // false代表是有效数字，数字比较
-            if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(routes[i].Operand)) {
+            if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(routes[i].Operand)) {
+            } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(routes[i].Operand)) {
+            } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
               break
-            } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(routes[i].Operand)) {
+            } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(Operand)) {
               skipNumber = routes[i].MoveStep
               break
             } else {
