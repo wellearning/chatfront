@@ -13,7 +13,7 @@
       <el-row :gutter="20" class="subtitle">
         <el-col :span="12">
           <el-form-item label="Effective Date" prop="EffectiveDate">
-            <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd" @change="changeEffectiveDate(memoForm.EffectiveDate)"></el-date-picker>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -120,6 +120,9 @@ export default {
   },
   data: function () {
     return {
+      AutoBindingAuthority: null,
+      PropertyBindingAuthority: null,
+      EffectiveDate: null,
       isAnswering: false,
       isPost: false,
       totalNum: 0,
@@ -218,32 +221,42 @@ export default {
         this.isLoadingInsuranceCompany = false
       })
     },
+    // 重置Memo
+    clearMemo: function () {
+      this.isAnswering = false
+      this.memoForm.StatusID = 0
+      this.currentTemplates = []
+      this.totalQuestionNum = 1
+    },
+    // 选择EffectiveDate
+    changeEffectiveDate: function (date) {
+      // 获取变量值，用于之后回答时routing比对
+      this.EffectiveDate = moment(date).format('YYYY-MM-DD')
+    },
     // 选择保险公司
     changeInsuranceCompany: function () {
       this.memoForm.Templates = []
-      this.currentTemplates = []
+      this.clearMemo()
+      // 获取变量值，用于之后回答时routing比对
+      this.AutoBindingAuthority = this.insuranceCompanyList.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID).AutoBindingAuthority
+      this.PropertyBindingAuthority = this.insuranceCompanyList.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID).PropertyBindingAuthority
     },
-    // 选择保险公司
+    // 选择Templates类型
     changeTemplateType: function (typeid) {
       this.memoForm.Templates = []
-      this.currentTemplates = []
+      this.clearMemo()
       this.initTemplates(typeid)
     },
     // 选择Templates
     changeTemplates: function () {
-      this.isAnswering = false
-      this.currentTemplates = []
-      // this.curQuestionNum = 0
-      // this.totalQuestionNum = 1
+      this.clearMemo()
     },
     // 开始回答
     beginToAnswer: function () {
-      this.memoForm.StatusID = 0
       let array = this.memoForm.Templates
-      // 重置template
-      this.isAnswering = true
       // 添加template
       if (array !== null && array.length > 0) {
+        this.isAnswering = true
         this.isPost = true
         this.totalNum = array.length
         for (let i = 0; i < array.length; i++) {
@@ -284,6 +297,11 @@ export default {
             this.isLoading = false
           })
         }
+      } else {
+        this.$message({
+          type: 'warning',
+          message: 'Please Select Policy Change Type'
+        })
       }
     },
     // 标序
@@ -340,6 +358,19 @@ export default {
         skipNumber = routes[0].MoveStep
       } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
+          // 变量转换为具体值
+          if (routes[i].Operand === '{AutoBindingAuthority}') {
+            routes[i].Operand = this.AutoBindingAuthority
+          } else if (routes[i].Operand === '{PropertyBindingAuthority}') {
+            routes[i].Operand = this.PropertyBindingAuthority
+          } else if (routes[i].Operand === '{EffectiveDate}') {
+            routes[i].Operand = this.EffectiveDate
+          }
+          // 日期型property把operand和value转成时间戳
+          if (sign === 'date') {
+            routes[i].Operand = moment(routes[i].Operand).valueOf()
+            value = moment(value).valueOf()
+          }
           if (isNaN(routes[i].Operand)) { // true代表非数字，字符串比较
             if (routes[i].Operator === '=' && value === routes[i].Operand) {
               skipNumber = routes[i].MoveStep
@@ -613,9 +644,10 @@ export default {
                   message: 'Operation Succeeded'
                 })
                 this.$refs['memoForm'].resetFields()
-                this.currentTemplates = []
-                this.totalQuestionNum = 1
-                this.isAnswering = false
+                this.clearMemo()
+                this.EffectiveDate = null
+                this.AutoBindingAuthority = null
+                this.PropertyBindingAuthority = null
                 if (type === 'saveAndPrint') {
                   this.$store.state.MemoID = res.data.MemoID
                 }

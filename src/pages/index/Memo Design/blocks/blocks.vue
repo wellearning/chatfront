@@ -51,7 +51,7 @@
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>
@@ -143,7 +143,7 @@
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
-                    <el-input v-model.number="item.Operand" clearable size="small"></el-input>
+                    <el-input v-model="item.Operand" clearable size="small"></el-input>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
@@ -238,7 +238,7 @@
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>

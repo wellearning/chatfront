@@ -56,7 +56,7 @@
           <el-row :gutter="20" class="subtitle">
             <el-col :span="12">
               <el-form-item label="Effective Date" prop="EffectiveDate">
-                <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+                <el-date-picker v-model="memoForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd" @change="changeEffectiveDate(memoForm.EffectiveDate)"></el-date-picker>
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -289,6 +289,9 @@ export default {
   },
   data: function () {
     return {
+      AutoBindingAuthority: null,
+      PropertyBindingAuthority: null,
+      EffectiveDate: null,
       isAnswering: false,
       isPost: false,
       totalNum: 0,
@@ -491,10 +494,10 @@ export default {
         this.isLoadingInsuranceCompany = false
       })
     },
-    // 选择保险公司
-    changeInsuranceCompany: function () {
-      this.memoForm.Templates = []
-      this.currentTemplates = []
+    // 选择EffectiveDate
+    changeEffectiveDate: function (date) {
+      // 获取变量值，用于之后回答时routing比对
+      this.EffectiveDate = moment(date).format('YYYY-MM-DD')
     },
     // 选择Templates
     changeTemplates: function (array, isAnswer) {
@@ -680,6 +683,19 @@ export default {
         skipNumber = routes[0].MoveStep
       } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
+          // 变量转换为具体值
+          if (routes[i].Operand === '{AutoBindingAuthority}') {
+            routes[i].Operand = this.AutoBindingAuthority
+          } else if (routes[i].Operand === '{PropertyBindingAuthority}') {
+            routes[i].Operand = this.PropertyBindingAuthority
+          } else if (routes[i].Operand === '{EffectiveDate}') {
+            routes[i].Operand = this.EffectiveDate
+          }
+          // 日期型property把operand和value转成时间戳
+          if (sign === 'date') {
+            routes[i].Operand = moment(routes[i].Operand).valueOf()
+            value = moment(value).valueOf()
+          }
           if (isNaN(routes[i].Operand)) { // true代表非数字，字符串比较
             if (routes[i].Operator === '=' && value === routes[i].Operand) {
               skipNumber = routes[i].MoveStep
@@ -800,6 +816,9 @@ export default {
             this.changeTemplates(this.memoForm.Templates, 'Answer')
             this.initTemplates()
             this.initInsuranceCompany()
+            this.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
+            this.AutoBindingAuthority = res.data.corpbroker.corp.AutoBindingAuthority
+            this.PropertyBindingAuthority = res.data.corpbroker.corp.PropertyBindingAuthority
           })
         }
         this.isLoading = false
@@ -819,6 +838,9 @@ export default {
         this.currentTemplates = []
         this.AnsweredArr = []
         this.totalQuestionNum = 1
+        this.EffectiveDate = null
+        this.AutoBindingAuthority = null
+        this.PropertyBindingAuthority = null
         done()
       }).catch(() => {})
     },
@@ -1042,6 +1064,9 @@ export default {
                 this.currentTemplates = []
                 this.AnsweredArr = []
                 this.totalQuestionNum = 1
+                this.EffectiveDate = null
+                this.AutoBindingAuthority = null
+                this.PropertyBindingAuthority = null
                 this.memoFormVisible = false
                 if (type === 'saveAndPrint') {
                   this.view(res.data.MemoID)
