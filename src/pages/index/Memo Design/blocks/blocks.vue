@@ -41,7 +41,7 @@
           <div v-for="(item, index) in addForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID + '. ' + item.question.Description}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
@@ -66,7 +66,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.QuestionID + '. ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
@@ -228,7 +228,7 @@
           <div v-for="(item, index) in editForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID + '. ' + item.question.Description}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
@@ -253,7 +253,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.QuestionID + '. ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>

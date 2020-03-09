@@ -430,7 +430,7 @@ html {
   margin-bottom: 30px;
 }
 .answerMemo .typeTitle {
-  font-size: 28px;
+  font-size: 20px;
   color: #303133;
   font-weight: bold;
   /*text-align: center;*/
@@ -438,7 +438,7 @@ html {
 .answerMemo .typeReminder {
   font-size: 20px;
   color: #303133;
-  font-weight: bold;
+  /*font-weight: bold;*/
   white-space: pre-line;
 }
 .answer .propertyQuestion .question {
@@ -564,7 +564,7 @@ html {
   margin-bottom: 30px;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .title .question {
-  font-size: 28px;
+  font-size: 18px;
   font-weight: bold;
   color: #303133;
   /*text-align: center;*/
@@ -585,7 +585,14 @@ html {
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .content {
   font-size: 18px;
   color: #606266;
+  font-weight: normal;
   /*text-decoration: underline;*/
+}
+.marginLeft10px {
+  margin-left: 10px;
+}
+.viewMemo .viewMemo-content .viewMemo-content-answer .question.fontNormal {
+  font-weight: normal;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .addition {
   font-size: 18px;

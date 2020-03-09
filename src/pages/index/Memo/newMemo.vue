@@ -238,6 +238,7 @@ export default {
     },
     // 开始回答
     beginToAnswer: function () {
+      this.memoForm.StatusID = 0
       let array = this.memoForm.Templates
       // 重置template
       this.isAnswering = true

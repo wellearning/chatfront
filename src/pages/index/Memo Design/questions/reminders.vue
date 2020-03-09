@@ -94,8 +94,8 @@ export default {
       },
       addFormRules: {
         Description: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
-          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' }
+          // { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
       },
       // 修改
@@ -114,8 +114,8 @@ export default {
       },
       editFormRules: {
         Description: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
-          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' }
+          // { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
       },
       // 搜索

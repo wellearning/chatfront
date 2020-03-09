@@ -51,7 +51,7 @@
           </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -62,7 +62,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -89,7 +89,7 @@
           </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -100,7 +100,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">

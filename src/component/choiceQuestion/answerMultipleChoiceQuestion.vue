@@ -42,7 +42,11 @@ export default {
       }
     },
     changeVal: function (value) {
-      this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)
+      if (this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).length > 0 && this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).filter(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null').length === 0) {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)
+      } else {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value, 'emptyAddition')
+      }
     }
   }
 }

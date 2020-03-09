@@ -98,14 +98,16 @@
                   </div>
                   <!--问题类型为：Reminder-->
                   <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
-                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Property-->
                   <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
-                    <div class="question">{{item.QuestionDesc}}</div>
-                    <div class="answer">
-                      <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{item.AnswerDesc}}</span>
-                      <span class="content noAnswer" v-else>No Answer</span>
+                    <div class="question">
+                      <span>{{item.QuestionDesc}}</span>
+                      <span class="answer marginLeft10px">
+                        <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
+                        <span class="content noAnswer" v-else>No Answer</span>
+                      </span>
                     </div>
                   </div>
                   <!--问题类型为：SimpleAnswer-->
@@ -120,7 +122,7 @@
                   <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
                     <div class="question">
                       <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
-                       <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== '' && part.FillinContent !== null)">{{part.FillinContent}}</span>
+                       <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== '' && part.FillinContent !== null)">{{isNaN(part.FillinContent) && !isNaN(Date.parse(part.FillinContent)) ? dateFormat(part.FillinContent) : part.FillinContent}}</span>
                         <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === '' || part.FillinContent !== null)">No Answer</span>
                         <span v-else>{{part.Part}}</span>
                       </span>
@@ -133,11 +135,11 @@
                       <div class="answer">
                         <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>
+                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>
                         </span>
                         <span v-else-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
                           <span class="content">{{item.optionAnswer.Outputs}}</span>
-                          <!--<i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''">Addition:<b>{{item.optionAnswer.AdditionContent}}</b></i>-->
+                          <!--<i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>-->
                         </span>
                       </div>
                     </div>
@@ -151,11 +153,11 @@
                           <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
                           <span v-if="option.OutputModeID === 1">
                             <span class="content">{{option.Content}}</span>
-                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>
+                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''"><b>{{option.AdditionContent}}</b></i>
                           </span>
                             <span v-else-if="option.OutputModeID === 2">
                             <span class="content">{{option.Outputs}}</span>
-                            <!--<i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''">Addition:<b>{{option.AdditionContent}}</b></i>-->
+                            <!--<i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''"><b>{{option.AdditionContent}}</b></i>-->
                           </span>
                           </div>
                         </div>
