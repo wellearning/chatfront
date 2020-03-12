@@ -23,6 +23,7 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingBlock" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="Status" prop="StatusID" :formatter="statusName" width="200"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
@@ -38,9 +39,19 @@
           <el-form-item label="Title" prop="Title">
             <el-input v-model="addForm.Title" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Type" prop="TypeID">
+            <el-select v-model="addForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-select v-model="addForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
+              <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -51,7 +62,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -66,9 +77,19 @@
           <el-form-item label="Title" prop="Title">
             <el-input v-model="editForm.Title" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Type" prop="TypeID">
+            <el-select v-model="editForm.TypeID" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-select v-model="editForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
+              <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -79,7 +100,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -100,11 +121,13 @@ export default {
       isLoadingBlock: false,
       blockList: [],
       currentBlock: null,
+      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
+      statusList: [{id: 0, name: 'Draft'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Stopped'}],
       // 新增
       addFormVisible: false,
       addForm: {
-        TypeID: 0,
-        StatusID: 1,
+        TypeID: null,
+        StatusID: 0,
         Title: null,
         templateBlocks: []
       },
@@ -112,14 +135,17 @@ export default {
         Title: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       },
       // 修改
       editFormVisible: false,
       editForm: {
         TemplateID: null,
-        TypeID: 0,
-        StatusID: 1,
+        TypeID: null,
+        StatusID: 0,
         Title: null,
         templateBlocks: [],
         IsNew: false
@@ -128,6 +154,9 @@ export default {
         Title: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       },
       // 搜索
@@ -149,6 +178,15 @@ export default {
     this.initBlock()
   },
   methods: {
+    statusName (row, column) {
+      if (row.StatusID === 0) {
+        return 'Draft'
+      } else if (row.StatusID === 1) {
+        return 'Normal'
+      } else {
+        return 'Stopped'
+      }
+    },
     // blocks列表
     initBlock: function () {
       this.isLoadingBlock = true
@@ -277,7 +315,7 @@ export default {
               this.currentBlock = null
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Title.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }
@@ -350,7 +388,7 @@ export default {
               this.currentBlock = null
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Title.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list = this.list.map(item => { return item.TemplateID === res.data.TemplateID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.TemplateID !== res.data.TemplateID)

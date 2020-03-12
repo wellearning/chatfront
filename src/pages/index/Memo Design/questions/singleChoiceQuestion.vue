@@ -242,7 +242,7 @@ export default {
           this.list = listWidthAdditionContent
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Description.indexOf(this.searchName) !== -1)
+            this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -271,7 +271,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['addForm'].resetFields()
-        this.addForm.options = null
+        this.addForm.options = []
         done()
       }).catch(() => {})
     },
@@ -291,10 +291,10 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['addForm'].resetFields()
-              this.addForm.options = null
+              this.addForm.options = []
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 // 声明value，AdditionContent，防止输入框无法输入
                 let listWidthAdditionContent = res.data
                 listWidthAdditionContent.value = null
@@ -341,7 +341,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['editForm'].resetFields()
-        this.editForm.options = null
+        this.editForm.options = []
         done()
       }).catch(() => {})
     },
@@ -361,10 +361,10 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['editForm'].resetFields()
-              this.editForm.options = null
+              this.editForm.options = []
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Description.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 // 声明value，AdditionContent，防止输入框无法输入
                 let listWidthAdditionContent = res.data
                 listWidthAdditionContent.value = null

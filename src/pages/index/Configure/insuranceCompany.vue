@@ -26,7 +26,7 @@
         <el-table-column label="Short Name" prop="ShortName" min-width="200"></el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broken Code</el-button>
+            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>
@@ -219,7 +219,7 @@ export default {
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+            this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -361,7 +361,7 @@ export default {
               this.$refs['editForm'].resetFields()
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list = this.list.map(item => { return item.InsuranceCorpID === res.data.InsuranceCorpID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.InsuranceCorpID !== res.data.InsuranceCorpID)
@@ -411,7 +411,7 @@ export default {
               this.$refs['addForm'].resetFields()
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }

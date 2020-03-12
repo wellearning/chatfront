@@ -361,7 +361,7 @@ export default {
             console.log('查询树', res)
             this.list = res.data
             if (this.searchName !== null) {
-              this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+              this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
             }
             this.total = this.list.length
             this.currentPage = goPage
@@ -377,7 +377,7 @@ export default {
             console.log('查询树', res)
             this.list = res.data
             if (this.searchName !== null) {
-              this.list = this.list.filter(item => item.Name.indexOf(this.searchName) !== -1)
+              this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
             }
             this.total = this.list.length
             this.currentPage = goPage

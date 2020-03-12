@@ -7,7 +7,7 @@
         <el-checkbox-group v-model="question.value" @change="resetAdditionContent">
           <el-checkbox v-for="item in question.options" :label="item.ChoiceOptionID" :key="item.ChoiceOptionID">
             <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
-            <el-input class="additionContent" v-if="item.NeedAddition" v-model="item.AdditionContent" :disabled="question.value.indexOf(item.ChoiceOptionID) === -1" size="mini" @blur="changeVal('alreadyAnswer')"></el-input>
+            <el-input class="additionContent" v-if="item.NeedAddition" v-model="item.AdditionContent" :disabled="question.value.indexOf(item.ChoiceOptionID) === -1" size="mini" @input="changeVal('alreadyAnswer')"></el-input>
           </el-checkbox>
         </el-checkbox-group>
       </div>
@@ -35,10 +35,18 @@ export default {
   methods: {
     resetAdditionContent: function () {
       this.question.options.forEach(item => { this.question.value.indexOf(item.ChoiceOptionID) === -1 ? item.AdditionContent = null : item.AdditionContent = item.AdditionContent })
-      this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, 'alreadyAnswer')
+      if (this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).length > 0 && this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).filter(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null').length === 0) {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, 'alreadyAnswer')
+      } else {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, 'alreadyAnswer', 'emptyAddition')
+      }
     },
     changeVal: function (value) {
-      this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)
+      if (this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).length > 0 && this.question.options.filter(item => this.question.value.indexOf(item.ChoiceOptionID) !== -1).filter(item => item.NeedAddition + '|' + item.AdditionContent === 'true|null').length === 0) {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)
+      } else {
+        this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value, 'emptyAddition')
+      }
     }
   }
 }

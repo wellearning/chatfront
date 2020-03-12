@@ -41,7 +41,7 @@
           <div v-for="(item, index) in addForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID + '. ' + item.question.Description}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
@@ -51,7 +51,7 @@
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>
@@ -66,7 +66,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.QuestionID + '. ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
@@ -102,11 +102,13 @@
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -141,16 +143,18 @@
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
-                    <el-input v-model.number="item.Operand" clearable size="small"></el-input>
+                    <el-input v-model="item.Operand" clearable size="small"></el-input>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -189,11 +193,13 @@
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -222,7 +228,7 @@
           <div v-for="(item, index) in editForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.Description}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID + '. ' + item.question.Description}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
@@ -232,7 +238,7 @@
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && item.question.InputType === 'number')">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>
@@ -247,7 +253,7 @@
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle">Question</el-button>
             <el-select v-model="currentQuestion" placeholder="Question" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="'(' + item.QuestionID + ') ' + item.Description" :value="item.QuestionID"></el-option>
+              <el-option class="questionOption" v-for="item in questionList" :key="item.QuestionID" :label="item.QuestionID + '. ' + item.Description" :value="item.QuestionID"></el-option>
             </el-select>
             <el-select v-model="currentQuestionType" placeholder="Question Type" size="small" class="questionType questionRightBtn" @change="changeQuestionType(currentQuestionType)" style="width: 207px;">
               <el-option v-for="item in questionTypeList" :key="item.id" :label="item.name" :value="item.id"></el-option>
@@ -518,7 +524,7 @@ export default {
               this.currentQuestionType = null
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list.push(res.data)
                 this.total = this.list.length
               }
@@ -695,7 +701,7 @@ export default {
               this.currentQuestionType = null
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
-              if (this.searchName === null || (this.searchName !== null && res.data.Name.indexOf(this.searchName) !== -1)) {
+              if (this.searchName === null || (this.searchName !== null && res.data.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 this.list = this.list.map(item => { return item.BlockID === res.data.BlockID ? res.data : item })
               } else {
                 this.list = this.list.filter(item => item.BlockID !== res.data.BlockID)
