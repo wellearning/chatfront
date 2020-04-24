@@ -24,6 +24,7 @@ html {
   line-height: 1.5;
   color: #303133;
   background: #f5f5f5;
+  word-break: normal;
 }
 .el-container {
   height: 100vh;
@@ -107,6 +108,7 @@ html {
 }
 .el-table .cell { /*表格识别换行符*/
   white-space: pre-line;
+  word-break: normal;
 }
 /*通用结束*/
 /*login开始*/
@@ -323,6 +325,7 @@ html {
   font-size: 20px;
   color: #303133;
   font-weight: bold;
+  word-break: normal;
 }
 .answer .fillInQuestion .question .part .additionContent {
   margin: 0 10px;
@@ -492,7 +495,7 @@ html {
 /*newMemo结束*/
 /*myMemo开始*/
 .printDiv {
-  position: absolute;
+  /* position: absolute;*/
   background: #ffffff;
   z-index: 2;
   width: 50%;
@@ -501,6 +504,15 @@ html {
   padding: 120px 80px;
   position: relative;
   white-space: pre-line;
+}
+.viewPinkSlip {
+  margin: 50px 0 50px 0;
+  padding: 70px 80px;
+  position: relative;
+  white-space: pre-line;
+  height: 1280px;
+  background-image: url(http://134.175.142.102:8080/upload/pinkslip.png);
+  background-repeat: no-repeat;
 }
 .viewLogo {
   position: absolute;
@@ -561,21 +573,22 @@ html {
   margin-top: 30px;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer{
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .title .question {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
   color: #303133;
   /*text-align: center;*/
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question {
-  font-size: 18px;
+  font-size: 24px;
   color: #303133;
-  font-weight: bold;
+  font-weight: normal;
+  word-break: normal;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question .fillInPart {
-  font-size: 18px;
+  font-size: 24px;
   color: #606266;
   font-weight: normal;
   margin-left: 10px;
@@ -583,7 +596,7 @@ html {
   text-decoration: underline;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .content {
-  font-size: 18px;
+  font-size: 24px;
   color: #606266;
   font-weight: normal;
   /*text-decoration: underline;*/
@@ -592,10 +605,11 @@ html {
   margin-left: 10px;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .question.fontNormal {
+  font-size: 24px;
   font-weight: normal;
 }
 .viewMemo .viewMemo-content .viewMemo-content-answer .answer .addition {
-  font-size: 18px;
+  font-size: 24px;
   color: #606266;
   font-style: normal;
   margin-left: 30px;
@@ -606,7 +620,7 @@ html {
   /*text-decoration: underline;*/
 }
 .noAnswer {
-  font-size: 18px;
+  font-size: 24px;
   color: #909399 !important;
   font-style: italic;
   /*text-decoration: underline;*/

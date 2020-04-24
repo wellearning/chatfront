@@ -22,20 +22,21 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Policy Change Type" prop="Title" min-width="200"></el-table-column>
+        <el-table-column label="Policy Change Type" prop="Title" min-width="250"></el-table-column>
         <el-table-column label="EffectiveDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="CorpName" prop="CorpName" min-width="200"></el-table-column>
-        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200"></el-table-column>
-        <el-table-column label="Name Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
+        <el-table-column label="CorpName" prop="CorpName" min-width="150"></el-table-column>
+        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="150"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="300"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+            <!--<el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>-->
           </template>
         </el-table-column>
       </el-table>
@@ -94,7 +95,7 @@
                 <div class="typeReminder"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
               </div>
               <div class="answerMemo" v-else-if="i.question.TypeID === 3 && !i.question.isSkip">
-                <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerProperty>
+                <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" :blockQuestions="it.block.blockQuestions" @changeValue="countShipNumber"></AnswerProperty>
               </div>
               <div class="answerMemo" v-else-if="i.question.TypeID === 4 && !i.question.isSkip">
                 <AnswerSimpleAnswer :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerSimpleAnswer>
@@ -125,7 +126,7 @@
         </div>
         <div class="viewMemo" id="pdfDom">
           <!--<div class="printDate">Print Date: {{printDate}}</div>-->
-          <img v-if="viewForm.branch.LogoUrl !== ''" class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
+          <img v-if="viewForm.branch.LogoUrl !== '' && viewForm.branch.LogoUrl!==null " class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
           <el-row :gutter="20">
             <el-col :span="12">
               <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
@@ -174,7 +175,7 @@
                 <div class="viewMemo-content-answer" v-for="(item, index) in it.normalAnswers" :key="index">
                   <!--问题类型为：Title-->
                   <div v-if="item.QuestionType === 'Title' && item.OutputModeID !== 3" class="title">
-                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Reminder-->
                   <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
@@ -211,7 +212,7 @@
                   <!--问题类型为：SingleChoice-->
                   <div v-else-if="item.QuestionType === 'SingleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
+                      <div class="question fontNormal" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
@@ -227,7 +228,7 @@
                   <!--问题类型为：MultipleChoice-->
                   <div v-else-if="item.QuestionType === 'MultipleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
+                      <div class="question fontNormal" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <div v-if="item.optionAnswers.length > 0">
                           <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
@@ -267,6 +268,12 @@
         </div>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Pink Slip 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="pinkSlipFormVisible" width="1184.56px"  height="2184.56px" center >
+        <PinkSlip ref="ps" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></PinkSlip>
+      </el-dialog>
+      <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
+
     </div>
   </div>
 </template>
@@ -278,6 +285,7 @@ import AnswerSimpleAnswer from '@/component/simpleAnswer/answerSimpleAnswer'
 import AnswerFillInQuestion from '@/component/fillInQuestion/answerFillInQuestion'
 import AnswerSingleChoiceQuestion from '@/component/choiceQuestion/answerSingleChoiceQuestion'
 import AnswerMultipleChoiceQuestion from '@/component/choiceQuestion/answerMultipleChoiceQuestion'
+import PinkSlip from '@/component/window/pinkSlip'
 
 export default {
   components: {
@@ -285,7 +293,8 @@ export default {
     AnswerSimpleAnswer,
     AnswerFillInQuestion,
     AnswerSingleChoiceQuestion,
-    AnswerMultipleChoiceQuestion
+    AnswerMultipleChoiceQuestion,
+    PinkSlip
   },
   data: function () {
     return {
@@ -310,6 +319,8 @@ export default {
         name: null
       },
       searchName: null,
+      pinkSlipFormVisible: false,
+      currentMemoID: null,
       // 列表
       tempList: [],
       list: [],
@@ -406,6 +417,14 @@ export default {
     }
   },
   methods: {
+    // 显示PinkSlip
+    showPinkSlip: function (memoid) {
+      this.currentMemoID = memoid
+      this.pinkSlipFormVisible = true
+      if (this.$refs.ps !== undefined) {
+        this.$refs.ps.loadMemo(memoid)
+      }
+    },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
@@ -413,14 +432,16 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetMemoesByStaff', {staffid: JSON.parse(this.$store.getters.getAccount).StaffID}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/GetMyMemoes', {query: name}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          /*
           if (name !== null) {
             this.searchName = name
             this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
+          */
           this.total = this.list.length
           this.currentPage = 1
         }
@@ -684,6 +705,7 @@ export default {
       } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
           // 变量转换为具体值，定义OperandCurrent，避免修改EffectiveDate时，无法再次匹配到{EffectiveDate}
+          /*
           if (routes[i].Operand === '{AutoBindingAuthority}') {
             routes[i].OperandCurrent = this.AutoBindingAuthority
           } else if (routes[i].Operand === '{PropertyBindingAuthority}') {
@@ -692,9 +714,12 @@ export default {
             routes[i].OperandCurrent = this.EffectiveDate
           }
           let Operand = routes[i].Operand
+
           if (routes[i].OperandCurrent !== undefined) {
             Operand = routes[i].OperandCurrent
           }
+          */
+          let Operand = this.parseOperand(routes[i].Operand, sign)
           // 日期型property把operand和value转成时间戳
           if (sign === 'date') {
             Operand = moment(Operand).valueOf()
@@ -769,6 +794,52 @@ export default {
         }
         let curNum = question.question.num + skipNumber - 1
         this.showNext(curNum)
+      }
+    },
+    // 解析操作数
+    parseOperand: function (exp, sign) {
+      // return exp
+      if (sign === 'number') {
+        let ed = new Date(this.EffectiveDate)
+        exp = exp.replace('{EffectiveDate}.Year', ed.getFullYear())
+        let corpid = this.memoForm.InsuranceCorpID
+        let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === corpid)
+        if (corp !== undefined) {
+          let starti = exp.indexOf('{')
+          let endi = exp.indexOf('}')
+          if (starti >= 0 && endi >= 0 && endi > starti + 1) {
+            let replaced = exp.substr(starti + 1, endi - starti - 1)
+            if (corp[replaced] !== undefined) {
+              exp = exp.replace('{' + replaced + '}', corp[replaced])
+            }
+          }
+          /*
+          exp = exp.replace('{AutoBindingAuthority}', corp.AutoBindingAuthority)
+          exp = exp.replace('{PropertyBindingAuthority}', corp.PropertyBindingAuthority)
+          exp = exp.replace('{HomeMinimum}', corp.HomeMinimum)
+          exp = exp.replace('{RentedDwelling}', corp.RentedDwelling) */
+        }
+        /*
+        if (corp !== undefined) {
+          exp = exp.replace('{AutoBindingAuthority}', corp.AutoBindingAuthority)
+          exp = exp.replace('{PropertyBindingAuthority}', corp.PropertyBindingAuthority)
+          exp = exp.replace('{HomeMinimum}', corp.HomeMinimum)
+          exp = exp.replace('{RentedDwelling}', corp.RentedDwelling)
+        } */
+        let operands = exp.split(/\+|-/g)
+        let operators = exp.split(/\d+/)
+        let result = 0
+        for (let i = 0; i < operands.length; i++) {
+          if (operators[i] === '') result = Number(operands[i])
+          else if (operators[i] === '+') result += Number(operands[i])
+          else if (operators[i] === '-') result -= Number(operands[i])
+        }
+        return result
+      } else if (sign === 'date') {
+        exp = exp.replace('{EffectiveDate}', this.EffectiveDate)
+        return exp
+      } else {
+        return exp
       }
     },
     // 显示下一个问题
@@ -1150,6 +1221,13 @@ export default {
     pdf: function (title, EffectiveDate) {
       this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#pdfDom')
+      this.axios.post('/api/Services/memoservice.asmx/CreatePrintRecord', {memoid: this.viewForm.MemoID, typeid: 1}).then(res => {
+        if (res) {
+          console.log('create printRecord', res)
+        }
+      }).catch(err => {
+        console.log('导出Memo PDF出错', err)
+      })
     },
     // 添加memo
     showAdd: function () {

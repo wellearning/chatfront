@@ -29,8 +29,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="Name Insured(s)" prop="NameInsured">
-            <el-input v-model="memoForm.NameInsured" placeholder="Name Insured(s)"></el-input>
+          <el-form-item label="Named Insured(s)" prop="NameInsured">
+            <el-input v-model="memoForm.NameInsured" placeholder="Last Name, First Name" title="Last Name, First Name"></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -42,6 +42,11 @@
             </el-select>
           </el-form-item>
         </el-col>
+        <!--<el-col :span="12">
+          <el-form-item label="Address Insured(s)" prop="AddressInsured">
+            <el-input v-model="memoForm.AddressInsured" placeholder="Address Insured(s)"></el-input>
+          </el-form-item>
+        </el-col>-->
       </el-row>
       <el-row :gutter="20" class="subtitle">
         <el-col :span="12">
@@ -74,8 +79,11 @@
           <div class="answerMemo" v-else-if="i.question.TypeID === 2 && !i.question.isSkip">
             <div class="typeReminder"><span v-if="i.question.Label !== undefined && i.question.Label !== null && i.question.Label !== ''">{{i.question.Label}}&nbsp;&nbsp;</span>{{i.question.Description}}</div>
           </div>
+          <!-- <div class="answerMemo" v-else-if="i.question.TypeID === 3 && i.question.InputType === 'list' && !i.question.isSkip">
+            <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" :dataList="makerList" @changeValue="countShipNumber"></AnswerProperty>
+          </div> -->
           <div class="answerMemo" v-else-if="i.question.TypeID === 3 && !i.question.isSkip">
-            <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerProperty>
+            <AnswerProperty :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" :blockQuestions="it.block.blockQuestions" @changeValue="countShipNumber"></AnswerProperty>
           </div>
           <div class="answerMemo" v-else-if="i.question.TypeID === 4 && !i.question.isSkip">
             <AnswerSimpleAnswer :question="i.question" :templateId="item.TemplateID" :blockSequenceNo="it.SequenceNo" :questionSequenceNo="i.SequenceNo" @changeValue="countShipNumber"></AnswerSimpleAnswer>
@@ -132,6 +140,7 @@ export default {
       isLoading: false,
       isLoadingTemplates: false,
       isLoadingInsuranceCompany: false,
+      isLoadingMakers: false,
       typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
       currentTemplates: [],
       memoForm: {
@@ -142,6 +151,7 @@ export default {
         StatusID: 0,
         RequestDate: moment(new Date()),
         NameInsured: null,
+        AddressInsured: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
         TemplateType: null,
@@ -170,6 +180,9 @@ export default {
         ],
         NameInsured: [
           { required: true, message: 'Please Enter', trigger: 'blur' }
+        ],
+        AddressInsured: [
+          { required: false, message: 'Please Enter', trigger: 'blur' }
         ]
       },
       templatesList: [],
@@ -179,6 +192,7 @@ export default {
   mounted: function () {
     // this.initTemplates()
     this.initInsuranceCompany()
+    // this.getMakerList()
   },
   watch: {
     finishNum (val) {
@@ -356,9 +370,19 @@ export default {
       let skipNumber = 1
       if (question.IsRoute && question.RouteTypeID === 1) { // baseOnQuestion
         skipNumber = routes[0].MoveStep
-      } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3) { // baseOnAnswer property
+      } else if (!(question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 3)) {
+        if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 6) { // baseOnAnswer singleChoice
+          // 单选题判断答案所属routes，得出跳过个数
+          if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
+            skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
+          } else {
+            skipNumber = 1
+          }
+        }
+      } else { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
           // 变量转换为具体值，定义OperandCurrent，避免修改EffectiveDate时，无法再次匹配到{EffectiveDate}
+          /*
           if (routes[i].Operand === '{AutoBindingAuthority}') {
             routes[i].OperandCurrent = this.AutoBindingAuthority
           } else if (routes[i].Operand === '{PropertyBindingAuthority}') {
@@ -370,6 +394,9 @@ export default {
           if (routes[i].OperandCurrent !== undefined) {
             Operand = routes[i].OperandCurrent
           }
+          */
+          // let Operand = routes[i].Operand
+          let Operand = this.parseOperand(routes[i].Operand, sign)
           // 日期型property把operand和value转成时间戳
           if (sign === 'date') {
             Operand = moment(Operand).valueOf()
@@ -403,13 +430,6 @@ export default {
             }
           }
         }
-      } else if (question.IsRoute && question.RouteTypeID === 2 && question.question.TypeID === 6) { // baseOnAnswer singleChoice
-        // 单选题判断答案所属routes，得出跳过个数
-        if (routes.find(item => parseFloat(item.Operand) === value) !== undefined) {
-          skipNumber = routes.find(item => parseFloat(item.Operand) === value).MoveStep
-        } else {
-          skipNumber = 1
-        }
       }
       // 隐藏当前问题之后的所有问题
       for (let i = 0; i < this.currentTemplates.length; i++) {
@@ -435,7 +455,7 @@ export default {
         }
       }
       if (sign !== 'emptyAddition' && skipNumber === -1) { // 到memo底
-        this.memoForm.StatusID = 1
+        this.memoForm.StatusID = 2 // 1  move to end表示没有完成
       } else if (sign !== 'emptyAddition') {
         if (this.totalQuestionNum === question.question.num) {
           this.memoForm.StatusID = 1
@@ -444,6 +464,49 @@ export default {
         }
         let curNum = question.question.num + skipNumber - 1
         this.showNext(curNum)
+      }
+    },
+    parseOperand: function (exp, sign) {
+      // return exp
+      if (sign === 'number') {
+        let ed = new Date(this.EffectiveDate)
+        exp = exp.replace('{EffectiveDate}.Year', ed.getFullYear())
+        let corpid = this.memoForm.InsuranceCorpID
+        let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === corpid)
+        if (corp !== undefined) {
+          let starti = exp.indexOf('{')
+          let endi = exp.indexOf('}')
+          if (starti >= 0 && endi >= 0 && endi > starti + 1) {
+            let replaced = exp.substr(starti + 1, endi - starti - 1)
+            if (corp[replaced] !== undefined) {
+              exp = exp.replace('{' + replaced + '}', corp[replaced])
+            }
+          }
+          /*
+          exp = exp.replace('{AutoBindingAuthority}', corp.AutoBindingAuthority)
+          exp = exp.replace('{PropertyBindingAuthority}', corp.PropertyBindingAuthority)
+          exp = exp.replace('{HomeMinimum}', corp.HomeMinimum)
+          exp = exp.replace('{RentedDwelling}', corp.RentedDwelling) */
+        }
+        /*
+        exp = exp.replace('{AutoBindingAuthority}', this.AutoBindingAuthority)
+        exp = exp.replace('{PropertyBindingAuthority}', this.PropertyBindingAuthority)
+        exp = exp.replace('{HomeMinimum}', this.HomeMinimum)
+        exp = exp.replace('{RentedDwelling}', this.RentedDwelling) */
+        let operands = exp.split(/\+|-/g)
+        let operators = exp.split(/\d+/)
+        let result = 0
+        for (let i = 0; i < operands.length; i++) {
+          if (operators[i] === '') result = Number(operands[i])
+          else if (operators[i] === '+') result += Number(operands[i])
+          else if (operators[i] === '-') result -= Number(operands[i])
+        }
+        return result
+      } else if (sign === 'date') {
+        exp = exp.replace('{EffectiveDate}', this.EffectiveDate)
+        return exp
+      } else {
+        return exp
       }
     },
     // 显示下一个问题

@@ -18,20 +18,24 @@
         </el-form>
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Policy Change Type" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="MemoID" prop="MemoID" width="80" fixed="left"></el-table-column>
+        <el-table-column label="Policy Change Type" prop="Title" min-width="320"></el-table-column>
         <el-table-column label="EffectiveDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Author" prop="Author" min-width="150"></el-table-column>
-        <el-table-column label="CorpName" prop="CorpName" min-width="200"></el-table-column>
-        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200"></el-table-column>
-        <el-table-column label="Name Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
-        <el-table-column label="Action" width="150" fixed="right">
+        <el-table-column label="Corp" prop="CorpName" min-width="100"></el-table-column>
+        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250"></el-table-column>
+        <el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column>
+        <el-table-column label="PrintPS" prop="PrintPSTimes" min-width="100"></el-table-column>
+        <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -94,7 +98,7 @@
                 <div class="viewMemo-content-answer" v-for="(item, index) in it.normalAnswers" :key="index">
                   <!--问题类型为：Title-->
                   <div v-if="item.QuestionType === 'Title' && item.OutputModeID !== 3" class="title">
-                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
                   </div>
                   <!--问题类型为：Reminder-->
                   <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
@@ -102,8 +106,8 @@
                   </div>
                   <!--问题类型为：Property-->
                   <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
-                    <div class="question">
-                      <span>{{item.QuestionDesc}}</span>
+                    <div class="question fontNormal">
+                      <span class="content">{{item.QuestionDesc}}</span>
                       <span class="answer marginLeft10px">
                         <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
                         <span class="content noAnswer" v-else>No Answer</span>
@@ -112,7 +116,7 @@
                   </div>
                   <!--问题类型为：SimpleAnswer-->
                   <div v-else-if="item.QuestionType === 'SimpleAnswer' && item.OutputModeID !== 3">
-                    <div class="question">{{item.QuestionDesc}}</div>
+                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
                     <div class="answer">
                       <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{item.AnswerDesc}}</span>
                       <span class="content noAnswer" v-else>No Answer</span>
@@ -120,7 +124,7 @@
                   </div>
                   <!--问题类型为：Fillin-->
                   <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
-                    <div class="question">
+                    <div class="question fontNormal">
                       <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
                        <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== '' && part.FillinContent !== null)">{{isNaN(part.FillinContent) && !isNaN(Date.parse(part.FillinContent)) ? dateFormat(part.FillinContent) : part.FillinContent}}</span>
                         <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === '' || part.FillinContent !== null)">No Answer</span>
@@ -131,7 +135,7 @@
                   <!--问题类型为：SingleChoice-->
                   <div v-else-if="item.QuestionType === 'SingleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
+                      <div class="content" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
                           <span class="content">{{item.optionAnswer.Content}}</span>
@@ -147,7 +151,7 @@
                   <!--问题类型为：MultipleChoice-->
                   <div v-else-if="item.QuestionType === 'MultipleChoice' && item.OutputModeID !== 3">
                     <div>
-                      <div class="question" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
+                      <div class="question fontNormal" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
                       <div class="answer">
                         <div v-if="item.optionAnswers.length > 0">
                           <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
@@ -187,14 +191,61 @@
         </div>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Pink Slip 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="pinkSlipFormVisible" width="1184.56px"  height="2184.56px" center >
+        <PinkSlip ref="ps" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></PinkSlip>
+      </el-dialog>
+
+      <!-- <el-dialog title="" :visible.sync="pinkSlipFormVisible" width="1184.56px"  height="2184.56px" center :before-close="closeView">
+        <div class="printDiv" >
+          <el-button icon="el-icon-document" type="primary" @click="pdfPinkSlip(pinkSlipForm.InsuredName, pinkSlipForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
+        </div>
+        <div class="viewPinkSlip" id="pinkSlipDom">
+          <el-row :gutter="20" style="margin-bottom:30px">
+            <el-col :span="12">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuranceCorpName}}</i></div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" style="margin-bottom:35px">
+            <el-col :span="12">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredName}}</i></div>
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredAddress}}</i></div>
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredCity}}</i></div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" style="margin-bottom:60px">
+            <el-col :span="4">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.EffectiveDate}}</i></div>
+            </el-col>
+            <el-col :span="4">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.ExpiryDate}}</i></div>
+            </el-col>
+            <el-col :span="4">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.PolicyNumber}}</i></div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" style="margin-bottom:60px">
+            <el-col :span="8">
+              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.VehicleInfo}}</i></div>
+            </el-col>
+            <el-col :span="4">
+            </el-col>
+          </el-row>
+        </div>
+      </el-dialog> -->
+      <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
 import moment from 'moment'
+import PinkSlip from '@/component/window/pinkSlip'
 
 export default {
+  components: {
+    PinkSlip
+  },
   data: function () {
     return {
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
@@ -216,6 +267,7 @@ export default {
       // 列表
       tempList: [],
       list: [],
+      currentMemoID: null,
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -247,6 +299,19 @@ export default {
           }]
         }],
         answerList: []
+      },
+      pinkSlipFormVisible: false,
+      pinkSlipForm: {
+        InsuranceCorpName: null,
+        InsuranceCorpAddress: null,
+        InsuredName: null,
+        InsuredAddress: 'Not provide',
+        InsuredCity: 'Not provide',
+        VehicleInfo: 'Not provide',
+        EffectiveDate: null,
+        ExpiryDate: null,
+        PolicyNumber: null,
+        Broker: ''
       }
     }
   },
@@ -271,6 +336,36 @@ export default {
       }).catch(err => {
         console.log('保险公司列表出错', err)
         this.isLoadingInsuranceCompany = false
+      })
+    },
+    // 删除
+    del: function (id) {
+      this.$confirm('Are you sure to delete it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/memoservice.asmx/RemoveMemo', {memoid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list = this.list.filter(item => item.MemoID !== id)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
       })
     },
     // 查询
@@ -356,6 +451,99 @@ export default {
     pdf: function (title, EffectiveDate) {
       this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#pdfDom')
+      this.axios.post('/api/Services/memoservice.asmx/CreatePrintRecord', {memoid: this.viewForm.MemoID, typeid: 1}).then(res => {
+        if (res) {
+          console.log('create printRecord', res)
+        }
+      }).catch(err => {
+        console.log('导出Memo PDF出错', err)
+      })
+    },
+    // 显示PinkSlip
+    showPinkSlip: function (memoid) {
+      this.currentMemoID = memoid
+      this.pinkSlipFormVisible = true
+      if (this.$refs.ps !== undefined) {
+        this.$refs.ps.loadMemo(memoid)
+      }
+    },
+    // Pink Slip弹窗
+    pinkSlip: function (id) {
+      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      this.isLoading = true
+      this.axios.post('/api/Services/memoservice.asmx/GetViewMemo', {memoid: id}).then(res => {
+        if (res) {
+          console.log('查询单个', res)
+          this.pinkSlipFormVisible = true
+          this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
+            let memo = res.data
+            let insuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === memo.InsuranceCorpID)
+            this.pinkSlipForm.InsuranceCorpName = insuranceCorp.Name
+            this.pinkSlipForm.InsuranceCorpAddress = insuranceCorp.Address
+            this.pinkSlipForm.EffectiveDate = moment(memo.EffectiveDate).format('DD/MM/YYYY')
+            this.pinkSlipForm.ExpiryDate = moment(memo.EffectiveDate).add(30, 'days').format('DD/MM/YYYY')
+            this.pinkSlipForm.PolicyNumber = memo.PolicyNumber
+            this.pinkSlipForm.InsuredName = memo.NameInsured
+            // this.pinkSlipForm.InsuredAddress = memo.AddressInsured
+            this.pinkSlipForm.Broker = memo.branch.Name
+            let vehicleYear = '2015'
+            let vehicleModel = ''
+            let vehicleMake = 'Toyota'
+            let vin = ''
+            let answer = memo.answers.find(a => a.QuestionDesc === 'Vehicle Year: ')
+            if (answer !== undefined) vehicleYear = answer.AnswerDesc
+            answer = memo.answers.find(a => a.QuestionDesc === 'Vehicle Make: ')
+            if (answer !== undefined) vehicleMake = answer.AnswerDesc
+            answer = memo.answers.find(a => a.QuestionDesc === 'Vehicle Model: ')
+            if (answer !== undefined) vehicleModel = answer.AnswerDesc
+            answer = memo.answers.find(a => a.QuestionDesc === 'VIN #: ')
+            if (answer !== undefined) vin = answer.AnswerDesc
+            this.pinkSlipForm.VehicleInfo = vehicleYear + ' ' + vehicleMake + ' ' + vehicleModel + ' ' + vin
+            answer = memo.answers.find(a => a.QuestionDesc === 'Address Line 1:')
+            if (answer !== undefined) this.pinkSlipForm.InsuredAddress = answer.AnswerDesc
+            answer = memo.answers.find(a => a.QuestionDesc === 'Address Line 2:')
+            if (answer !== undefined) this.pinkSlipForm.InsuredCity = answer.AnswerDesc
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询单个出错', err)
+        this.isLoading = false
+      })
+    },
+    // 关闭Pink Slip
+    closePinkSlip: function (done) {
+      this.viewForm = {
+        Title: null,
+        EffectiveDate: null,
+        InsuranceCorp: null,
+        PolicyNumber: null,
+        Author: null,
+        branch: {
+          Name: null,
+          Address: null,
+          Telphone: null
+        },
+        corpbroker: {
+          BrokerCode: null,
+          corp: {
+            Name: null
+          }
+        },
+        RequestDate: null,
+        memoTemplates: [{
+          memoBlocks: [{
+            answers: []
+          }]
+        }],
+        answerList: []
+      }
+      done()
+    },
+    // 转pdf
+    pdfPinkSlip: function (title, EffectiveDate) {
+      this.htmlTitle = title + ' ' + EffectiveDate
+      this.getPdf('#pinkSlipDom')
     }
   }
 }

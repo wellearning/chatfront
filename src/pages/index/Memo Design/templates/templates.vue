@@ -22,8 +22,10 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingBlock" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Heat" prop="SequenceNo" min-width="100"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
         <el-table-column label="Status" prop="StatusID" :formatter="statusName" width="200"></el-table-column>
+        <el-table-column label="NeedPinkSlip" prop="NeedPinkSlip"  :formatter="printPinkSlip" width="150"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
@@ -48,6 +50,9 @@
             <el-select v-model="addForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
               <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="Need Pink Slip">
+            <el-checkbox v-model="addForm.NeedPinkSlip"></el-checkbox>
           </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
@@ -86,6 +91,9 @@
             <el-select v-model="editForm.StatusID" placeholder="Status" no-data-text="No Record" filterable>
               <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="Need Pink Slip">
+            <el-checkbox v-model="editForm.NeedPinkSlip"></el-checkbox>
           </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
@@ -129,6 +137,7 @@ export default {
         TypeID: null,
         StatusID: 0,
         Title: null,
+        NeedPinkSlip: false,
         templateBlocks: []
       },
       addFormRules: {
@@ -147,6 +156,7 @@ export default {
         TypeID: null,
         StatusID: 0,
         Title: null,
+        NeedPinkSlip: false,
         templateBlocks: [],
         IsNew: false
       },
@@ -185,6 +195,13 @@ export default {
         return 'Normal'
       } else {
         return 'Stopped'
+      }
+    },
+    printPinkSlip (row, column) {
+      if (row.NeedPinkSlip) {
+        return 'True'
+      } else {
+        return 'False'
       }
     },
     // blocks列表

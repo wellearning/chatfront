@@ -24,6 +24,7 @@
         <el-table-column label="Company ID" prop="InsuranceCorpID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Company Name" prop="Name" min-width="200"></el-table-column>
         <el-table-column label="Short Name" prop="ShortName" min-width="200"></el-table-column>
+        <el-table-column label="Address" prop="Address" min-width="200"></el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
@@ -43,11 +44,20 @@
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="addForm.ShortName" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Address" prop="Address">
+            <el-input v-model="addForm.Address" clearable></el-input>
+          </el-form-item>
           <el-form-item label="AutoBindingAuthority" prop="AutoBindingAuthority">
             <el-input v-model.number="addForm.AutoBindingAuthority" clearable></el-input>
           </el-form-item>
           <el-form-item label="PropertyBindingAuthority" prop="PropertyBindingAuthority">
             <el-input v-model.number="addForm.PropertyBindingAuthority" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="HomeMinimum" prop="HomeMinimum">
+            <el-input v-model.number="addForm.HomeMinimum" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="RentedDwelling" prop="RentedDwelling">
+            <el-input v-model.number="addForm.RentedDwelling" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
@@ -64,11 +74,20 @@
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="editForm.ShortName" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Address" prop="Address">
+            <el-input v-model="editForm.Address" clearable></el-input>
+          </el-form-item>
           <el-form-item label="AutoBindingAuthority" prop="AutoBindingAuthority">
             <el-input v-model.number="editForm.AutoBindingAuthority" clearable></el-input>
           </el-form-item>
           <el-form-item label="PropertyBindingAuthority" prop="PropertyBindingAuthority">
             <el-input v-model.number="editForm.PropertyBindingAuthority" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="HomeMinimum" prop="HomeMinimum">
+            <el-input v-model.number="editForm.HomeMinimum" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="RentedDwelling" prop="RentedDwelling">
+            <el-input v-model.number="editForm.RentedDwelling" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
@@ -122,8 +141,11 @@ export default {
       addForm: {
         Name: null,
         ShortName: null,
+        Address: null,
         AutoBindingAuthority: null,
-        PropertyBindingAuthority: null
+        PropertyBindingAuthority: null,
+        HomeMinimum: null,
+        RentedDwelling: null
       },
       addFormRules: {
         Name: [
@@ -134,11 +156,23 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
         ],
+        Address: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 200, message: 'Within 200 Characters', trigger: 'blur' }
+        ],
         AutoBindingAuthority: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ],
         PropertyBindingAuthority: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ],
+        HomeMinimum: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ],
+        RentedDwelling: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ]
@@ -149,8 +183,11 @@ export default {
         InsuranceCorpID: null,
         Name: null,
         ShortName: null,
+        Address: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
+        HomeMinimum: null,
+        RentedDwelling: null,
         IsNew: false,
         IsNewAdded: false,
         IsRemoved: false
@@ -164,11 +201,23 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
         ],
+        Address: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 200, message: 'Within 200 Characters', trigger: 'blur' }
+        ],
         AutoBindingAuthority: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ],
         PropertyBindingAuthority: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ],
+        HomeMinimum: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { type: 'number', message: 'Format Error', trigger: 'blur' }
+        ],
+        RentedDwelling: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { type: 'number', message: 'Format Error', trigger: 'blur' }
         ]

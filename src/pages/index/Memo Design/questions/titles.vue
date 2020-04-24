@@ -22,6 +22,11 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Title ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
+          <template slot-scope="scope">
+            <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
+          </template>
+        </el-table-column>
         <el-table-column label="Title" min-width="300">
           <template slot-scope="scope">
             <el-input v-model="scope.row.Description" :disabled="!(scope.row.QuestionID === currentId)"></el-input>
@@ -50,12 +55,22 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BlockQuestionDetail弹窗开始----------------------------------------------------->
+      <el-dialog title="Blocks Used Detail" :visible.sync="blocksDetailVisible" width="800px" center :before-close="closeBlocksDetail">
+        <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
+      </el-dialog>
+      <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
+import UsedBlockList from '@/component/window/usedBlockList'
+
 export default {
+  components: {
+    UsedBlockList
+  },
   data: function () {
     return {
       isLoading: false,
@@ -73,6 +88,7 @@ export default {
       pagerCount: 5,
       currentPage: 1,
       total: 0,
+      blocksDetailVisible: false,
       // 新增
       addFormVisible: false,
       addForm: {
@@ -97,16 +113,28 @@ export default {
     this.search(null)
   },
   methods: {
+    // show used block list
+    showBlocksDetail: function (id) {
+      this.currentId = id
+      this.blocksDetailVisible = true
+      if (this.$refs.bl !== undefined) {
+        this.$refs.bl.loadBlocks(id)
+      }
+    },
+    closeBlocksDetail: function () {
+      this.blocksDetailVisible = false
+      this.currentId = null
+    },
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 1}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByTypeQuery', {typeid: 1, query: name}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+            // this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1

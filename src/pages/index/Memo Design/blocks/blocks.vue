@@ -23,6 +23,11 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Block ID" prop="BlockID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Name" prop="Name" min-width="300"></el-table-column>
+        <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
+          <template slot-scope="scope">
+            <a href="#" @click="showTemplatesDetail(scope.row.BlockID)">{{scope.row.UseTimes}}</a>
+          </template>
+        </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
@@ -101,12 +106,14 @@
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
                   <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option :key="0" label="Stay Here" :value="0"></el-option>
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
@@ -147,12 +154,14 @@
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
@@ -192,13 +201,15 @@
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
                     <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
-                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
                   </el-col>
@@ -265,15 +276,26 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BlockQuestionDetail弹窗开始----------------------------------------------------->
+      <el-dialog title="Templates Used Detail" :visible.sync="templatesDetailVisible" width="800px" center :before-close="closeTemplatesDetail">
+        <UsedTemplateList ref="tl" :questionID="currentId" ></UsedTemplateList>
+      </el-dialog>
+      <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
+import UsedTemplateList from '@/component/window/usedTemplateList'
 export default {
+  components: {
+    UsedTemplateList
+  },
   data: function () {
     return {
       isLoading: false,
+      currentId: null,
+      templatesDetailVisible: false,
       routeTypeList: [{id: 1, name: 'Base On Question'}, {id: 2, name: 'Base On Answer'}],
       isLoadingInsuranceCompany: false,
       currentQuestionType: null,
@@ -351,6 +373,18 @@ export default {
     this.initInsuranceCompany()
   },
   methods: {
+    // show used block list
+    showTemplatesDetail: function (id) {
+      this.currentId = id
+      this.templatesDetailVisible = true
+      if (this.$refs.tl !== undefined) {
+        this.$refs.tl.loadTemplates(id)
+      }
+    },
+    closeTemplatesDetail: function () {
+      this.templatesDetailVisible = false
+      this.currentId = null
+    },
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true

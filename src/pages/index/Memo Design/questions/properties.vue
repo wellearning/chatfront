@@ -22,6 +22,11 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Property ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
+          <template slot-scope="scope">
+            <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
+          </template>
+        </el-table-column>
         <el-table-column label="Content" prop="Description" min-width="300"></el-table-column>
         <el-table-column label="Input Type" prop="InputType" width="100"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
@@ -36,6 +41,13 @@
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New Property" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="addForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
           <el-form-item label="Content" prop="Description">
             <el-input v-model="addForm.Description" clearable></el-input>
           </el-form-item>
@@ -46,6 +58,18 @@
               </el-radio>
             </el-radio-group>
           </el-form-item>
+          <el-form-item v-if="addForm.InputType === 'list'" label="Data Source" prop="DataSource" >
+            <el-select v-model="addForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in dataTypes" :key="item.ItemID" :label="item.Name" :value="item.ItemValue"></el-option>
+            </el-select>
+            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
+          </el-form-item>
+          <el-form-item v-if="addForm.InputType === 'children'" label="Data Source" prop="DataSource" >
+            <el-input v-model="addForm.DataSource" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Question Tips" prop="Tips">
+            <el-input v-model="addForm.Tips" clearable></el-input>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
           </el-form-item>
@@ -55,6 +79,13 @@
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit Property" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="editForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
           <el-form-item label="Content" prop="Description">
             <el-input v-model="editForm.Description" clearable></el-input>
           </el-form-item>
@@ -65,23 +96,47 @@
               </el-radio>
             </el-radio-group>
           </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'list'" label="Data Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in dataTypes" :key="item.ItemID" :label="item.Name" :value="item.ItemValue"></el-option>
+            </el-select>
+            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'children'" label="Data Source" prop="DataSource" >
+            <el-input v-model="editForm.DataSource" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Question Tips" prop="Tips">
+            <el-input v-model="editForm.Tips" clearable></el-input>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BlockQuestionDetail弹窗开始----------------------------------------------------->
+      <el-dialog title="Blocks Used Detail" :visible.sync="blocksDetailVisible" width="800px" center :before-close="closeBlocksDetail">
+        <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
+      </el-dialog>
+      <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
+import UsedBlockList from '@/component/window/usedBlockList'
+
 export default {
+  components: {
+    UsedBlockList
+  },
   data: function () {
     return {
       isLoading: false,
-      inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}],
+      blocksDetailVisible: false,
+      inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}, {id: 4, name: 'list', value: 'list'}, {id: 5, name: 'children', value: 'children'}],
       // 新增
+      outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
       addFormVisible: false,
       addForm: {
         TypeID: 3,
@@ -90,6 +145,7 @@ export default {
         OutputModeID: 1,
         StatusID: 1,
         InputType: 'text',
+        DataSource: null,
         fillinParts: null,
         options: null
       },
@@ -109,6 +165,7 @@ export default {
         OutputModeID: 1,
         StatusID: 1,
         InputType: null,
+        DataSource: null,
         fillinParts: null,
         options: null,
         IsNew: false
@@ -124,6 +181,9 @@ export default {
         name: null
       },
       searchName: null,
+      dataSourceVisible: false,
+      isLoadingDataTypes: false,
+      dataTypes: [],
       // 列表
       tempList: [],
       list: [],
@@ -135,18 +195,45 @@ export default {
   },
   mounted: function () {
     this.search(null)
+    this.loadDataTypes()
   },
   methods: {
+    // show used block list
+    showBlocksDetail: function (id) {
+      this.currentId = id
+      this.blocksDetailVisible = true
+      if (this.$refs.bl !== undefined) {
+        this.$refs.bl.loadBlocks(id)
+      }
+    },
+    closeBlocksDetail: function () {
+      this.blocksDetailVisible = false
+      this.currentId = null
+    },
+    // 获取数据类型列表
+    loadDataTypes: function () {
+      this.isLoadingDataTypes = true
+      this.axios.post('/api/Services/baseservice.asmx/GetDataTypes', { }).then(res => {
+        if (res) {
+          console.log('数据类型列表', res)
+          this.dataTypes = res.data
+        }
+        this.isLoadingDataTypes = false
+      }).catch(err => {
+        console.log('数据类型列表', err)
+        this.isLoadingDataTypes = false
+      })
+    },
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: 3}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByTypeQuery', {typeid: 3, query: name}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
           if (name !== null) {
             this.searchName = name
-            this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+            // this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
           }
           this.total = this.list.length
           this.currentPage = 1

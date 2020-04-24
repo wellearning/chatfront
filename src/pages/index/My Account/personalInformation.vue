@@ -9,12 +9,14 @@
           <el-input v-model="editForm.StaffID" disabled></el-input>
         </el-form-item>
         <el-form-item label="Institution" prop="institution">
-          <SelectTree :value="editForm.institution" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit"></SelectTree>
+          <el-input v-model="editForm.institution.Name" disabled></el-input>
+          <!--<SelectTree :value="editForm.institution" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit" disabled></SelectTree>-->
         </el-form-item>
         <el-form-item label="Role" prop="role">
-          <el-select v-model="editForm.role" placeholder="Please Select" filterable clearable>
+          <el-input v-model="editForm.role.Name" disabled></el-input>
+          <!--<el-select v-model="editForm.role" placeholder="Please Select" disabled filterable clearable>
             <el-option v-for="item in roleIdOptions" :key="item.RoleID" :label="item.Name" :value="item.RoleID"></el-option>
-          </el-select>
+          </el-select>-->
         </el-form-item>
         <el-form-item label="Name" prop="Name">
           <el-input v-model.trim="editForm.Name" clearable></el-input>
@@ -146,8 +148,8 @@ export default {
         if (res) {
           console.log('查询单个', res)
           let form = JSON.parse(JSON.stringify(res.data))
-          form.institution = form.institution.InstitutionID
-          form.role = form.role.RoleID
+          // form.institution = form.institution.InstitutionID
+          // form.role = form.role.RoleID
           this.editForm = form
         }
         this.isLoading = false
@@ -162,8 +164,8 @@ export default {
         if (valid) {
           this.isLoading = true
           let form = JSON.parse(JSON.stringify(this.editForm))
-          form.institution = {InstitutionID: form.institution}
-          form.role = {RoleID: form.role}
+          // form.institution = {InstitutionID: form.institution}
+          // form.role = {RoleID: form.role}
           this.axios.post('/api/Services/baseservice.asmx/SaveStaff', {staff: JSON.stringify(form)}).then(res => {
             if (res) {
               console.log('修改', res)

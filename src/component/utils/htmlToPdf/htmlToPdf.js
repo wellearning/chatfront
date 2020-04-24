@@ -3,9 +3,9 @@ import html2Canvas from 'html2canvas'
 import JsPDF from 'jspdf'
 export default{
   install (Vue, options) {
-    Vue.prototype.getPdf = function () {
+    Vue.prototype.getPdf = function (pdfDom) {
       var title = this.htmlTitle
-      html2Canvas(document.querySelector('#pdfDom'), {
+      html2Canvas(document.querySelector(pdfDom), {
         allowTaint: true,
         useCORS: true
       }).then(function (canvas) {
