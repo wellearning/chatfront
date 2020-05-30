@@ -4,6 +4,7 @@
       <span class="inPageNav">Properties</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -119,20 +120,31 @@
         <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
+      <el-dialog title="Property List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
 import UsedBlockList from '@/component/window/usedBlockList'
+import QuestionList from '@/component/window/questionList'
 
 export default {
   components: {
-    UsedBlockList
+    UsedBlockList,
+    QuestionList
   },
   data: function () {
     return {
       isLoading: false,
+      currentId: null,
+      typeId: 3,
+      typeName: 'Properties',
+      questionListVisible: false,
       blocksDetailVisible: false,
       inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}, {id: 4, name: 'list', value: 'list'}, {id: 5, name: 'children', value: 'children'}],
       // 新增
@@ -198,6 +210,15 @@ export default {
     this.loadDataTypes()
   },
   methods: {
+    showQuestionList: function () {
+      this.questionListVisible = true
+      if (this.$refs.ql !== undefined) {
+        this.$refs.ql.loadQuestions(this.typeId)
+      }
+    },
+    closeQuestionList: function () {
+      this.questionListVisible = false
+    },
     // show used block list
     showBlocksDetail: function (id) {
       this.currentId = id

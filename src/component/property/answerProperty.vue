@@ -5,11 +5,11 @@
       <el-input v-if="question.InputType === 'text'" class="additionContent" v-model="question.value" size="mini" @change="changeVal('alreadyAnswer', 'text')" placeholder="Text" style="width: 300px;"></el-input>
       <el-date-picker v-else-if="question.InputType === 'date'" class="additionContent" v-model="question.value" type="date" size="mini" @change="changeVal(question.value, 'date')" placeholder="yyyy-mm-dd"></el-date-picker>
       <el-input v-else-if="question.InputType === 'number'" class="additionContent" v-model="question.value" size="mini" @change="changeVal(question.value, 'number')" placeholder="Number"></el-input>
-      <el-select v-else-if="question.InputType === 'list'" class="additionContent"  v-model="question.value" size="mini" @focus="loadDataSource(question)" @change="changeVal(question.value, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
+      <el-select v-else-if="question.InputType === 'list'" class="additionContent"  v-model="question.value" size="mini" @focus="loadDataSource(question)" @change="changeVal(question, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
         <el-option class="questionOption" v-for="item in dataList" :key="item.ItemValue" :label="item.Name" :value="item.ItemValue"></el-option>
       </el-select>
       <el-select v-else-if="question.InputType === 'children'" class="additionContent"  v-model="question.value" size="mini" @focus="loadChildren(question)" @change="changeVal(question.value, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
-        <el-option class="questionOption" v-for="item in dataList" :key="item.ItemValue" :label="item.Name" :value="item.ItemValue"></el-option>
+        <el-option class="questionOption" v-for="item in dataList" :key="item.Name" :label="item.Name" :value="item.Name"></el-option>
       </el-select>
       <!--<el-input-number v-else-if="question.InputType === 'number'" class="additionContent" v-model="question.value" size="mini" @input="changeVal(question.value)" placeholder="Number"></el-input-number>-->
       <div class="questionTips">{{question.Tips}}</div>
@@ -61,7 +61,7 @@ export default {
       })
     },
     loadChildren: function (question) {
-      if (this.dataList.length > 0) return
+      // if (this.dataList.length > 0) return
       if (this.blockQuestions.length === 0) return
       let parent = null
       this.blockQuestions.forEach(function (bq) {

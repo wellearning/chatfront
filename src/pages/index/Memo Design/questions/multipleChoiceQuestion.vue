@@ -4,9 +4,10 @@
       <span class="inPageNav">Multiple Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent">
+    <div class="inPageContent" id="questionListDom">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -147,6 +148,7 @@ export default {
     return {
       isLoading: false,
       blocksDetailVisible: false,
+      typeName: 'MultpleChoice',
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
       addFormVisible: false,
@@ -442,6 +444,10 @@ export default {
           message: 'Operation Cancelled'
         })
       })
+    },
+    toPDF: function () {
+      this.htmlTitle = this.typeName + this.currentPage
+      this.getPdf('#questionListDom')
     }
   }
 }

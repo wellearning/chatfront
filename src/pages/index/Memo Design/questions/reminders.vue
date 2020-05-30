@@ -4,6 +4,7 @@
       <span class="inPageNav">Reminders</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -80,19 +81,30 @@
         <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
+      <el-dialog title="Reminder List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
 import UsedBlockList from '@/component/window/usedBlockList'
+import QuestionList from '@/component/window/questionList'
 export default {
   components: {
-    UsedBlockList
+    UsedBlockList,
+    QuestionList
   },
   data: function () {
     return {
       isLoading: false,
+      currentId: null,
+      typeId: 2,
+      typeName: 'Reminders',
+      questionListVisible: false,
       blocksDetailVisible: false,
       outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
       // 新增
@@ -151,6 +163,16 @@ export default {
     this.search(null)
   },
   methods: {
+    // show question list
+    showQuestionList: function () {
+      this.questionListVisible = true
+      if (this.$refs.ql !== undefined) {
+        this.$refs.ql.loadQuestions(this.typeId)
+      }
+    },
+    closeQuestionList: function () {
+      this.questionListVisible = false
+    },
     // show used block list
     showBlocksDetail: function (id) {
       this.currentId = id

@@ -4,9 +4,10 @@
       <span class="inPageNav">Single Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent">
+    <div class="inPageContent" id="questionListDom">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -146,6 +147,8 @@ export default {
   data: function () {
     return {
       isLoading: false,
+      currentId: null,
+      typeName: 'SingleChoice',
       blocksDetailVisible: false,
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
@@ -444,7 +447,12 @@ export default {
           message: 'Operation Cancelled'
         })
       })
+    },
+    toPDF: function () {
+      this.htmlTitle = this.typeName + this.currentPage
+      this.getPdf('#questionListDom')
     }
+
   }
 }
 </script>

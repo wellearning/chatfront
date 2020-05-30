@@ -5,7 +5,7 @@
         <el-col :span="6">&#12288;</el-col>
         <el-col :span="12">
           <el-form-item prop="Title">
-            <el-input v-model="memoForm.Title" placeholder="Title"></el-input>
+            <el-input v-model="memoForm.Title" placeholder="Title" disabled></el-input>
           </el-form-item>
         </el-col>
         <el-col :span="6">&#12288;</el-col>
@@ -455,7 +455,7 @@ export default {
         }
       }
       if (sign !== 'emptyAddition' && skipNumber === -1) { // 到memo底
-        this.memoForm.StatusID = 2 // 1  move to end表示没有完成
+        this.memoForm.StatusID = 1
       } else if (sign !== 'emptyAddition') {
         if (this.totalQuestionNum === question.question.num) {
           this.memoForm.StatusID = 1
