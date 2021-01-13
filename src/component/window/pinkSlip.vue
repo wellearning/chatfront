@@ -39,6 +39,13 @@
           <!--<div class="viewMemo-subtitle head">{{pinkSlipForm.Broker}}</div>-->
         </el-col>
       </el-row>
+      <el-row :gutter="20" class="foot printDateInFoot">
+        <el-col>
+          <div style="margin-top: 420px; padding-right:550px;">
+            <b>{{Author + ' ' + printDate}}</b>
+          </div>
+        </el-col>
+      </el-row>
     </div>
   </div>
 </template>
@@ -49,6 +56,8 @@ export default {
   name: 'pinkSlip',
   data: function () {
     return {
+      printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      Author: JSON.parse(this.$store.getters.getAccount).Name,
       pinkSlipForm: {
         InsuranceCorpName: null,
         InsuranceCorpAddress: null,
@@ -79,7 +88,7 @@ export default {
       console.log('start')
     },
     loadMemo: function (id) {
-      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      // this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
       this.axios.post('/api/Services/memoservice.asmx/GetViewMemo', {memoid: id}).then(res => {
         if (res) {
@@ -93,9 +102,13 @@ export default {
             this.pinkSlipForm.EffectiveDate = moment(memo.EffectiveDate).format('DD/MM/YYYY')
             this.pinkSlipForm.ExpiryDate = moment(memo.EffectiveDate).add(30, 'days').format('DD/MM/YYYY')
             this.pinkSlipForm.PolicyNumber = memo.PolicyNumber
-            this.pinkSlipForm.InsuredName = memo.NameInsured
+            // this.pinkSlipForm.InsuredName = memo.NameInsured
             // this.pinkSlipForm.InsuredAddress = memo.AddressInsured
             this.pinkSlipForm.Broker = memo.branch.Name
+            let insuredname = memo.NameInsured
+            let answer0 = memo.answers.find(a => a.QuestionDesc.indexOf('Last name') > 0)
+            if (answer0 !== undefined) insuredname = answer0.AnswerDesc
+            this.pinkSlipForm.InsuredName = insuredname
             let vehicleYear = '2015'
             let vehicleModel = ''
             let vehicleMake = 'Toyota'

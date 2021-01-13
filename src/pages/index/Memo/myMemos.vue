@@ -31,11 +31,12 @@
         <el-table-column label="CorpName" prop="CorpName" min-width="150"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="150"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="300"></el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="Action" width="400" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
             <!--<el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>-->
           </template>
         </el-table-column>
@@ -273,6 +274,11 @@
         <PinkSlip ref="ps" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></PinkSlip>
       </el-dialog>
       <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
+      <!----------------------------------------------COI 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="coiFormVisible" width="1184.56px"  height="2184.56px" center >
+        <COI ref="co" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></COI>
+      </el-dialog>
+      <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -286,6 +292,7 @@ import AnswerFillInQuestion from '@/component/fillInQuestion/answerFillInQuestio
 import AnswerSingleChoiceQuestion from '@/component/choiceQuestion/answerSingleChoiceQuestion'
 import AnswerMultipleChoiceQuestion from '@/component/choiceQuestion/answerMultipleChoiceQuestion'
 import PinkSlip from '@/component/window/pinkSlip'
+import COI from '@/component/window/coi'
 
 export default {
   components: {
@@ -294,7 +301,8 @@ export default {
     AnswerFillInQuestion,
     AnswerSingleChoiceQuestion,
     AnswerMultipleChoiceQuestion,
-    PinkSlip
+    PinkSlip,
+    COI
   },
   data: function () {
     return {
@@ -320,6 +328,7 @@ export default {
       },
       searchName: null,
       pinkSlipFormVisible: false,
+      coiFormVisible: false,
       currentMemoID: null,
       // 列表
       tempList: [],
@@ -423,6 +432,13 @@ export default {
       this.pinkSlipFormVisible = true
       if (this.$refs.ps !== undefined) {
         this.$refs.ps.loadMemo(memoid)
+      }
+    },
+    showCOI: function (memoid) {
+      this.currentMemoID = memoid
+      this.coiFormVisible = true
+      if (this.$refs.co !== undefined) {
+        this.$refs.co.loadMemo(memoid)
       }
     },
     // 日期格式

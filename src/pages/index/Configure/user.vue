@@ -52,7 +52,7 @@
               </el-table-column>
               <el-table-column label="ProducerCode" prop="ProducerCode" min-width="110"></el-table-column>
               <el-table-column label="Role" prop="role.Name" min-width="110"></el-table-column>
-              <el-table-column label="Action" width="250" fixed="right">
+              <el-table-column label="Action" width="300" fixed="right">
                 <template slot-scope="scope">
                   <el-tooltip class="item" effect="dark" :content="scope.row.StatusID === 2 ? 'Set Active' : 'Set Inactive'" placement="top-end">
                     <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
@@ -65,6 +65,9 @@
                   </el-tooltip>
                   <el-tooltip class="item" effect="dark" content="Delete" placement="top-end">
                     <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                  </el-tooltip>
+                  <el-tooltip class="item" effect="dark" content="Producer" placement="top-end">
+                    <el-button icon="el-icon-edit" type="primary" @click="showEditProducer(scope.row.StaffID, scope.row.Name)" :loading="isLoading || isLoadingProducer" size="small"></el-button>
                   </el-tooltip>
                 </template>
               </el-table-column>
@@ -167,6 +170,34 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------重置密码弹窗结束------------------------------------------------->
+      <!----------------------------------------------Producer弹窗开始----------------------------------------------------->
+      <el-dialog title="Producer Editor" :visible.sync="producerFormVisible" width="1000px" center :before-close="closeEdit">
+        <el-form :model="producerForm" ref="editForm" :rules="producerFormRules" class="form choiceQuestionForm">
+          <el-form-item label="Title" prop="Title">
+            <el-input v-model="producerForm.Name" clearable></el-input>
+          </el-form-item>
+          <div v-for="(item, index) in producerForm.producers" :key="index" class="choice">
+            <el-form-item class="marginLeft10">
+              <span><b>{{item.StaffID + '. ' + item.Name}}</b></span>
+            </el-form-item>
+            <el-form-item class="marginLeft20">
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('producerForm', index)" :loading="isLoading || isLoadingProducer" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('producerForm', index)" :loading="isLoading || isLoadingProducer" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== producerForm.producers.length - 1" type="primary" @click="downChoice('producerForm', index)" :loading="isLoading || isLoadingProducer" plain size="small" class="questionRightBtnGroup"></el-button>
+            </el-form-item>
+          </div>
+          <el-form-item class="confirmBtn smallLine">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('producerForm')" :loading="isLoading || isLoadingProducer" plain size="small" class="questionRightBtnSingle">Producer</el-button>
+            <el-select v-model="producerForm.ProducerID" placeholder="Producer" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+              <el-option class="questionOption" v-for="item in producerList" :key="item.StaffID" :label="item.StaffID + '. ' + item.Name" :value="item.StaffID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="editProducer()" :loading="isLoading || isLoadingProducer">Confirm</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------Producer弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -207,6 +238,7 @@ export default {
       },
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
+      producerList: [],
       addFormRules: {
         Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
@@ -295,6 +327,17 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ]
+      },
+      isLoadingProducer: false,
+      producerFormVisible: false,
+      producerForm: {
+        StaffID: null,
+        Name: null,
+        ProducerID: 0,
+        producers: [],
+        csrproducerlist: []
+      },
+      producerFormRules: {
       }
     }
   },
@@ -302,6 +345,7 @@ export default {
     this.initOrganization()
     this.initRole()
     this.search(null, null)
+    this.initProducer()
   },
   methods: {
     // selectTree返回值
@@ -616,7 +660,89 @@ export default {
           message: 'Operation Cancelled'
         })
       })
+    },
+    // producer form
+    // blocks列表
+    initProducer: function () {
+      this.isLoadingProducer = true
+      this.axios.post('/api/Services/BaseService.asmx/GetSelectableProducers', {}).then(res => {
+        if (res) {
+          console.log('producer列表', res)
+          this.producerList = res.data
+        }
+        this.isLoadingProducer = false
+      }).catch(err => {
+        console.log('producer列表出错', err)
+        this.isLoadingProducer = false
+      })
+    },
+    // 添加一行
+    addChoice: function (form) {
+      this.producerForm.producers.push(this.producerList.find(s => s.StaffID === this.producerForm.ProducerID))
+    },
+    // 删除一行
+    delChoice: function (form, index) {
+      this.producerForm.producers.splice(index, 1)
+    },
+    // 修改弹窗
+    showEditProducer: function (id, name) {
+      this.producerForm.StaffID = id
+      this.producerForm.Name = name
+      this.isLoadingProducer = true
+      this.axios.post('/api/Services/baseservice.asmx/GetCSRProducers', {csrid: this.producerForm.StaffID}).then(res => {
+        if (res) {
+          console.log('Producer列表', res)
+          this.producerForm.producers = res.data
+        }
+        this.isLoadingProducer = false
+      }).catch(err => {
+        console.log('producer列表出错', err)
+        this.isLoadingProducer = false
+      })
+
+      this.producerFormVisible = true
+    },
+    // 关闭修改
+    closeEditProducer: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.producerForm.producers = []
+        this.producerForm.csrproducerlist = []
+        this.producerFormVisible = false
+        done()
+      }).catch(() => {})
+    },
+    // 修改
+    editProducer: function () {
+      this.isLoading = true
+      // 按顺序添加SequenceNo
+      for (let i = 0; i < this.producerForm.producers.length; i++) {
+        let csrproducer = {}
+        csrproducer.CSRID = this.producerForm.StaffID
+        csrproducer.ProducerID = this.producerForm.producers[i].StaffID
+        this.producerForm.csrproducerlist.push(csrproducer)
+      }
+      this.axios.post('/api/Services/BaseService.asmx/SaveCSRProducers', {csrid: this.producerForm.StaffID, list: JSON.stringify(this.producerForm.csrproducerlist)}).then(res => {
+        if (res) {
+          console.log('修改', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.producerForm.producers = []
+          this.producerForm.csrproducerlist = []
+          this.producerFormVisible = false
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('修改出错', err)
+        this.isLoading = false
+      })
     }
+
   }
 }
 </script>

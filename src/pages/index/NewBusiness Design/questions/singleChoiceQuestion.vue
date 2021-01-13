@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Single Choice Question</span>
+      <span class="inPageNav">Single Choice Questions for cover letter</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
         <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
@@ -208,7 +208,7 @@ export default {
     }
   },
   mounted: function () {
-    this.search('')
+    this.search(null)
   },
   methods: {
     // show used block list
@@ -258,9 +258,9 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      let query = ''
-      if (name !== null) query = name
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
+      // let query = ''
+      // if (name !== null) query = name
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: name}).then(res => {
         if (res) {
           console.log('查询', res)
           // 声明value，AdditionContent，防止输入框无法输入
@@ -313,7 +313,7 @@ export default {
           for (let i = 0; i < this.addForm.options.length; i++) {
             this.addForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -349,7 +349,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestion', {questionid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -383,7 +383,7 @@ export default {
           for (let i = 0; i < this.editForm.options.length; i++) {
             this.editForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -426,7 +426,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({

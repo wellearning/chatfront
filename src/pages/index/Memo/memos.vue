@@ -10,7 +10,7 @@
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
@@ -25,21 +25,27 @@
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Author" prop="Author" min-width="150"></el-table-column>
+        <el-table-column label="User" prop="Author" min-width="150"></el-table-column>
         <el-table-column label="Corp" prop="CorpName" min-width="100"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250"></el-table-column>
         <el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column>
         <el-table-column label="PrintPS" prop="PrintPSTimes" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="RequestDate" min-width="150">
+          <template slot-scope="scope">
+            <span>{{dateFormat(scope.row.RequestDate)}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Action" width="400" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
@@ -64,30 +70,30 @@
           </el-row>
           <div class="viewMemo-title">{{viewForm.Title}}</div>
           <el-row :gutter="20">
-            <el-col :span="4">
+            <el-col :span="5">
               <div class="viewMemo-subtitle">EffectiveDate:</div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="7">
               <div class="viewMemo-subtitle"><span>{{viewForm.EffectiveDate}}</span></div>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="5">
               <div class="viewMemo-subtitle">RequestDate:</div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="7">
               <div class="viewMemo-subtitle"><span>{{viewForm.RequestDate}}</span></div>
             </el-col>
           </el-row>
           <el-row :gutter="20">
-            <el-col :span="4">
+            <el-col :span="5">
               <div class="viewMemo-subtitle">PolicyNumber:</div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="7">
               <div class="viewMemo-subtitle"><span>{{viewForm.PolicyNumber}}</span></div>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="5">
               <div class="viewMemo-subtitle">Name Insured(s):</div>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="7">
               <div class="viewMemo-subtitle"><span>{{viewForm.NameInsured}}</span></div>
             </el-col>
           </el-row>
@@ -109,8 +115,11 @@
                     <div class="question fontNormal">
                       <span class="content">{{item.QuestionDesc}}</span>
                       <span class="answer marginLeft10px">
-                        <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
-                        <span class="content noAnswer" v-else>No Answer</span>
+                        <span class="content" v-if="item.AnswerDesc === null || item.AnswerDesc === ''"></span>
+                        <span class="content" v-else-if="IsDate(item.AnswerDesc)">{{dateFormat(item.AnswerDesc)}}</span>
+                        <span class="content" v-else>{{item.AnswerDesc}}</span>
+                        <!--span class="content" v-else-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
+                        <span class="content noAnswer" v-else>No Answer</span-->
                       </span>
                     </div>
                   </div>
@@ -185,7 +194,7 @@
           <!--</el-row>-->
           <el-row :gutter="20" class="foot printDateInFoot">
             <el-col>
-              <b>{{printDate}}</b>
+              <b>{{Author + ' ' + printDate}}</b>
             </el-col>
           </el-row>
         </div>
@@ -234,6 +243,11 @@
         </div>
       </el-dialog> -->
       <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
+      <!----------------------------------------------COI 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="coiFormVisible" width="1184.56px"  height="2184.56px" center >
+        <COI ref="co" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></COI>
+      </el-dialog>
+      <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -241,14 +255,17 @@
 <script>
 import moment from 'moment'
 import PinkSlip from '@/component/window/pinkSlip'
+import COI from '@/component/window/coi'
 
 export default {
   components: {
-    PinkSlip
+    PinkSlip,
+    COI
   },
   data: function () {
     return {
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      Author: JSON.parse(this.$store.getters.getAccount).Name,
       printObj: {
         id: 'pdfDom',
         popTitle: ''
@@ -272,6 +289,7 @@ export default {
       pagerCount: 5,
       currentPage: 1,
       total: 0,
+      isAll: false,
       // 查阅
       viewFormVisible: false,
       viewForm: {
@@ -301,6 +319,7 @@ export default {
         answerList: []
       },
       pinkSlipFormVisible: false,
+      coiFormVisible: false,
       pinkSlipForm: {
         InsuranceCorpName: null,
         InsuranceCorpAddress: null,
@@ -316,10 +335,17 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    this.search(null, 0)
     this.initInsuranceCompany()
   },
   methods: {
+    /**
+     * @return {boolean}
+     */
+    IsDate (dateval) {
+      if (dateval.length > 8 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
+      else return false
+    },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
@@ -369,20 +395,29 @@ export default {
       })
     },
     // 查询
-    search: function (name) {
+    search: function (name, start) {
       this.isLoading = true
+      if (start === 0) this.list = []
       // 后端不支持null查询，把null转换成''
       if (name === null) {
         this.searchName = ''
       } else {
         this.searchName = name
       }
-      this.axios.post('/api/Services/memoservice.asmx/SearchMemoes', {query: this.searchName}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/SearchMemoes', {query: this.searchName, start: start}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.list = res.data
+          if (res.data.length < this.pagerCount * this.pageSize) {
+            this.isAll = true
+          } else {
+            this.isAll = false
+          }
+          this.list = this.list.concat(res.data)
           this.total = this.list.length
-          this.currentPage = 1
+          this.pageCount = Math.ceil(this.total / this.pageSize)
+          // this.list = res.data
+          // this.total = this.list.length
+          // this.currentPage = 1
         }
         this.isLoading = false
       }).catch(err => {
@@ -390,11 +425,17 @@ export default {
         this.isLoading = false
       })
     },
+    handleCurrentChange: function (val) {
+      console.log(`当前页: ${val}`)
+      if (val === this.pageCount && !this.isAll) {
+        this.search(null, this.total)
+      }
+    },
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null)
+      this.search(null, 0)
     },
     // 查阅弹窗
     view: function (id) {
@@ -467,6 +508,13 @@ export default {
         this.$refs.ps.loadMemo(memoid)
       }
     },
+    showCOI: function (memoid) {
+      this.currentMemoID = memoid
+      this.coiFormVisible = true
+      if (this.$refs.co !== undefined) {
+        this.$refs.co.loadMemo(memoid)
+      }
+    },
     // Pink Slip弹窗
     pinkSlip: function (id) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
@@ -513,6 +561,35 @@ export default {
     },
     // 关闭Pink Slip
     closePinkSlip: function (done) {
+      this.viewForm = {
+        Title: null,
+        EffectiveDate: null,
+        InsuranceCorp: null,
+        PolicyNumber: null,
+        Author: null,
+        branch: {
+          Name: null,
+          Address: null,
+          Telphone: null
+        },
+        corpbroker: {
+          BrokerCode: null,
+          corp: {
+            Name: null
+          }
+        },
+        RequestDate: null,
+        memoTemplates: [{
+          memoBlocks: [{
+            answers: []
+          }]
+        }],
+        answerList: []
+      }
+      done()
+    },
+    // 关闭Pink Slip
+    closeCOI: function (done) {
       this.viewForm = {
         Title: null,
         EffectiveDate: null,
