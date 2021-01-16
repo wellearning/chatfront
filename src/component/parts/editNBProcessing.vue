@@ -15,7 +15,7 @@
     <el-row v-for="p in properties" :gutter="20" class="subtitle" :key="p.ParameterID">
       <el-col :span="4">&#12288;</el-col>
       <el-col :span="8">
-        {{p.Name}}
+        {{p.parameter.DisplayName}}
       </el-col>
       <el-col :span="11">
         <el-form-item>

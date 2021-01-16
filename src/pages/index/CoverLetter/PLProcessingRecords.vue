@@ -40,9 +40,10 @@
         <el-table-column label="Insurance Type" prop="InsuranceType" min-width="130"></el-table-column>
         <el-table-column label="Leads From" prop="LeadsFrom" min-width="120"></el-table-column>
         <el-table-column label="No prior" prop="NoPrior" min-width="100"></el-table-column>
-        <el-table-column label="Underage" prop="Underage" min-width="100"></el-table-column>
+        <el-table-column label="Underage/Senior" prop="Underage" min-width="100"></el-table-column>
         <el-table-column label="Gap" prop="InsuranceGap" min-width="100"></el-table-column>
         <el-table-column label="SoleDrivLicense" prop="SoleDriverLicense" min-width="130"></el-table-column>
+        <el-table-column label="UBIProgram" prop="UBIProgram" min-width="130"></el-table-column>
         <el-table-column label="#Driver" prop="NumberOfDriver" min-width="100"></el-table-column>
         <el-table-column label="#Vehicle" prop="NumberOfVehicle" min-width="100"></el-table-column>
         <el-table-column label="HighValue" prop="HighValue" min-width="100"></el-table-column>
