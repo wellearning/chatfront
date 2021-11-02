@@ -76,7 +76,7 @@
       </el-row>
       <el-row :gutter="20" style="margin-top:15px; margin-left:55px; font-size:18px;">
         <el-col :span="20">
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">We for any further details, please forward your request via fax to 1-888-233-3218.</span></div>
+          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">For any further details, please forward your request via fax to 1-888-233-3218.</span></div>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top:55px; margin-left:80px; font-size:18px;">

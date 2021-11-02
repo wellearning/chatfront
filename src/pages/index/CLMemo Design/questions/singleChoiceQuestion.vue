@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Multiple Choice Question</span>
+      <span class="inPageNav">Single Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
         <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
@@ -30,7 +30,7 @@
         </el-table-column>
         <el-table-column label="Question" min-width="950">
           <template slot-scope="scope">
-            <AnswerMultipleChoiceQuestion :question="scope.row"></AnswerMultipleChoiceQuestion>
+            <AnswerSingleChoiceQuestion :question="scope.row"></AnswerSingleChoiceQuestion>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
@@ -43,7 +43,7 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Multiple Choice Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Single Choice Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form choiceQuestionForm">
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="addForm.OutputModeID">
@@ -85,7 +85,7 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Multiple Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Single Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="editForm.OutputModeID">
@@ -136,25 +136,25 @@
 </template>
 
 <script>
-import AnswerMultipleChoiceQuestion from '@/component/choiceQuestion/answerMultipleChoiceQuestion'
+import AnswerSingleChoiceQuestion from '@/component/choiceQuestion/answerSingleChoiceQuestion'
 import UsedBlockList from '@/component/window/usedBlockList'
 
 export default {
   components: {
-    AnswerMultipleChoiceQuestion,
+    AnswerSingleChoiceQuestion,
     UsedBlockList
   },
   data: function () {
     return {
       isLoading: false,
       currentId: null,
+      typeName: 'SingleChoice',
       blocksDetailVisible: false,
-      typeName: 'MultpleChoice',
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
       addFormVisible: false,
       addForm: {
-        TypeID: 7,
+        TypeID: 6,
         Description: null,
         Tips: null,
         OutputModeID: 1,
@@ -176,7 +176,7 @@ export default {
       editFormVisible: false,
       editForm: {
         QuestionID: null,
-        TypeID: 7,
+        TypeID: 6,
         Description: null,
         Tips: null,
         OutputModeID: 1,
@@ -208,7 +208,7 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    this.search('')
   },
   methods: {
     // show used block list
@@ -258,19 +258,21 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByTypeQuery', {typeid: 7, query: name}).then(res => {
+      let query = ''
+      if (name !== null) query = name
+      this.axios.post('/api/Services/CommerceService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
         if (res) {
           console.log('查询', res)
           // 声明value，AdditionContent，防止输入框无法输入
           let listWidthAdditionContent = res.data
           for (let i = 0; i < listWidthAdditionContent.length; i++) {
-            listWidthAdditionContent[i].value = []
+            listWidthAdditionContent[i].value = null
             listWidthAdditionContent[i].options.forEach(item => { item.AdditionContent = null })
           }
           this.list = listWidthAdditionContent
           if (name !== null) {
             this.searchName = name
-            // this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+            //  this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1 || !item.QuestionID.indexOf(this.searchName))
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -311,7 +313,7 @@ export default {
           for (let i = 0; i < this.addForm.options.length; i++) {
             this.addForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/CommerceService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -325,7 +327,7 @@ export default {
               if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 // 声明value，AdditionContent，防止输入框无法输入
                 let listWidthAdditionContent = res.data
-                listWidthAdditionContent.value = []
+                listWidthAdditionContent.value = null
                 listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
                 this.list.push(listWidthAdditionContent)
                 this.total = this.list.length
@@ -347,7 +349,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetQuestion', {questionid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -381,7 +383,7 @@ export default {
           for (let i = 0; i < this.editForm.options.length; i++) {
             this.editForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/memoservice.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/CommerceService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -395,7 +397,7 @@ export default {
               if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
                 // 声明value，AdditionContent，防止输入框无法输入
                 let listWidthAdditionContent = res.data
-                listWidthAdditionContent.value = []
+                listWidthAdditionContent.value = null
                 listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
                 this.list = this.list.map(item => { return item.QuestionID === listWidthAdditionContent.QuestionID ? listWidthAdditionContent : item })
               } else {
@@ -424,7 +426,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -450,6 +452,7 @@ export default {
       this.htmlTitle = this.typeName + this.currentPage
       this.getPdf('#questionListDom')
     }
+
   }
 }
 </script>

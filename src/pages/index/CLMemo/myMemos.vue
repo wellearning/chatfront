@@ -187,11 +187,8 @@
                     <div class="question">
                       <span>{{item.QuestionDesc}}</span>
                       <span class="answer marginLeft10px">
-                        <span class="content" v-if="item.AnswerDesc === null || item.AnswerDesc === ''"></span>
-                        <span class="content" v-else-if="IsDate(item.AnswerDesc)">{{dateFormat(item.AnswerDesc)}}</span>
-                        <span class="content" v-else>{{item.AnswerDesc}}</span>
-                        <!--span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
-                        <span class="content noAnswer" v-else>No Answer</span-->
+                        <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
+                        <span class="content noAnswer" v-else>No Answer</span>
                       </span>
                     </div>
                   </div>
@@ -444,10 +441,6 @@ export default {
         this.$refs.co.loadMemo(memoid)
       }
     },
-    IsDate (dateval) {
-      if (dateval.length > 8 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
-      else return false
-    },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
@@ -455,7 +448,7 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetMyMemoes', {query: name}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetMyMemoes', {query: name}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
@@ -488,7 +481,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/RemoveMemo', {memoid: id}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/RemoveMemo', {memoid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -513,7 +506,7 @@ export default {
     // Templates列表
     initTemplates: function () {
       this.isLoadingTemplates = true
-      this.axios.post('/api/Services/memoservice.asmx/SearchTemplates', {query: ''}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/SearchTemplates', {query: ''}).then(res => {
         if (res) {
           console.log('Templates列表', res)
           this.templatesList = res.data
@@ -549,7 +542,7 @@ export default {
       this.totalNum = array.length
       for (let i = 0; i < array.length; i++) {
         this.isLoading = true
-        this.axios.post('/api/Services/memoservice.asmx/GetTemplate', {templateid: array[i]}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/GetTemplate', {templateid: array[i]}).then(res => {
           if (res) {
             console.log('添加Templates', res)
             let temp = res.data
@@ -902,7 +895,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetMemo', {memoid: id}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetMemo', {memoid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.memoFormVisible = true
@@ -1151,7 +1144,7 @@ export default {
             form.memoTemplates = templates
             // console.log('提交问题', form)
             this.isLoading = true
-            this.axios.post('/api/Services/memoservice.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
+            this.axios.post('/api/Services/CommerceService.asmx/SaveMemo', {memo: JSON.stringify(form)}).then(res => {
               if (res) {
                 console.log('修改', res)
                 this.$message({
@@ -1193,7 +1186,7 @@ export default {
     view: function (id) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetMemo', {memoid: id}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetMemo', {memoid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.viewFormVisible = true
@@ -1244,7 +1237,7 @@ export default {
     pdf: function (title, EffectiveDate) {
       this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#pdfDom')
-      this.axios.post('/api/Services/memoservice.asmx/CreatePrintRecord', {memoid: this.viewForm.MemoID, typeid: 1}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/CreatePrintRecord', {memoid: this.viewForm.MemoID, typeid: 1}).then(res => {
         if (res) {
           console.log('create printRecord', res)
         }

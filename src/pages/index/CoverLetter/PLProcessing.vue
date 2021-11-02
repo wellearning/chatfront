@@ -146,7 +146,7 @@ export default {
       this.ProcessingTitle = 'Upload Processing'
       this.processingVisible = true
       if (this.$refs.enbp !== undefined) {
-        this.$refs.enbp.loadProperties(2)
+        this.$refs.enbp.loadProperties(2, coverletter.CoverLetterID)
       }
     },
     showDecline: function (coverletter) {
@@ -156,7 +156,7 @@ export default {
       this.ProcessingTitle = 'Decline Processing'
       this.processingVisible = true
       if (this.$refs.enbp !== undefined) {
-        this.$refs.enbp.loadProperties(3)
+        this.$refs.enbp.loadProperties(3, coverletter.CoverLetterID)
       }
     },
     reinstate: function (coverletter) {

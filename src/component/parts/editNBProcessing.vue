@@ -71,6 +71,7 @@ export default {
     loadProperties: function (typeid, coverletterid) {
       this.isLoading = true
       if (coverletterid === undefined) coverletterid = this.coverLetter.CoverLetterID
+      // coverletterid = this.coverLetter.CoverLetterID
       this.typeid = typeid
       this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties', {coverletterid: coverletterid, processingtypeid: typeid}).then(res => {
         if (res) {

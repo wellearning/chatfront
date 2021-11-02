@@ -3,7 +3,8 @@
     <div class="inPageTitle">
       <span class="inPageNav">My CoverLetters</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAddAuto()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">NewAuto</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAddProperty()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">NewProperty</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -493,8 +494,11 @@ export default {
       })
     },
     // 添加coverLetter
-    showAdd: function () {
-      this.$router.push({path: '/newCoverLetter'})
+    showAddAuto: function () {
+      this.$router.push({path: '/newForAutoCoverLetter'})
+    },
+    showAddProperty: function () {
+      this.$router.push({path: '/newForPropertyCoverLetter'})
     }
   }
 }
