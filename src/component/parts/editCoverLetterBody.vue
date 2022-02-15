@@ -284,7 +284,8 @@ export default {
       answer.hasAnswer = true
       if (answer.IsRoute) this.resetLeftAnswer(ctemplate, cblock, answer)
       let skipsteps = this.countShipNumber(answer)
-      if (skipsteps !== 0) {
+      // if (skipsteps !== 0) {
+      if (skipsteps > 0) {
         for (let i = 0; i < cblock.answers.length; i++) {
           if (cblock.answers[i].QuestionID === answer.QuestionID) {
             for (let j = i + 1; j < i + skipsteps; j++) {
@@ -301,7 +302,7 @@ export default {
             break
           }
         }
-      } else {
+      } else if (skipsteps === -1) {
         // 完成答卷
         this.skipLeft(ctemplate, cblock, answer)
         // this.coverLetter.StatusID = 1

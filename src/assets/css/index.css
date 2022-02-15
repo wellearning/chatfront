@@ -524,7 +524,7 @@ html {
   position: relative;
   white-space: pre-line;
   height: 1160px;
-  background-image: url(http://134.175.142.102:8080/upload/pinkslip.png);
+  background-image: url(../images/pinkslip.png);
   background-repeat: no-repeat;
 }
 .viewCOI {
@@ -534,7 +534,7 @@ html {
   position: relative;
   white-space: pre-line;
   height: 1180px;
-  background-image: url(http://134.175.142.102:8080/upload/coi2.png);
+  background-image: url(../images/coi2.png);
   background-repeat: no-repeat;
   font-family: "Arial";
   font-weight: normal;

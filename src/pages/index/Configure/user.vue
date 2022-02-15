@@ -400,6 +400,7 @@ export default {
         goPage = page
       }
       if (this.searchOrganization === null) {
+        /*
         this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {}).then(res => {
           if (res) {
             console.log('查询树', res)
@@ -415,6 +416,8 @@ export default {
           console.log('查询树出错', err)
           this.isLoading = false
         })
+        */
+        this.isLoading = false
       } else {
         this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: this.searchOrganization}).then(res => {
           if (res) {
