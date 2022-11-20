@@ -20,7 +20,8 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
         <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="User" prop="Author" min-width="100"></el-table-column>
+        <el-table-column label="Status" prop="Status" min-width="100"></el-table-column>
+        <!--el-table-column label="User" prop="Author" min-width="100"></el-table-column-->
         <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
         <el-table-column label="Line of Business" prop="Title" min-width="200"></el-table-column>
@@ -35,12 +36,14 @@
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="500" fixed="right">
+        <el-table-column label="UWScore" prop="Score" min-width="70"></el-table-column>
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="70"></el-table-column>
+        <el-table-column label="Action" width="350" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID >= 1 && scope.row.StatusID !== 4" type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-upload" v-if="scope.row.StatusID >= 2 && scope.row.StatusID !== 4" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 || scope.row.StatusID === 3" type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <!--el-button icon="el-icon-upload" v-if="scope.row.StatusID >= 2 && scope.row.StatusID !== 4" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button-->
             <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 4" type="danger" @click="showDecline(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Decline</el-button>
             <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 4" type="danger" @click="reinstate(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
           </template>

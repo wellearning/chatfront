@@ -48,6 +48,14 @@
           <div class="viewMemo-subtitle"><span>{{viewForm.NameInsured}}</span></div>
         </el-col>
       </el-row>
+      <el-row :gutter="20">
+        <el-col :span="4">
+          <div class="viewMemo-subtitle">Premium on APP:</div>
+        </el-col>
+        <el-col :span="8">
+          <div class="viewMemo-subtitle"><span>{{viewForm.PremiumOnApp}}</span></div>
+        </el-col>
+      </el-row>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col :span="24">
           <div class="viewMemo-subtitle"><span></span></div>
@@ -90,6 +98,7 @@ export default {
         RequestDate: moment(new Date()),
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         branch: null,
+        PremiumOnApp: null,
         Templates: null
       }
     }

@@ -20,11 +20,11 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
-        <!--el-table-column label="Enter Date" min-width="100">
+        <el-table-column label="Enter Date" min-width="100">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EnterDate)}}</span>
           </template>
-        </el-table-column-->
+        </el-table-column>
         <el-table-column label="EffectiveDate" min-width="120">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>

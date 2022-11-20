@@ -52,6 +52,13 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-row :gutter="20" class="subtitle">
+        <el-col :span="12">
+          <el-form-item label="AppPremium" prop="PremiumOnApp">
+            <el-input v-model="coverLetterForm.PremiumOnApp" type="number" placeholder="App Premium" title="AppPremium"></el-input>
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
     <div class="newMemo-submit">
       <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering" :disabled="currentTemplateID === null">Start</el-button>
@@ -91,6 +98,7 @@ export default {
         ProducerID: JSON.parse(this.$store.getters.getAccount).StaffID,
         RequestDate: moment(new Date()),
         NameInsured: null,
+        PremiumOnApp: null,
         TemplateType: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
@@ -116,6 +124,9 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         NameInsured: [
+          { required: true, message: 'Please Enter', trigger: 'blur' }
+        ],
+        PremiumOnApp: [
           { required: true, message: 'Please Enter', trigger: 'blur' }
         ]
       },

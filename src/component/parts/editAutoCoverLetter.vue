@@ -44,6 +44,11 @@
           </el-select>
         </el-form-item>
       </el-col>
+      <el-col :span="12">
+        <el-form-item label="Premium on App" prop="PremiumOnApp">
+          <el-input v-model="coverLetterForm.PremiumOnApp" type="number" placeholder="Premium on App" title="Premium on App"></el-input>
+        </el-form-item>
+      </el-col>
     </el-row>
   </el-form>
   <EditCoverLetterBody :coverLetter="coverLetterForm"></EditCoverLetterBody>
@@ -89,6 +94,7 @@ export default {
         RequestDate: moment(new Date()),
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         ProducerID: 0,
+        PremiumOnApp: null,
         Templates: null
       },
       coverLetterFormRules: {
@@ -108,6 +114,9 @@ export default {
         ],
         Templates: [
           { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        PremiumOnApp: [
+          { required: true, message: 'Please Enter', trigger: 'blur' }
         ]
       }
     }

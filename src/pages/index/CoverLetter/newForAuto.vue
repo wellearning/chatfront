@@ -44,6 +44,11 @@
             </el-select>
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item label="AppPremium" prop="PremiumOnApp">
+            <el-input v-model="coverLetterForm.PremiumOnApp" type="number" placeholder="App Premium" title="AppPremium"></el-input>
+          </el-form-item>
+        </el-col>
       </el-row>
     </el-form>
     <div class="newMemo-submit">
@@ -82,6 +87,7 @@ export default {
         StatusID: 0,
         RequestDate: moment(new Date()),
         NameInsured: null,
+        PremiumOnApp: null,
         ProducerID: JSON.parse(this.$store.getters.getAccount).StaffID,
         TemplateType: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
@@ -111,6 +117,9 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         NameInsured: [
+          { required: true, message: 'Please Enter', trigger: 'blur' }
+        ],
+        PremiumOnApp: [
           { required: true, message: 'Please Enter', trigger: 'blur' }
         ]
       },

@@ -42,13 +42,15 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <!--<el-col :span="12">
-          <el-form-item label="Address Insured(s)" prop="AddressInsured">
-            <el-input v-model="memoForm.AddressInsured" placeholder="Address Insured(s)"></el-input>
+        <el-col :span="12">
+          <el-form-item label="Policy Change Type" prop="Templates">
+            <el-select v-model="memoForm.Templates" placeholder="Policy Change Type" no-data-text="No Record" filterable multiple collapse-tags :disabled="memoForm.InsuranceCorpID === null || memoForm.TemplateType === null" @change="changeTemplates()">
+              <el-option v-for="item in templatesList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
+            </el-select>
           </el-form-item>
-        </el-col>-->
+        </el-col>
       </el-row>
-      <el-row :gutter="20" class="subtitle">
+      <!--<el-row :gutter="20" class="subtitle">
         <el-col :span="12">
           <el-form-item label="Category" prop="TemplateType">
             <el-select v-model="memoForm.TemplateType" placeholder="Category" no-data-text="No Record" filterable @change="changeTemplateType(memoForm.TemplateType)">
@@ -63,7 +65,7 @@
             </el-select>
           </el-form-item>
         </el-col>
-      </el-row>
+      </el-row>-->
     </el-form>
     <div class="newMemo-submit">
       <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering">Start</el-button>
@@ -154,7 +156,7 @@ export default {
         AddressInsured: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
-        TemplateType: null,
+        TemplateType: {id: 1, name: 'Vehicle Template'}, // null,
         Templates: null
       },
       memoFormRules: {
@@ -251,6 +253,8 @@ export default {
     changeInsuranceCompany: function () {
       this.memoForm.Templates = []
       this.clearMemo()
+      this.initTemplates(1)
+
       // 获取变量值，用于之后回答时routing比对
       this.AutoBindingAuthority = this.insuranceCompanyList.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID).AutoBindingAuthority
       this.PropertyBindingAuthority = this.insuranceCompanyList.find(item => item.InsuranceCorpID === this.memoForm.InsuranceCorpID).PropertyBindingAuthority
@@ -718,7 +722,7 @@ export default {
                 if (type === 'saveAndPrint') {
                   this.$store.state.MemoID = res.data.MemoID
                 }
-                this.$router.push({path: '/myMemos'})
+                this.$router.push({path: '/CLMmyMemos'})
               }
               this.isLoading = false
             }).catch(err => {

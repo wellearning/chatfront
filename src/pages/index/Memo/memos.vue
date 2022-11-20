@@ -29,24 +29,33 @@
         <el-table-column label="Corp" prop="CorpName" min-width="100"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250"></el-table-column>
-        <el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column>
+        <el-table-column label="UWScore" prop="Score" min-width="100"></el-table-column>
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
+        <!--el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column-->
         <el-table-column label="PrintPS" prop="PrintPSTimes" min-width="100"></el-table-column>
         <el-table-column label="RequestDate" min-width="150">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="400" fixed="right">
+        <el-table-column label="Action" width="480" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
           </template>
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
+      <!----------------------------------------------Processing弹窗开始----------------------------------------------------->
+      <el-dialog :title="ProcessingTitle" :visible.sync="processingVisible" width="1184.56px" center :before-close="beforeCloseProcessing" :after-close="closeProcessing">
+        <EditMemoProcessing ref="enbp" :memo="currentMemo" :processingtypeid="ProcessingTypeID" @close="closeProcessing"></EditMemoProcessing>
+      </el-dialog>
+      <!----------------------------------------------Processing弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
         <div class="printDiv" v-if="viewForm.StatusID === 1">
@@ -256,9 +265,11 @@
 import moment from 'moment'
 import PinkSlip from '@/component/window/pinkSlip'
 import COI from '@/component/window/coi'
+import EditMemoProcessing from '@/component/parts/editMemoProcessing'
 
 export default {
   components: {
+    EditMemoProcessing,
     PinkSlip,
     COI
   },
@@ -284,7 +295,8 @@ export default {
       // 列表
       tempList: [],
       list: [],
-      currentMemoID: null,
+      currentMemo: null,
+      currentMemoID: 0,
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -331,7 +343,11 @@ export default {
         ExpiryDate: null,
         PolicyNumber: null,
         Broker: ''
-      }
+      },
+      // processing
+      ProcessingTypeID: null,
+      ProcessingTitle: '',
+      processingVisible: false
     }
   },
   mounted: function () {
@@ -437,6 +453,36 @@ export default {
       this.searchName = null
       this.search(null, 0)
     },
+    // UW弹窗
+    showUnderWriter: function (memo) {
+      this.currentMemo = memo
+      this.currentMemoID = memo.MemoID
+      this.ProcessingTypeID = 1
+      this.ProcessingTitle = 'Underwriting Processing'
+      this.processingVisible = true
+      if (this.$refs.enbp !== undefined) {
+        this.$refs.enbp.loadProperties(1, memo.MemoID)
+      }
+    },
+    beforeCloseProcessing: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        done()
+      }).catch(() => {})
+    },
+    closeProcessing: function () {
+      this.$refs.enbp.closeview()
+      // this.currentMemo = null
+      this.ProcessingTypeID = 0
+      this.processingVisible = false
+      if (this.$refs.enbp !== undefined) {
+        this.$refs.enbp.close()
+      }
+    },
+
     // 查阅弹窗
     view: function (id) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')

@@ -668,3 +668,6 @@ html {
   font-size: 16px;
 }
 
+.yearMonthSelection {
+  width: 125px;
+}

@@ -14,7 +14,7 @@
             <el-input v-model="searchForm.name" placeholder="Question" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
@@ -40,7 +40,7 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New Single Choice Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
@@ -208,7 +208,7 @@ export default {
     }
   },
   mounted: function () {
-    this.search('')
+    this.search('', 0)
   },
   methods: {
     // show used block list
@@ -256,11 +256,13 @@ export default {
       }
     },
     // 查询
-    search: function (name) {
+    // search: function (name) {
+    search: function (name, start) {
       this.isLoading = true
       let query = ''
       if (name !== null) query = name
-      this.axios.post('/api/Services/CommerceService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
+      // this.axios.post('/api/Services/CommerceService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/SearchQuestionsByTypeQuery', {typeid: 6, query: query, start: start}).then(res => {
         if (res) {
           console.log('查询', res)
           // 声明value，AdditionContent，防止输入框无法输入
@@ -287,7 +289,14 @@ export default {
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null)
+      // this.search(null)
+      this.search(null, 0)
+    },
+    handleCurrentChange: function (val) {
+      console.log(`当前页: ${val}`)
+      if (val === this.pageCount && !this.isAll) {
+        this.search(null, this.total)
+      }
     },
     // 显示新增弹窗
     showAdd: function () {
