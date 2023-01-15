@@ -8,10 +8,22 @@
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-button icon="el-icon-minus" type="primary" @click="prevMonth()" :loading="isLoading ">Prev Month</el-button>
+            <!--el-checkbox v-if="branchVisible" v-model="showAll" label="Show All" size="large" border @change="switchRecords()"/-->
+            <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
+              <el-radio-button label="View Monthly" />
+              <el-radio-button label="View Yearly" />
+            </el-radio-group>
+            <!--el-switch  @change="switchRecords()" :loading="isLoading "
+                        v-model="viewMonthly"
+                        active-text="View Monthly"
+                        inactive-text="View Yearly">
+              active-color="#13ce66"
+              inactive-color="#ff4949">
+            </el-switch-->
+            <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
           <el-form-item label="Year" prop="Year">
-            <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYearMonth()">
+            <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYear()">
               <el-option v-for="item in searchForm.years" :key="item" :label="item" :value="item"></el-option>
             </el-select>
           </el-form-item>
@@ -21,7 +33,8 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-plus" type="primary" @click="nextMonth()" :loading="isLoading ">Next Month</el-button>
+            <el-button icon="el-icon-arrow-right" type="default" title="Next Month" @click="nextMonth()" :loading="isLoading "></el-button>
+            <!--el-button icon="el-icon-plus" type="primary" @click="nextMonth()" :loading="isLoading ">Next Month</el-button-->
           </el-form-item>
         </el-form>
       </div>
@@ -29,13 +42,13 @@
     <div v-if="adminVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
-          <el-row :gutter="20" class="title" v-loading="isLoading">
-            <el-col :span="4" class="">Monthly Summary: </el-col>
-            <el-col :span="4">NB Counts: {{NBCounts}}</el-col>
-            <el-col :span="4">NB Premium: ${{NBPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Remarket Counts: {{RemarketCounts}}</el-col>
-            <el-col :span="4">Remarket Premium: ${{RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Score Average: {{ScoreAverage}}</el-col>
+          <el-row :gutter="20" class="title" v-loading="isLoadingMonthToDate">
+            <el-col :span="4" class="">Month to Date: </el-col>
+            <el-col :span="4">NB Counts: {{monthSummary.NBCounts}}</el-col>
+            <el-col :span="4">NB Premium: ${{monthSummary.NBPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Remarket Counts: {{monthSummary.RemarketCounts}}</el-col>
+            <el-col :span="4">Remarket Premium: ${{monthSummary.RemarketPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Score Average: {{monthSummary.ScoreAverage}}</el-col>
           </el-row>
           <el-row :gutter="20" class="title" v-loading="isLoadingYearToDate">
             <el-col :span="4" class="">Year to Date: </el-col>
@@ -110,7 +123,7 @@
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoading">
-            <el-col :span="4" class="">{{currentBranch.InstitutionName}} Monthly Summary: </el-col>
+            <el-col :span="4" class="">{{currentBranch.InstitutionName}} Summary: </el-col>
             <el-col :span="4">NB Counts: {{currentBranch.NBCounts}}</el-col>
             <el-col :span="4">NB Premium: ${{currentBranch.NBPremium.toLocaleString()}}</el-col>
             <el-col :span="4">Remarket Counts: {{currentBranch.RemarketCounts}}</el-col>
@@ -267,6 +280,8 @@ export default {
   },
   data: function () {
     return {
+      viewMonthly: 'View Monthly',
+      showAll: false,
       totalPremium: 0,
       NBCounts: 0,
       NBPremium: 1,
@@ -286,6 +301,7 @@ export default {
       // htmlTitle: 'null', // pdf文件名
       isLoading: false,
       isLoadingYearToDate: false,
+      isLoadingMonthToDate: false,
       isLoadingBranch: false,
       isLoadingProducer: false,
       isLoadingCoverLetter: false,
@@ -319,6 +335,14 @@ export default {
         RemarketPremium: 0,
         ScoreAverage: 0
       },
+      monthSummary: {
+        NBCounts: 0,
+        NBPremium: 0,
+        RemarketCounts: 0,
+        RemarketPremium: 0,
+        ScoreAverage: 0
+      },
+
       currentBranch: null,
       // currentBranchID: 0,
       branches: [],
@@ -363,6 +387,7 @@ export default {
     }
     this.search()
     this.loadYearToDate()
+    this.loadMonthToDate()
   },
   watch: {
     finishNum (val) {
@@ -377,6 +402,11 @@ export default {
     }
   },
   methods: {
+    switchRecords: function () {
+      if (this.adminVisible) this.search()
+      else if (this.branchVisible) this.loadBranch()
+      else this.loadProducer()
+    },
     rank: function (name) {
       if (this.adminVisible) this.list.sort(this.by(name))
       else {
@@ -408,6 +438,7 @@ export default {
       if (this.searchForm.Month === 1) {
         this.searchForm.Month = 12
         this.searchForm.Year--
+        this.loadYearToDate()
       } else this.searchForm.Month--
       this.showMain()
     },
@@ -415,7 +446,12 @@ export default {
       if (this.searchForm.Month === 12) {
         this.searchForm.Month = 1
         this.searchForm.Year++
+        this.loadYearToDate()
       } else this.searchForm.Month++
+      this.showMain()
+    },
+    changeYear: function () {
+      this.loadYearToDate()
       this.showMain()
     },
     changeYearMonth: function () {
@@ -436,6 +472,7 @@ export default {
       this.branchVisible = false
       this.producerVisible = false
       this.coverLetterVisible = false
+      this.loadMonthToDate()
       this.search()
     },
     showProducer: function (producer) {
@@ -475,16 +512,37 @@ export default {
         this.isLoadingYearToDate = false
       })
     },
+    loadMonthToDate: function () {
+      this.isLoadingMonthToDate = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetInstitutionRecords_monthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.monthSummary = res.data
+        }
+        this.isLoadingMonthToDate = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingMonthToDate = false
+      })
+    },
+
     getBranch: function (branchid) {
       return this.branches.find(b => b.InstitutionID === branchid)
     },
     // 查询
     search: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetInstitutionRecords', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords'
+      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'View Yearly') {
+        service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_year'
+        param = {year: this.searchForm.Year}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          /*
           let sumofnb = 0
           let nbcounts = 0
           let remarketcounts = 0
@@ -503,6 +561,7 @@ export default {
           this.RemarketPremium = sumofremarket
           this.NBCounts = nbcounts
           this.RemarketCounts = remarketcounts
+          */
           this.total = this.list.length
           this.currentPage = 1
           this.isLoading = false
@@ -515,7 +574,17 @@ export default {
     loadBranch: function () {
       let branchid = this.currentBranch.InstitutionID
       this.isLoadingBranch = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecords_branch', {branchid: branchid, year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_branch'
+      let param = {branchid: branchid, year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'View Yearly') {
+        service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_branch_year'
+        param = {branchid: branchid, year: this.searchForm.Year}
+      }
+      if (this.showAll) {
+        service = service.replace('branch', 'all')
+        param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.producers = res.data
@@ -535,7 +604,13 @@ export default {
     loadProducer: function () {
       let producerid = this.currentProducer.ProducerID
       this.isLoadingProducer = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetters_producer', {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer'
+      let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'View Yearly') {
+        service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year'
+        param = {producerid: producerid, year: this.searchForm.Year}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.coverletters = res.data
@@ -555,7 +630,7 @@ export default {
     loadCoverLetter: function () {
       let coverletterid = this.currentCoverLetter.CoverLetterID
       this.isLoadingCoverLetter = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties_score', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
         if (res) {
           console.log('查询', res)
           this.coverletterproperties = res.data

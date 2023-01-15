@@ -1,38 +1,51 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">My Report</span>
+      <!--span class="inPageNav">My Report</span-->
+      <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">My Report</a>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-button icon="el-icon-minus" type="primary" @click="prevMonth()" :loading="isLoading ">Prev Month</el-button>
+            <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
+              <el-radio-button label="View Monthly" />
+              <el-radio-button label="View Yearly" />
+            </el-radio-group>
+            <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
           <el-form-item label="Year" prop="Year">
-            <el-select v-model="searchForm.Year" placeholder="" no-data-text="No Record" filterable @change="changeYearMonth()">
+            <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYear()">
               <el-option v-for="item in searchForm.years" :key="item" :label="item" :value="item"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Month" prop="Month">
-            <el-select v-model="searchForm.Month" placeholder="" no-data-text="No Record" filterable @change="changeYearMonth()">
+            <el-select v-model="searchForm.Month" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYearMonth()">
               <el-option v-for="item in searchForm.months" :key="item.value" :label="item.name" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-plus" type="primary" @click="nextMonth()" :loading="isLoading ">Next Month</el-button>
+            <el-button icon="el-icon-arrow-right" type="default" title="Next Month" @click="nextMonth()" :loading="isLoading "></el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
-    <div class="inPageContent">
+    <div v-if="mainVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
-          <el-row :gutter="20" class="title">
-            <el-col :span="4" class="">Monthly Summary: </el-col>
-            <el-col :span="4">NB Counts: {{NBCounts}}</el-col>
-            <el-col :span="4">NB Premium: ${{NBPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Remarket Counts: {{RemarketCounts}}</el-col>
-            <el-col :span="4">Remarket Premium: ${{RemarketPremium.toLocaleString()}}</el-col>
-            <!--el-col :span="4">Score Average: {{ScoreAverage}}</el-col-->
+          <el-row :gutter="20" class="title" v-loading="isLoadingMonthToDate">
+            <el-col :span="4" class="">Month to Date: </el-col>
+            <el-col :span="4">NB Counts: {{monthSummary.NBCounts}}</el-col>
+            <el-col :span="4">NB Premium: ${{monthSummary.NBPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Remarket Counts: {{monthSummary.RemarketCounts}}</el-col>
+            <el-col :span="4">Remarket Premium: ${{monthSummary.RemarketPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Score Average: {{monthSummary.ScoreAverage}}</el-col>
+          </el-row>
+          <el-row :gutter="20" class="title" v-loading="isLoadingYearToDate">
+            <el-col :span="4" class="">Year to Date: </el-col>
+            <el-col :span="4">NB Counts: {{yearSummary.NBCounts}}</el-col>
+            <el-col :span="4">NB Premium: ${{yearSummary.NBPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Remarket Counts: {{yearSummary.RemarketCounts}}</el-col>
+            <el-col :span="4">Remarket Premium: ${{yearSummary.RemarketPremium.toLocaleString()}}</el-col>
+            <el-col :span="4">Score Average: {{yearSummary.ScoreAverage}}</el-col>
           </el-row>
         </el-main>
         <!--el-form :model="searchForm" ref="searchForm" class="searchForm">
@@ -68,14 +81,45 @@
             <span>${{scope.row.PremiumOnApp.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <!--el-table-column label="Score" prop="Score" min-width="80"></el-table-column-->
         <el-table-column label="Submit Premium" prop="Premium" min-width="120">
           <template slot-scope="scope" >
             <span>${{scope.row.Premium.toLocaleString()}}</span>
           </template>
         </el-table-column>
+        <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="80"></el-table-column>
+        <el-table-column label="Detail" prop="" min-width="80">
+          <template slot-scope="scope" >
+            <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      </el-pagination>
+    </div>
+    <div v-else class="inPageContent">
+      <div class="searchBox">
+        <el-main class="" >
+          <el-row :gutter="20" class="title" v-loading="isLoading">
+            <el-col :span="4" class="">CoverLetterID: {{currentCoverLetter.CoverLetterID}} </el-col>
+            <el-col :span="4">Client Code: {{currentCoverLetter.ClientCode}}</el-col>
+            <el-col :span="4">Name Insured: {{currentCoverLetter.NameInsured}}</el-col>
+            <el-col :span="4">Premium: ${{currentCoverLetter.Premium.toLocaleString()}}</el-col>
+            <el-col :span="4">UW Score: {{currentCoverLetter.Score}}</el-col>
+            <el-col :span="4">Quality Score: {{currentCoverLetter.QualityScore}}</el-col>
+          </el-row>
+        </el-main>
+      </div>
+      <el-table :data="coverletterpropertylist.slice((coverlettercurrentPage - 1) * pageSize, coverlettercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingCoverLetter" element-loading-background="rgba(255, 255, 255, 0.5)">
+        <el-table-column label="ID" prop="PropertyID" min-width="100" fixed="left"></el-table-column>
+        <el-table-column label="Name" prop="Name" min-width="150"></el-table-column>
+        <el-table-column label="" prop="" min-width="1"></el-table-column>
+        <el-table-column label="Value" prop="Value" min-width="150"></el-table-column>
+        <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="80"></el-table-column>
+
+      </el-table>
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=coverlettercurrentPage layout="prev, pager, next" :total=coverlettertotal class="pageList">
       </el-pagination>
     </div>
   </div>
@@ -89,12 +133,13 @@ export default {
   },
   data: function () {
     return {
+      viewMonthly: 'View Monthly',
       totalPremium: 0,
       NBCounts: 0,
       NBPremium: 1,
       RemarketCounts: 0,
-      RemarketPremium: 2,
-      ScoreAverage: 3,
+      RemarketPremium: 0,
+      ScoreAverage: 0,
       AutoBindingAuthority: null,
       PropertyBindingAuthority: null,
       EffectiveDate: null,
@@ -111,6 +156,8 @@ export default {
       // },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
+      isLoadingYearToDate: false,
+      isLoadingMonthToDate: false,
       // 搜索
       searchForm: {
         name: null,
@@ -132,12 +179,37 @@ export default {
           {name: 'December', value: 12}]
       },
       searchName: null,
-      pinkSlipFormVisible: false,
+      mainVisible: true,
+      coverLetterVisible: false,
       currentCoverLetterID: null,
-      currentCoverLetter: null,
+      coverletterpropertylist: [],
+      currentCoverLetter: {
+        CoverLetterID: 0,
+        ClientCode: '',
+        NameInsured: '',
+        Score: 0,
+        QualityScore: 0
+      },
+      coverlettercurrentPage: 1,
+      coverlettertotal: 0,
       // 列表
       tempList: [],
       list: [],
+      yearSummary: {
+        NBCounts: 0,
+        NBPremium: 0,
+        RemarketCounts: 0,
+        RemarketPremium: 0,
+        ScoreAverage: 0
+      },
+      monthSummary: {
+        NBCounts: 0,
+        NBPremium: 0,
+        RemarketCounts: 0,
+        RemarketPremium: 0,
+        ScoreAverage: 0
+      },
+      showRecord: 'Show Year',
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -151,6 +223,8 @@ export default {
       this.searchForm.years.push(i)
     }
     this.search()
+    this.loadYearToDate()
+    this.loadMonthToDate()
   },
   watch: {
     finishNum (val) {
@@ -165,33 +239,73 @@ export default {
     }
   },
   methods: {
+    switchRecords: function () {
+      this.search()
+    },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {
         this.searchForm.Month = 12
         this.searchForm.Year--
+        this.loadYearToDate()
       } else this.searchForm.Month--
       this.search()
+      this.loadMonthToDate()
     },
     nextMonth: function () {
       if (this.searchForm.Month === 12) {
         this.searchForm.Month = 1
         this.searchForm.Year++
+        this.loadYearToDate()
       } else this.searchForm.Month++
+      this.search()
+      this.loadMonthToDate()
+    },
+    changeYear: function () {
+      this.loadYearToDate()
+      this.loadMonthToDate()
       this.search()
     },
     changeYearMonth: function () {
       this.search()
+      this.loadMonthToDate()
     },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
-    loadYearToDate: function () {
-      this.isLoadingYearToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetMyYearToDate', {year: this.searchForm.Year}).then(res => {
+    showMain: function () {
+      this.mainVisible = true
+      this.coverLetterVisible = false
+      this.search()
+    },
+    showCoverLetter: function (letter) {
+      this.mainVisible = false
+      this.coverLetterVisible = true
+      if (letter !== undefined) {
+        this.currentCoverLetter = letter
+        this.loadCoverLetter()
+      }
+    },
+    loadMonthToDate: function () {
+      this.isLoadingMonthToDate = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_producermonthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.totalPremium = res.data
+          this.monthSummary = res.data
+        }
+        this.isLoadingMonthToDate = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingMonthToDate = false
+      })
+    },
+
+    loadYearToDate: function () {
+      this.isLoadingYearToDate = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_produceryearsummary', {year: this.searchForm.Year}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.yearSummary = res.data
         }
         this.isLoadingYearToDate = false
       }).catch(err => {
@@ -202,36 +316,16 @@ export default {
     // 查询
     search: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month'
+      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'View Yearly') {
+        service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year'
+        param = {year: this.searchForm.Year}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
-          let sumofnb = 0
-          let nbcounts = 0
-          let remarketcounts = 0
-          let sumofremarket = 0
-          let sumofscore = 0
-          this.list.forEach(function (c) {
-            if (c.LeadsFrom === 'New' || c.LeadsFrom === 'X-New' || c.LeadsFrom === 'LOA') {
-              sumofnb += c.Premium
-              nbcounts++
-            } else {
-              sumofremarket += c.Premium
-              remarketcounts++
-            }
-            sumofscore += c.Score
-          })
-          if (this.list.length > 0) this.averageScore = Math.round(100 * sumofscore / this.list.length) / 100
-          this.NBPremium = sumofnb
-          this.RemarketPremium = sumofremarket
-          this.NBCounts = nbcounts
-          this.RemarketCounts = remarketcounts
-          /*
-            if (name !== null) {
-              this.searchName = name
-              this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-            }
-            */
           this.total = this.list.length
           this.currentPage = 1
         }
@@ -239,6 +333,23 @@ export default {
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoading = false
+      })
+    },
+    // loading current coverletter properties
+    loadCoverLetter: function () {
+      let coverletterid = this.currentCoverLetter.CoverLetterID
+      this.isLoadingCoverLetter = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties_score', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.coverletterpropertylist = res.data
+          this.coverlettertotal = this.coverletterpropertylist.length
+          this.coverlettercurrentPage = 1
+        }
+        this.isLoadingCoverLetter = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingCoverLetter = false
       })
     },
     // 重置查询
