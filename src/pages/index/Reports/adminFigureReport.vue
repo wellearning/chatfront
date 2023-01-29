@@ -1,9 +1,15 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <a class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Broker Report</a>
+      <a class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Figure Report</a>
+      <a v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.Name}} Report</a>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
+          <el-form-item label="Report" prop="ReportItem"  v-loading="isLoadingReportItems" >
+            <el-select v-model="searchForm.ReportItem" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
+              <el-option v-for="item in reportItems" :key="item.ParameterID" :label="item.Name" :value="item.ParameterID"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
               <el-radio-button label="View Monthly" />
@@ -28,39 +34,18 @@
       </div>
     </div>
     <div v-if="adminVisible" class="inPageContent">
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left">
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="Producer Name" prop="ProducerName" min-width="150">
-          <!--template slot-scope="scope" >
-            <a>{{scope.row.ProducerName}}</a>
-          </template-->
+        <el-table-column label="Name" prop="ProducerName" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="NB Counts" prop="NBCounts" min-width="100">
+        <el-table-column label="Total Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="NB Premium" prop="nbPremium" min-width="150">
-          <!--template slot-scope="scope" >
-            <span>${{scope.row.NBPremium.toLocaleString()}}</span>
-          </template-->
-        </el-table-column>
-        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100">
-        </el-table-column>
-        <el-table-column label="Remarket Premium" prop="remarketPremium" min-width="150">
-          <!--template slot-scope="scope" >
-            <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
-          </template-->
-        </el-table-column>
-        <el-table-column label="UW Score" prop="UWScore" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('UWScore')" @dblclick="rankdesc('UWScore')" title="Click to rank, double click to rank desc">UW Score</span>
+        <el-table-column v-for="(col, index) in tableColumns" :key="index" :label="col.Name" :prop="col.Prop" min-width="100" sortable="custom" >
+          <template slot-scope="scope" >
+            <span v-if="col.Prop.indexOf('Percent')>=0">{{scope.row[col.Prop].toFixed(2)}}%</span>
+            <span v-else>{{scope.row[col.Prop]}}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('QualityScore')" @dblclick="rankdesc('QualityScore')" title="Click to rank, double click to rank desc">Quality Score</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Score Average" prop="ScoreAverage" min-width="150">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
@@ -79,6 +64,7 @@ export default {
     return {
       viewMonthly: 'View Monthly',
       isLoading: false,
+      isLoadingReportItems: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
       // 搜索
@@ -86,6 +72,7 @@ export default {
         name: null,
         Year: 2022,
         Month: 1,
+        ReportItem: null,
         years: [],
         months: [
           {name: 'January', value: 1},
@@ -103,7 +90,10 @@ export default {
       },
       // 列表
       list: [],
-      producers: [],
+      reportItems: [],
+      currentItem: {},
+      reportID: '0',
+      tableColumns: [],
       coverletters: [],
       coverletterproperties: [],
       currentProducer: null,
@@ -127,7 +117,7 @@ export default {
     for (var i = 2020; i <= this.searchForm.Year; i++) {
       this.searchForm.years.push(i)
     }
-    this.search()
+    this.loadReportItems()
   },
   watch: {
     finishNum (val) {
@@ -142,6 +132,10 @@ export default {
     }
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
     rank: function (name) {
       if (this.adminVisible) this.list.sort(this.by(name))
       else {
@@ -194,25 +188,70 @@ export default {
     },
     showMain: function () {
       this.adminVisible = true
+      this.currentItem = this.reportItems.find(i => i.ParameterID === this.searchForm.ReportItem)
+      if (this.currentItem === undefined) return
+      this.setColumns(this.currentItem)
       this.search()
+      this.$forceUpdate()
     },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
+    setColumns (parameter) {
+      if (parameter.DataType === 'Check') {
+        this.tableColumns = [{'Name': 'Counts of ' + parameter.DisplayName, 'Prop': 'RemarketCounts'}, {'Name': 'Percentage', 'Prop': 'Percentage'}]
+      } else if (parameter.DataType === 'List') {
+        this.tableColumns = []
+        for (var i = 0; i < parameter.listValues.length; i++) {
+          this.tableColumns.push({'Name': 'Counts of ' + parameter.listValues[i].Name, 'Prop': 'ListCounts' + i})
+          this.tableColumns.push({'Name': 'Percent of ' + parameter.listValues[i].Name, 'Prop': 'ListPercent' + i})
+        }
+      }
+    },
+    loadReportItems: function () {
+      this.isLoadingReportItems = true
+      let service = '/api/Services/BaseService.asmx/GetFiguredBusinessParameters'
+      let param = {businesstypeid: 2}
+      this.axios.post(service, param).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.reportItems = res.data
+          this.isLoadingReportItems = false
+        }
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingReportItems = false
+      })
+    },
     // 查询
     search: function () {
       this.isLoading = true
-      let service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all'
-      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      let service = '/api/Services/NewBusinessService.asmx/GetFigureReport'
+      let param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: this.searchForm.Month}
       if (this.viewMonthly === 'View Yearly') {
-        service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all_year'
-        param = {year: this.searchForm.Year}
+        // service += '_year'
+        param = param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: 0}
       }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          if (this.currentItem.DataType === 'List') {
+            this.list.forEach(function (item) {
+              for (var i = 0; i < item.listValueRecords.length; i++) {
+                item['ListCounts' + i] = item.listValueRecords[i].Count
+                if (item.NBCounts !== 0) item['ListPercent' + i] = (item.listValueRecords[i].Count / item.NBCounts * 100)
+                else item['ListPercent' + i] = 0
+              }
+            })
+          } else if (this.currentItem.DataType === 'Check') {
+            this.list.forEach(function (item) {
+              if (item.NBCounts !== 0) item['Percentage'] = (item.RemarketCounts / item.NBCounts * 100).toFixed(2)
+              else item['Percentage'] = 0
+            })
+          }
+
           this.total = this.list.length
           this.currentPage = 1
           this.isLoading = false

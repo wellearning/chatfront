@@ -80,6 +80,18 @@ export default{
         if (typeof o === 'object' && typeof p === 'object' && o && p) {
           a = o[name]
           b = p[name]
+          if (typeof a === 'string') {
+            return a.localeCompare(b)
+          } else {
+            if (a === b) {
+              return 0
+            }
+            if (typeof a === typeof b) {
+              return a < b ? -1 : 1
+            }
+            return typeof a < typeof b ? -1 : 1
+          }
+          /*
           if (a === b) {
             return 0
           }
@@ -87,6 +99,7 @@ export default{
             return a < b ? -1 : 1
           }
           return typeof a < typeof b ? -1 : 1
+          */
         } else {
           return 1
           // throw ('error')
@@ -99,6 +112,18 @@ export default{
         if (typeof o === 'object' && typeof p === 'object' && o && p) {
           a = o[name]
           b = p[name]
+          if (typeof a === 'string') {
+            return b.localeCompare(a)
+          } else {
+            if (a === b) {
+              return 0
+            }
+            if (typeof a === typeof b) {
+              return a > b ? -1 : 1
+            }
+            return typeof a > typeof b ? -1 : 1
+          }
+          /*
           if (a === b) {
             return 0
           }
@@ -106,6 +131,7 @@ export default{
             return a > b ? -1 : 1
           }
           return typeof a > typeof b ? -1 : 1
+          */
         } else {
           return 1
           // throw ("error");
