@@ -7,8 +7,8 @@
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
-              <el-radio-button label="View Monthly" />
-              <el-radio-button label="View Yearly" />
+              <el-radio-button label="Month to Date" />
+              <el-radio-button label="Year to Date" />
             </el-radio-group>
             <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
@@ -133,7 +133,7 @@ export default {
   },
   data: function () {
     return {
-      viewMonthly: 'View Monthly',
+      viewMonthly: 'Month to Date',
       totalPremium: 0,
       NBCounts: 0,
       NBPremium: 1,
@@ -318,7 +318,7 @@ export default {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month'
       let param = {year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
+      if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year'
         param = {year: this.searchForm.Year}
       }

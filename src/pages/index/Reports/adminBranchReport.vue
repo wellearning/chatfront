@@ -10,8 +10,8 @@
           <el-form-item>
             <!--el-checkbox v-if="branchVisible" v-model="showAll" label="Show All" size="large" border @change="switchRecords()"/-->
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
-              <el-radio-button label="View Monthly" />
-              <el-radio-button label="View Yearly" />
+              <el-radio-button label="Month to Date" />
+              <el-radio-button label="Year to Date" />
             </el-radio-group>
             <!--el-switch  @change="switchRecords()" :loading="isLoading "
                         v-model="viewMonthly"
@@ -60,60 +60,36 @@
           </el-row>
         </el-main>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="" prop="InstitutionID" width="60" fixed="left">
-          <template slot="header" >
-            <span @click = "rank('InstitutionID')" @dblclick="rankdesc('InstitutionID')" title="Click to rank, double click to rank desc">ID</span>
-          </template>
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="InstitutionID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="InstitutionName" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('InstitutionName')" @dblclick="rankdesc('InstitutionName')" title="Click to rank, double click to rank desc">Name</span>
-          </template>
+        <el-table-column label="Name" prop="InstitutionName" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <a @click = "showBranch(scope.row)" style="color:darkblue" href="#" title="Click here to show the branch detail.">{{scope.row.InstitutionName}}</a>
           </template>
         </el-table-column>
-        <el-table-column label="" prop="NBCounts" min-width="100">
-          <template slot="header" >
-            <span @click = "rank('NBCounts')" @dblclick="rankdesc('NBCounts')" title="Click to rank, double click to rank desc">NB Counts</span>
-          </template>
+        <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column  prop="NBPremium" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('NBPremium')" @dblclick="rankdesc('NBPremium')" title="Click to rank, double click to rank desc">NB Premium</span>
-          </template>
+        <el-table-column label="NB Premium"  prop="NBPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.NBPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="" prop="RemarketCounts" min-width="100">
-          <template slot="header" >
-            <span @click = "rank('RemarketCounts')" @dblclick="rankdesc('RemarketCounts')" title="Click to rank, double click to rank desc">Remarket Counts</span>
-          </template>
+        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RemarketPremium" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('RemarketPremium')" @dblclick="rankdesc('RemarketPremium')" title="Click to rank, double click to rank desc">Remarket Premium</span>
-          </template>
+        <el-table-column label="Remarket Premium" prop="RemarketPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="" prop="UWScore" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('UWScore')" @dblclick="rankdesc('UWScore')" title="Click to rank, double click to rank desc">UW Score</span>
-          </template>
+        <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="QualityScore" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('QualityScore')" @dblclick="rankdesc('QualityScore')" title="Click to rank, double click to rank desc">Quality Score</span>
-          </template>
+        <el-table-column label="Quality Scor" prop="QualityScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="ScoreAverage" min-width="150">
-          <template slot="header" >
+        <el-table-column label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
+          <!--template slot="header" >
             <span @click = "rank('ScoreAverage')" @dblclick="rankdesc('ScoreAverage')" title="Click to rank, double click to rank desc">Score Average</span>
-          </template>
+          </template-->
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
@@ -132,39 +108,39 @@
           </el-row>
         </el-main>
       </div>
-      <el-table :data="producers.slice((branchcurrentPage - 1) * pageSize, branchcurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingBranch" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left">
+      <el-table :data="producers.slice((branchcurrentPage - 1) * pageSize, branchcurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingBranch" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttablebranch">
+        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="Producer Name" prop="ProducerName" min-width="150">
-          <template slot-scope="scope" >
+        <el-table-column label="Producer Name" prop="ProducerName" min-width="150" sortable="custom">
+          <template slot-scope="scope"  sortable="custom">
             <a @click = "showProducer(scope.row)" style="color:darkblue" href="#" title="Double Click here to show the detail.">{{scope.row.ProducerName}}</a>
           </template>
         </el-table-column>
-        <el-table-column label="NB Counts" prop="NBCounts" min-width="100">
+        <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="NB Premium" prop="nbPremium" min-width="150">
+        <el-table-column label="NB Premium" prop="nbPremium" min-width="150" sortable="custom">
           <!--template slot-scope="scope" >
             <span>${{scope.row.NBPremium.toLocaleString()}}</span>
           </template-->
         </el-table-column>
-        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100">
+        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="Remarket Premium" prop="remarketPremium" min-width="150">
+        <el-table-column label="Remarket Premium" prop="remarketPremium" min-width="150" sortable="custom">
           <!--template slot-scope="scope" >
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template-->
         </el-table-column>
-        <el-table-column label="UW Score" prop="UWScore" min-width="150">
-          <template slot="header" >
+        <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+          <!--template slot="header" >
             <span @click = "rank('UWScore')" @dblclick="rankdesc('UWScore')" title="Click to rank, double click to rank desc">UW Score</span>
-          </template>
+          </template-->
         </el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="150">
-          <template slot="header" >
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+          <!--template slot="header" >
             <span @click = "rank('QualityScore')" @dblclick="rankdesc('QualityScore')" title="Click to rank, double click to rank desc">Quality Score</span>
-          </template>
+          </template-->
         </el-table-column>
-        <el-table-column label="Score Average" prop="ScoreAverage" min-width="150">
+        <el-table-column label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=branchcurrentPage layout="prev, pager, next" :total=branchtotal class="pageList">
@@ -214,10 +190,10 @@
         <template slot="header" >
           <span @click = "crank('Title')" @dblclick="crankdesc('Title')" title="Click to rank, double click to rank desc">Line of Business</span>
         </template>
-        <el-table-column label="Effective Date" min-width="120">
-          <template slot-scope="scope">
+        <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120">
+          <!--template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
-          </template>
+          </template-->
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="80"></el-table-column>
         <el-table-column label="APP Premium" prop="appPremium" min-width="120">
@@ -280,7 +256,7 @@ export default {
   },
   data: function () {
     return {
-      viewMonthly: 'View Monthly',
+      viewMonthly: 'Month to Date',
       showAll: false,
       totalPremium: 0,
       NBCounts: 0,
@@ -407,6 +383,10 @@ export default {
       else if (this.branchVisible) this.loadBranch()
       else this.loadProducer()
     },
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
     rank: function (name) {
       if (this.adminVisible) this.list.sort(this.by(name))
       else {
@@ -422,11 +402,19 @@ export default {
         this.producers.sort(this.bydesc(name))
       }
     },
+    sorttablebranch: function (column) {
+      if (column.order === 'descending') this.rankdescbranch(column.prop)
+      else this.rankbranch(column.prop)
+    },
     rankbranch: function (name) {
       this.producers.sort(this.by(name))
     },
     rankdescbranch: function (name) {
       this.producers.sort(this.bydesc(name))
+    },
+    csorttable: function (column) {
+      if (column.order === 'descending') this.crankdesc(column.prop)
+      else this.crank(column.prop)
     },
     crank: function (name) {
       this.coverletters.sort(this.by(name))
@@ -534,7 +522,7 @@ export default {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords'
       let param = {year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
+      if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_year'
         param = {year: this.searchForm.Year}
       }
@@ -576,7 +564,7 @@ export default {
       this.isLoadingBranch = true
       let service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_branch'
       let param = {branchid: branchid, year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
+      if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_branch_year'
         param = {branchid: branchid, year: this.searchForm.Year}
       }
@@ -606,7 +594,7 @@ export default {
       this.isLoadingProducer = true
       let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer'
       let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
+      if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year'
         param = {producerid: producerid, year: this.searchForm.Year}
       }
@@ -617,6 +605,7 @@ export default {
           this.coverletters.forEach(function (c) {
             c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
             c.submitPremium = '$' + c.Premium.toLocaleString()
+            c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
           })
           this.producertotal = this.coverletters.length
           this.producercurrentPage = 1

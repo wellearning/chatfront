@@ -2,42 +2,38 @@
   <div>
     <div class="inPageTitle">
       <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Figure Report</span>
-      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem === undefined ? '':currentItem.Name}} Report</span>
+      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.Name}} Report</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="Report" prop="ReportItem"  v-loading="isLoadingReportItems" >
-            <el-select v-model="searchForm.ReportItem" placeholder="" class="middleWidth" no-data-text="No Record" filterable @change="showMain()">
+            <el-select v-model="searchForm.ReportItem" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
               <el-option v-for="item in reportItems" :key="item.ParameterID" :label="item.Name" :value="item.ParameterID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-date-picker @change="showMain()"
-              v-model="periodDates" class="middleWidth"
-              type="daterange"
-              unlink-panels
-              placeholder="StartDate">
-            </el-date-picker>
+            <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
+              <el-radio-button label="View Monthly" />
+              <el-radio-button label="View Yearly" />
+            </el-radio-group>
+            <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
-          <el-form-item label="Frequently Used" prop="Year">
-            <el-select v-model="period" placeholder="" class="middleWidth" no-data-text="No Record" filterable @change="changePeriod()">
-              <el-option v-for="item in searchForm.periods" :key="item.value" :label="item.name" :value="item.value"></el-option>
+          <el-form-item label="Year" prop="Year">
+            <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYear()">
+              <el-option v-for="item in searchForm.years" :key="item" :label="item" :value="item"></el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="Month" prop="Month">
+            <el-select v-model="searchForm.Month" class="yearMonthSelection" placeholder="" no-data-text="No Record" filterable @change="changeYearMonth()">
+              <el-option v-for="item in searchForm.months" :key="item.value" :label="item.name" :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-arrow-right" type="default" title="Next Month" @click="nextMonth()" :loading="isLoading "></el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
     <div v-if="adminVisible" class="inPageContent">
-      <div class="searchBox">
-        <el-main class="" >
-          <el-row :gutter="20" class="title" v-loading="isLoading">
-            <el-col :span="4" class="">Summary of {{currentItem === undefined ? '':currentItem.Name}}: </el-col>
-            <el-col :span="4">Total Counts: {{summaryCounts}}</el-col>
-            <el-col v-for="s in summary" :span="4" :key="s.Name">
-              {{s.Name}}: ({{s.Counts}}, {{s.Percent}}%)
-            </el-col>
-          </el-row>
-        </el-main>
-      </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
@@ -71,29 +67,33 @@ export default {
       isLoadingReportItems: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
-      periodDates: '',
-      endDate: '2023-2-1',
-      period: 1,
       // 搜索
       searchForm: {
         name: null,
+        Year: 2022,
+        Month: 1,
         ReportItem: null,
-        periods: [
-          {name: 'Month to Date', value: 1},
-          {name: 'Year to Date', value: 2},
-          {name: 'Last 30 Days', value: 30},
-          {name: 'Last 90 Days', value: 90},
-          {name: 'Last 182 Days', value: 182},
-          {name: 'Last 365 Days', value: 365}]
+        years: [],
+        months: [
+          {name: 'January', value: 1},
+          {name: 'February', value: 2},
+          {name: 'March', value: 3},
+          {name: 'April', value: 4},
+          {name: 'May', value: 5},
+          {name: 'June', value: 6},
+          {name: 'July', value: 7},
+          {name: 'August', value: 8},
+          {name: 'September', value: 9},
+          {name: 'October', value: 10},
+          {name: 'November', value: 11},
+          {name: 'December', value: 12}]
       },
       // 列表
       list: [],
       reportItems: [],
-      currentItem: {ParameterID: -1, Name: ''},
+      currentItem: {},
       reportID: '0',
       tableColumns: [],
-      summary: [],
-      summaryCounts: 0,
       coverletters: [],
       coverletterproperties: [],
       currentProducer: null,
@@ -112,8 +112,11 @@ export default {
     }
   },
   mounted: function () {
-    this.period = 1
-    this.changePeriod()
+    this.searchForm.Year = new Date().getFullYear()
+    this.searchForm.Month = new Date().getMonth() + 1
+    for (var i = 2020; i <= this.searchForm.Year; i++) {
+      this.searchForm.years.push(i)
+    }
     this.loadReportItems()
   },
   watch: {
@@ -148,50 +151,61 @@ export default {
         this.producers.sort(this.bydesc(name))
       }
     },
-    changePeriod: function () {
-      if (this.period === 1) {
-        let year = new Date().getFullYear()
-        let month = new Date().getMonth()
-        let startDate = new Date(year, month, 1)
-        let endDate = new Date()
-        this.periodDates = [startDate, endDate]
-      } else if (this.period === 2) {
-        let year = new Date().getFullYear()
-        let startDate = new Date(year, 0, 1)
-        let endDate = new Date()
-        this.periodDates = [startDate, endDate]
-      } else {
-        let now = new Date().getTime()
-        let startDate = new Date(now - this.period * 24 * 60 * 60 * 1000)
-        let endDate = new Date()
-        this.periodDates = [startDate, endDate]
-      }
+    rankbranch: function (name) {
+      this.producers.sort(this.by(name))
+    },
+    rankdescbranch: function (name) {
+      this.producers.sort(this.bydesc(name))
+    },
+    crank: function (name) {
+      this.coverletters.sort(this.by(name))
+    },
+    crankdesc: function (name) {
+      this.coverletters.sort(this.bydesc(name))
+    },
+    prevMonth: function () {
+      if (this.searchForm.Month === 1) {
+        this.searchForm.Month = 12
+        this.searchForm.Year--
+      } else this.searchForm.Month--
       this.showMain()
+    },
+    nextMonth: function () {
+      if (this.searchForm.Month === 12) {
+        this.searchForm.Month = 1
+        this.searchForm.Year++
+      } else this.searchForm.Month++
+      this.showMain()
+    },
+    changeYear: function () {
+      this.showMain()
+    },
+    changeYearMonth: function () {
+      this.showMain()
+    },
+    switchRecords: function () {
+      this.search()
     },
     showMain: function () {
       this.adminVisible = true
-      if (this.reportItems.length === 0) return
       this.currentItem = this.reportItems.find(i => i.ParameterID === this.searchForm.ReportItem)
+      if (this.currentItem === undefined) return
       this.setColumns(this.currentItem)
       this.search()
-      // this.$forceUpdate()
+      this.$forceUpdate()
     },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
     setColumns (parameter) {
-      if (parameter === undefined) return
       if (parameter.DataType === 'Check') {
         this.tableColumns = [{'Name': 'Counts of ' + parameter.DisplayName, 'Prop': 'RemarketCounts'}, {'Name': 'Percentage', 'Prop': 'Percentage'}]
-        this.summary = [{'Name': parameter.DisplayName, 'Counts': 0, 'Percent': 0}]
       } else if (parameter.DataType === 'List') {
         this.tableColumns = []
-        this.summary = []
         for (var i = 0; i < parameter.listValues.length; i++) {
           this.tableColumns.push({'Name': 'Counts of ' + parameter.listValues[i].Name, 'Prop': 'ListCounts' + i})
           this.tableColumns.push({'Name': 'Percent of ' + parameter.listValues[i].Name, 'Prop': 'ListPercent' + i})
-          this.summary.push({'Name': parameter.listValues[i].Name, 'Counts': 0, 'Percent': 0})
         }
       }
     },
@@ -210,69 +224,35 @@ export default {
         this.isLoadingReportItems = false
       })
     },
-    compute: function () {
-      this.summaryCounts = 0
-      if (this.currentItem.DataType === 'List') {
-        for (var j = 0; j < this.list.length; j++) {
-          let item = this.list[j]
-          for (var i = 0; i < item.listValueRecords.length; i++) {
-            item['ListCounts' + i] = item.listValueRecords[i].Count
-            if (item.NBCounts !== 0) item['ListPercent' + i] = Math.round(item.listValueRecords[i].Count / item.NBCounts * 100)
-            else item['ListPercent' + i] = 0
-            this.summary[i].Counts += item.listValueRecords[i].Count
-          }
-          this.summaryCounts += item.NBCounts
-        }
-      } else if (this.currentItem.DataType === 'Check') {
-        for (j = 0; j < this.list.length; j++) {
-          let item = this.list[j]
-          if (item.NBCounts !== 0) item['Percentage'] = Math.round(item.RemarketCounts * 100 / item.NBCounts)
-          else item['Percentage'] = 0
-          this.summary[0].Counts += item.RemarketCounts
-          this.summaryCounts += item.NBCounts
-        }
-      }
-      for (i = 0; i < this.summary.length; i++) {
-        if (this.summaryCounts > 0) this.summary[i].Percent = Math.round(10000 * this.summary[i].Counts / this.summaryCounts) / 100
-      }
-    },
     // 查询
     search: function () {
       if (this.searchForm.ReportItem === null) return
       this.isLoading = true
-      let startDate = this.dateFormat(this.periodDates[0])
-      let endDate = this.dateFormat(this.periodDates[1])
-      let service = '/api/Services/NewBusinessService.asmx/GetFigureReport_period'
-      let param = {parameterid: this.searchForm.ReportItem, startdate: startDate, enddate: endDate}
+      let service = '/api/Services/NewBusinessService.asmx/GetFigureReport'
+      let param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'View Yearly') {
+        // service += '_year'
+        param = param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: 0}
+      }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
-          this.compute()
-          /*
           if (this.currentItem.DataType === 'List') {
             this.list.forEach(function (item) {
               for (var i = 0; i < item.listValueRecords.length; i++) {
                 item['ListCounts' + i] = item.listValueRecords[i].Count
                 if (item.NBCounts !== 0) item['ListPercent' + i] = Math.round(item.listValueRecords[i].Count / item.NBCounts * 100)
                 else item['ListPercent' + i] = 0
-                this.summary[i].Counts += item.listValueRecords[i].Count
               }
-              this.summaryCounts += item.NBCounts
             })
-            for (var i = 0; i < this.currentItem.listValue.length; i++) {
-              if (this.summaryCounts > 0) this.summary[i].Percent = Math.round(this.summary[i].Counts / this.summaryCounts * 100)
-            }
           } else if (this.currentItem.DataType === 'Check') {
             this.list.forEach(function (item) {
               if (item.NBCounts !== 0) item['Percentage'] = Math.round(item.RemarketCounts * 100 / item.NBCounts)
               else item['Percentage'] = 0
-              this.summary[0].Counts += item.RemarketCounts
-              this.summaryCounts += item.NBCounts
             })
-            if (this.summaryCounts > 0) this.summary[0].Percent = Math.round(this.summary[0].Counts / this.summaryCounts * 100)
           }
-          */
+
           this.total = this.list.length
           this.currentPage = 1
           this.isLoading = false

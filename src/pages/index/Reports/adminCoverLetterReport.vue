@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <a class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin CoverLetter Report</a>
-      <a v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.value}} Report</a>
+      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin CoverLetter Report</span>
+      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.value}} Report</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="Report" prop="ReportItem">
@@ -12,8 +12,8 @@
           </el-form-item>
           <el-form-item>
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
-              <el-radio-button label="View Monthly" />
-              <el-radio-button label="View Yearly" />
+              <el-radio-button label="Month to Date" />
+              <el-radio-button label="Year to Date" />
             </el-radio-group>
             <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
@@ -34,55 +34,34 @@
       </div>
     </div>
     <div v-if="adminVisible" class="inPageContent">
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="" prop="ID" width="60" fixed="left">
-          <template slot="header" >
-            <span @click = "rank('ID')" @dblclick="rankdesc('ID')" title="Click to rank, double click to rank desc">ID</span>
-          </template>
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="ID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="Name" prop="Name" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('Name')" @dblclick="rankdesc('Name')" title="Click to rank, double click to rank desc">Name</span>
-          </template>
+        <el-table-column label="Name" prop="Name" min-width="150" sortable="custom">
           <!--template slot-scope="scope" >
             <a @click = "showBranch(scope.row)" style="color:darkblue" href="#" title="Click here to show the branch detail.">{{scope.row.Name}}</a>
           </template-->
         </el-table-column>
-        <el-table-column label="" prop="NBCounts" min-width="100">
-          <template slot="header" >
+        <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
+          <!--template slot="header" >
             <span @click = "rank('NBCounts')" @dblclick="rankdesc('NBCounts')" title="Click to rank, double click to rank desc">NB Counts</span>
-          </template>
+          </template-->
         </el-table-column>
-        <el-table-column  prop="NBPremium" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('NBPremium')" @dblclick="rankdesc('NBPremium')" title="Click to rank, double click to rank desc">NB Premium</span>
-          </template>
+        <el-table-column label="NB Premium" prop="NBPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.NBPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="" prop="RemarketCounts" min-width="100">
-          <template slot="header" >
-            <span @click = "rank('RemarketCounts')" @dblclick="rankdesc('RemarketCounts')" title="Click to rank, double click to rank desc">Remarket Counts</span>
-          </template>
+        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RemarketPremium" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('RemarketPremium')" @dblclick="rankdesc('RemarketPremium')" title="Click to rank, double click to rank desc">Remarket Premium</span>
-          </template>
+        <el-table-column label="Remarket Premium" prop="RemarketPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="" prop="Counts" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('Counts')" @dblclick="rankdesc('Counts')" title="Click to rank, double click to rank desc">Total Counts</span>
-          </template>
+        <el-table-column label="Total Counts" prop="Counts" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="Premium" min-width="150">
-          <template slot="header" >
-            <span @click = "rank('Premium')" @dblclick="rankdesc('Premium')" title="Click to rank, double click to rank desc">Total Premium</span>
-          </template>
+        <el-table-column label="Total Premium" prop="Premium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.Premium.toLocaleString()}}</span>
           </template>
@@ -102,7 +81,7 @@ export default {
   },
   data: function () {
     return {
-      viewMonthly: 'View Monthly',
+      viewMonthly: 'Month to Date',
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
@@ -169,6 +148,10 @@ export default {
     }
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
     rank: function (name) {
       if (this.adminVisible) this.list.sort(this.by(name))
       else {
@@ -233,7 +216,7 @@ export default {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/Get' + this.searchForm.ReportItem + 'Records'
       let param = {year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
+      if (this.viewMonthly === 'Year to Date') {
         service += '_year'
         param = {year: this.searchForm.Year}
       }
