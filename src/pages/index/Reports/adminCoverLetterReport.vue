@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin CoverLetter Report</span>
+      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Business Report</span>
       <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.value}} Report</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">

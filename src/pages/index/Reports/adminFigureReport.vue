@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Figure Report</span>
-      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem === undefined ? '':currentItem.Name}} Report</span>
+      <span class="inPageNav"  style="color:darkblue" title="">Admin Quality Report</span>
+      <span v-if="currentItem.ParameterID > -1" style="color:darkblue" class="inPageNav" href="#" title="">  - {{currentItem.Name}} Report</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="Report" prop="ReportItem"  v-loading="isLoadingReportItems" >
@@ -26,14 +26,14 @@
         </el-form>
       </div>
     </div>
-    <div v-if="adminVisible" class="inPageContent">
+    <div v-if="currentItem.ParameterID > -1" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoading">
-            <el-col :span="4" class="">Summary of {{currentItem === undefined ? '':currentItem.Name}}: </el-col>
+            <el-col :span="4" class="">Summary of {{currentItem.Name+'(Counts --- Percent)'}}: </el-col>
             <el-col :span="4">Total Counts: {{summaryCounts}}</el-col>
             <el-col v-for="s in summary" :span="4" :key="s.Name">
-              {{s.Name}}: ({{s.Counts}}, {{s.Percent}}%)
+              {{s.Name}}: ({{s.Counts}} --- {{s.Percent}}%)
             </el-col>
           </el-row>
         </el-main>
