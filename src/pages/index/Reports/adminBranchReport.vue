@@ -71,14 +71,14 @@
         <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="NB Premium"  prop="NBPremium" min-width="150" sortable="custom">
-          <template slot-scope="scope" >
+          <template v-slot="scope" >
             <span>${{scope.row.NBPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Remarket Premium" prop="RemarketPremium" min-width="150" sortable="custom">
-          <template slot-scope="scope" >
+          <template v-slot="scope" >
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
@@ -112,7 +112,7 @@
         <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column label="Producer Name" prop="ProducerName" min-width="150" sortable="custom">
-          <template slot-scope="scope"  sortable="custom">
+          <template v-slot="scope"  sortable="custom">
             <a @click = "showProducer(scope.row)" style="color:darkblue" href="#" title="Double Click here to show the detail.">{{scope.row.ProducerName}}</a>
           </template>
         </el-table-column>
@@ -161,33 +161,33 @@
       </div>
       <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="80" fixed="left">
-          <template slot="header" >
+          <template v-slot="header" >
             <span @click = "crank('CoverLetterID')" @dblclick="crankdesc('CoverLetterID')" title="Click to rank, double click to rank desc">ID</span>
           </template>
         </el-table-column>
         <el-table-column label="" prop="ClientCode" min-width="1"></el-table-column>
         <el-table-column label="Client Code" prop="ClientCode" min-width="100">
-          <template slot="header" >
+          <template v-slot="header" >
             <span @click = "crank('ClientCode')" @dblclick="crankdesc('ClientCode')" title="Click to rank, double click to rank desc">Client Code</span>
           </template>
         </el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150">
-          <template slot="header" >
+          <template v-slot="header" >
             <span @click = "crank('NameInsured')" @dblclick="crankdesc('NameInsured')" title="Click to rank, double click to rank desc">Named Insured(s)</span>
           </template>
         </el-table-column>
         <el-table-column label="App Type" prop="LeadsFrom" min-width="100">
-          <template slot="header" >
+          <template v-slot="header" >
             <span @click = "crank('LeadsFrom')" @dblclick="crankdesc('LeadsFrom')" title="Click to rank, double click to rank desc">App Type</span>
           </template>
         </el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150">
-          <template slot="header" >
+          <template v-slot="header" >
             <span @click = "crank('CorpName')" @dblclick="crankdesc('CorpName')" title="Click to rank, double click to rank desc">Company</span>
           </template>
         </el-table-column>
         <el-table-column label="Line of Business" prop="Title" min-width="150"></el-table-column>
-        <template slot="header" >
+        <template>
           <span @click = "crank('Title')" @dblclick="crankdesc('Title')" title="Click to rank, double click to rank desc">Line of Business</span>
         </template>
         <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120">
