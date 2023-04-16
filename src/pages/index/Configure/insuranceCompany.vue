@@ -23,8 +23,22 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Company ID" prop="InsuranceCorpID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Company Name" prop="Name" min-width="200"></el-table-column>
-        <el-table-column label="Short Name" prop="ShortName" min-width="200"></el-table-column>
+        <el-table-column label="Short Name" prop="ShortName" min-width="100"></el-table-column>
         <el-table-column label="Address" prop="Address" min-width="200"></el-table-column>
+        <el-table-column label="BusinessLine" width="100">
+          <template v-slot:="scope">
+            <span v-if="scope.row.BusinessLineID === 0" size="medium">Both</span>
+            <span v-else-if="scope.row.BusinessLineID === 1" size="medium">Personal</span>
+            <span v-else size="medium">Commercial</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Status" width="100">
+          <template v-slot:="scope">
+            <span v-if="scope.row.StatusID === 0" size="medium">Draft</span>
+            <span v-if="scope.row.StatusID === 1" size="medium">Normal</span>
+            <span v-else type="danger" size="medium">Stopped</span>
+          </template>
+        </el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
@@ -66,7 +80,7 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Insurance Company" :visible.sync="editFormVisible" width="600px" center :before-close="closeEdit">
+      <el-dialog title="Edit Insurance Company" :visible.sync="editFormVisible" width="700px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
           <el-form-item label="Name" prop="Name">
             <el-input v-model="editForm.Name" clearable></el-input>
@@ -88,6 +102,20 @@
           </el-form-item>
           <el-form-item label="RentedDwelling" prop="RentedDwelling">
             <el-input v-model.number="editForm.RentedDwelling" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="BusinessLine" prop="BusinessLineID">
+            <el-radio-group v-model="editForm.BusinessLineID">
+              <el-radio v-for="item in businessLineList" :label="item.key" :key="item.key">
+                <span>{{item.value}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-radio-group v-model="editForm.StatusID">
+              <el-radio v-for="item in statusList" :label="item.key" :key="item.key">
+                <span>{{item.value}}</span>
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
@@ -136,6 +164,8 @@ export default {
       isPost: false,
       totalNum: 0,
       finishNum: 0,
+      businessLineList: [{key: 0, value: 'Both'}, {key: 1, value: 'Personal'}, {key: 2, value: 'Commercial'}],
+      statusList: [{key: 0, value: 'Draft'}, {key: 1, value: 'Normal'}, {key: 2, value: 'Stopped'}],
       // 新增
       addFormVisible: false,
       addForm: {
@@ -188,6 +218,8 @@ export default {
         PropertyBindingAuthority: null,
         HomeMinimum: null,
         RentedDwelling: null,
+        BusinessLineID: 0,
+        StatusID: 1,
         IsNew: false,
         IsNewAdded: false,
         IsRemoved: false

@@ -84,7 +84,7 @@
         </el-table-column>
         <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="Quality Scor" prop="QualityScore" min-width="150" sortable="custom">
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
         </el-table-column>
         <el-table-column label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
           <!--template slot="header" >

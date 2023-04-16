@@ -10,12 +10,12 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Role ID" prop="RoleID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Role Name" min-width="300">
-          <template slot-scope="scope">
+          <template v-slot:="scope">
             <el-input v-model="scope.row.Name" :disabled="!(scope.row.RoleID === currentId)"></el-input>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
-          <template slot-scope="scope">
+          <template v-slot:="scope">
             <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Privileges</el-button>
             <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
             <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Delete</el-button>

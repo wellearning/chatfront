@@ -261,8 +261,8 @@ export default {
       this.isLoading = true
       let query = ''
       if (name !== null) query = name
-      // this.axios.post('/api/Services/CommerceService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
-      this.axios.post('/api/Services/CommerceService.asmx/SearchQuestionsByTypeQuery', {typeid: 6, query: query, start: start}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: query}).then(res => {
+      // this.axios.post('/api/Services/CommerceService.asmx/SearchQuestionsByTypeQuery', {typeid: 6, query: query, start: start}).then(res => {
         if (res) {
           console.log('查询', res)
           // 声明value，AdditionContent，防止输入框无法输入

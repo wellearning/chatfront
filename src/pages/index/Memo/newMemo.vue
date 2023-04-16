@@ -224,7 +224,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpsByBusinessLine', {lineid: 1}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           this.insuranceCompanyList = res.data

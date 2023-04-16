@@ -226,7 +226,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpsByBusinessLine', {lineid: 2}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           this.insuranceCompanyList = res.data
@@ -722,7 +722,7 @@ export default {
                 if (type === 'saveAndPrint') {
                   this.$store.state.MemoID = res.data.MemoID
                 }
-                this.$router.push({path: '/CLMmyMemos'})
+                this.$router.push({path: '/clmyMemos'})
               }
               this.isLoading = false
             }).catch(err => {
