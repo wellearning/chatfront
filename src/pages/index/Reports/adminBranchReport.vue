@@ -64,7 +64,7 @@
         <el-table-column label="ID" prop="InstitutionID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column label="Name" prop="InstitutionName" min-width="150" sortable="custom">
-          <template slot-scope="scope" >
+          <template v-slot="scope" >
             <a @click = "showBranch(scope.row)" style="color:darkblue" href="#" title="Click here to show the branch detail.">{{scope.row.InstitutionName}}</a>
           </template>
         </el-table-column>
@@ -118,17 +118,17 @@
         </el-table-column>
         <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="NB Premium" prop="nbPremium" min-width="150" sortable="custom">
-          <!--template slot-scope="scope" >
+        <el-table-column label="NB Premium" prop="NBPremium" min-width="150" sortable="custom">
+          <template v-slot="scope" >
             <span>${{scope.row.NBPremium.toLocaleString()}}</span>
-          </template-->
+          </template>
         </el-table-column>
         <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="Remarket Premium" prop="remarketPremium" min-width="150" sortable="custom">
-          <!--template slot-scope="scope" >
+        <el-table-column label="Remarket Premium" prop="RemarketPremium" min-width="150" sortable="custom">
+          <template v-slot="scope" >
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
-          </template-->
+          </template>
         </el-table-column>
         <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
           <!--template slot="header" >
@@ -191,27 +191,27 @@
           <span @click = "crank('Title')" @dblclick="crankdesc('Title')" title="Click to rank, double click to rank desc">Line of Business</span>
         </template>
         <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120">
-          <!--template slot-scope="scope">
+          <!--template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template-->
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="80"></el-table-column>
-        <el-table-column label="APP Premium" prop="appPremium" min-width="120">
-          <!--template slot-scope="scope" >
+        <el-table-column label="APP Premium" prop="PremiumOnApp" min-width="120">
+          <template v-slot="scope" >
             <span>${{scope.row.PremiumOnApp.toLocaleString()}}</span>
-          </template-->
+          </template>
         </el-table-column>
-        <el-table-column label="Submit Premium" prop="submitPremium" min-width="120">
-          <!--template slot-scope="scope" >
+        <el-table-column label="Submit Premium" prop="Premium" min-width="120">
+          <template v-slot="scope" >
             <span>${{scope.row.Premium.toLocaleString()}}</span>
-          </template-->
+          </template>
         </el-table-column>
         <el-table-column label="UW Score" prop="Score" min-width="80">
         </el-table-column>
         <el-table-column label="Quality Score" prop="QualityScore" min-width="80">
         </el-table-column>
         <el-table-column label="Detail" prop="" min-width="80">
-          <template slot-scope="scope" >
+          <template v-slot="scope" >
             <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
         </el-table-column>
@@ -577,8 +577,10 @@ export default {
           console.log('查询', res)
           this.producers = res.data
           this.producers.forEach(function (c) {
-            c.nbPremium = '$' + c.NBPremium.toLocaleString()
-            c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
+            // c.nbPremium = '$' + c.NBPremium.toLocaleString()
+            // c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
+            c.nbPremium = c.NBPremium
+            c.remarketPremium = c.RemarketPremium
           })
           this.branchtotal = this.producers.length
           this.branchcurrentPage = 1
