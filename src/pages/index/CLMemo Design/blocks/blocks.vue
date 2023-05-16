@@ -388,7 +388,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           let all = [{InsuranceCorpID: 0, Name: 'All Insurance Company'}]

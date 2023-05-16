@@ -1,8 +1,10 @@
 // 导出页面为PDF格式
 import html2canvas from 'html2canvas'
 import JsPDF from 'jspdf'
+import printJS from 'print-js'
 export default{
   install (Vue, options) {
+    Vue.prototype.$printJS = printJS
     Vue.prototype.getPdf = function (pdfDom) {
       var title = this.htmlTitle
       html2canvas(document.querySelector(pdfDom), {

@@ -4,10 +4,10 @@
       <span class="inPageNav">Multiple Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
-        <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent" id="questionListDom">
+    <div class="inPageContent" id="">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -131,6 +131,11 @@
         <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="questionListVisible" width="1200px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -138,17 +143,22 @@
 <script>
 import AnswerMultipleChoiceQuestion from '@/component/choiceQuestion/answerMultipleChoiceQuestion'
 import UsedBlockList from '@/component/window/usedBlockList'
+import QuestionList from '@/component/window/multipleChoiceQuestionList'
 
 export default {
   components: {
     AnswerMultipleChoiceQuestion,
-    UsedBlockList
+    UsedBlockList,
+    QuestionList
   },
   data: function () {
     return {
       isLoading: false,
       blocksDetailVisible: false,
-      typeName: 'MultpleChoice',
+      typeName: 'PL-NewBusiness Multple Choice Question List',
+      typeId: 7,
+      btypeId: 3,
+      questionListVisible: false,
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
       addFormVisible: false,
@@ -210,6 +220,16 @@ export default {
     this.search(null)
   },
   methods: {
+    // show question list
+    showQuestionList: function () {
+      this.questionListVisible = true
+      if (this.$refs.ql !== undefined) {
+        this.$refs.ql.loadQuestions(this.typeId, this.btypeId)
+      }
+    },
+    closeQuestionList: function () {
+      this.questionListVisible = false
+    },
     // show used block list
     showBlocksDetail: function (id) {
       this.currentId = id

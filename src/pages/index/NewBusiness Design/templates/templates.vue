@@ -24,12 +24,14 @@
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Heat" prop="SequenceNo" min-width="100"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="Province" prop="Province" min-width="200"></el-table-column>
         <el-table-column label="Status" prop="StatusID" :formatter="statusName" width="200"></el-table-column>
         <el-table-column label="NeedPinkSlip" prop="NeedPinkSlip"  :formatter="printPinkSlip" width="150"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Delete</el-button>
+            <el-button icon="el-icon-copy" type="" @click="duplicate(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Duplicate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -54,6 +56,11 @@
           <el-form-item label="InsuranceCorp" prop="InsuranceCorpID" v-if = "insuranceCorpVisible">
             <el-select v-model="addForm.InsuranceCorpID" placeholder="InsuranceCorp" no-data-text="No Record" filterable>
               <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="addForm.ProvinceID" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.ItemID"></el-option>
             </el-select>
           </el-form-item>
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
@@ -99,6 +106,11 @@
               <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="editForm.ProvinceID" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.ItemID"></el-option>
+            </el-select>
+          </el-form-item>
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
@@ -132,11 +144,13 @@ export default {
       isLoading: false,
       isLoadingBlock: false,
       isLoadingInsuranceCorpList: false,
+      isLoadingProvinceList: false,
       blockList: [],
       currentBlock: null,
       typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
       statusList: [{id: 0, name: 'Draft'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Stopped'}],
       insuranceCorpList: [],
+      provinceList: [],
       insuranceCorpVisible: false,
       // 新增
       addFormVisible: false,
@@ -144,7 +158,8 @@ export default {
         TypeID: null,
         StatusID: 0,
         Title: null,
-        InsuranceCorpID: 0,
+        InsuranceCorpID: null,
+        ProvinceID: null,
         NeedPinkSlip: false,
         templateBlocks: []
       },
@@ -165,6 +180,7 @@ export default {
         StatusID: 0,
         Title: null,
         InsuranceCorpID: null,
+        ProvinceID: null,
         NeedPinkSlip: false,
         templateBlocks: [],
         IsNew: false
@@ -193,8 +209,9 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    // this.search(null)
     this.initBlock()
+    this.initProvinceList()
     this.initInsuranceCorpList()
   },
   methods: {
@@ -217,15 +234,31 @@ export default {
     // 查询保险公司
     initInsuranceCorpList: function () {
       this.isLoadingInsuranceCorpList = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('查询', res)
           this.insuranceCorpList = res.data
+          this.search(null)
         }
         this.isLoadingInsuranceCorpList = false
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoadingInsuranceCorpList = false
+      })
+    },
+    // 查询保险公司
+    initProvinceList: function () {
+      this.isLoadingProvinceList = true
+      this.axios.post('/api/Services/baseservice.asmx/GetDictionary', {datatype: 'Province'}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.provinceList = res.data
+          this.search(null)
+        }
+        this.isLoadingProvinceList = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingProvinceList = false
       })
     },
 
@@ -300,9 +333,16 @@ export default {
       } else {
         this.searchName = name
       }
+      let corpList = this.insuranceCorpList
       this.axios.post('/api/Services/NewBusinessService.asmx/SearchTemplates', {query: this.searchName}).then(res => {
         if (res) {
           console.log('查询', res)
+          res.data.forEach(function (temp) {
+            let corp = corpList.find(c => c.InsuranceCorpID === temp.InsuranceCorpID)
+            if (corp !== undefined) {
+              temp.CorpName = corp.ShortName
+            } else temp.CorpName = ''
+          })
           this.list = res.data
           this.total = this.list.length
           this.currentPage = 1
@@ -471,6 +511,44 @@ export default {
               message: 'Operation Succeeded'
             })
             this.list = this.list.filter(item => item.TemplateID !== id)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+
+    setCorpName: function (temp) {
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === temp.InsuranceCorpID)
+      if (corp !== undefined) {
+        temp.CorpName = corp.ShortName
+      } else temp.CorpName = ''
+    },
+
+    duplicate: function (id) {
+      this.$confirm('Are you sure to duplicate it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/DuplicateTemplate', {templateid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.setCorpName(res.data)
+            this.list.push(res.data)
             this.total = this.list.length
           }
           this.isLoading = false

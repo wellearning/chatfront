@@ -4,10 +4,10 @@
       <span class="inPageNav">Single Choice Question</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
-        <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent" id="questionListDom">
+    <div class="inPageContent" id="">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -24,17 +24,17 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Question ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
           </template>
         </el-table-column>
         <el-table-column label="Question" min-width="950">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <AnswerSingleChoiceQuestion :question="scope.row"></AnswerSingleChoiceQuestion>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
           </template>
@@ -131,6 +131,11 @@
         <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="questionListVisible" width="1200px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -138,17 +143,22 @@
 <script>
 import AnswerSingleChoiceQuestion from '@/component/choiceQuestion/answerSingleChoiceQuestion'
 import UsedBlockList from '@/component/window/usedBlockList'
+import QuestionList from '@/component/window/singleChoiceQuestionList'
 
 export default {
   components: {
     AnswerSingleChoiceQuestion,
-    UsedBlockList
+    UsedBlockList,
+    QuestionList
   },
   data: function () {
     return {
       isLoading: false,
       currentId: null,
-      typeName: 'SingleChoice',
+      typeName: 'IRCA-Memo SingleChoice Question List',
+      typeId: 6,
+      btypeId: 3,
+      questionListVisible: false,
       blocksDetailVisible: false,
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
@@ -211,6 +221,16 @@ export default {
     this.search('', 0)
   },
   methods: {
+    // show question list
+    showQuestionList: function () {
+      this.questionListVisible = true
+      if (this.$refs.ql !== undefined) {
+        this.$refs.ql.loadQuestions(this.typeId, this.btypeId)
+      }
+    },
+    closeQuestionList: function () {
+      this.questionListVisible = false
+    },
     // show used block list
     showBlocksDetail: function (id) {
       this.currentId = id

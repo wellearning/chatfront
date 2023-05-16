@@ -24,17 +24,17 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Title ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
           </template>
         </el-table-column>
         <el-table-column label="Title" min-width="300">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-input v-model="scope.row.Description" :disabled="!(scope.row.QuestionID === currentId)"></el-input>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button v-if="currentId === null && !(scope.row.QuestionID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID, scope.row.Description)" :loading="isLoading" size="small">Edit</el-button>
             <el-button v-if="currentId === null && !(scope.row.QuestionID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
             <el-button v-if="scope.row.QuestionID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
@@ -62,8 +62,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Title List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -83,7 +83,8 @@ export default {
     return {
       isLoading: false,
       typeId: 1,
-      typeName: 'Titles',
+      btypeId: 3,
+      typeName: 'IRCA Memo Title Question List',
       questionListVisible: false,
       currentId: null,
       currentDescription: null,

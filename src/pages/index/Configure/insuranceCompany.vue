@@ -41,7 +41,7 @@
         </el-table-column>
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
+            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>
@@ -123,7 +123,7 @@
         </el-form>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
-      <!----------------------------------------------权限弹窗开始----------------------------------------------------->
+      <!----------------------------------------------BrokerCode弹窗开始----------------------------------------------------->
       <el-dialog title="BrokerCode" :visible.sync="privilegesVisible" width="600px" center :before-close="closePrivileges">
         <el-form class="form">
           <el-form-item v-for="(item, index) in BrokerCodeList" :label="item.Name + '(' + item.BranchCode + ')'" :key="index">
@@ -134,7 +134,7 @@
           </el-form-item>
         </el-form>
       </el-dialog>
-      <!----------------------------------------------权限弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BrokerCode弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -318,14 +318,14 @@ export default {
       this.search(null)
     },
     // 显示权限弹窗
-    showPrivilege: function (id) {
+    showPrivilege: function (corp) {
       this.isLoading = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpBrokers', {corpid: id}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpBrokers', {corpid: corp.InsuranceCorpID}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.privilegesVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-            this.BrokerCodeList = JSON.parse(JSON.stringify(this.organizationList)).map(item => { return {InsuranceCorpID: id, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
+            this.BrokerCodeList = JSON.parse(JSON.stringify(corp.institutions)).map(item => { return {InsuranceCorpID: corp.InsuranceCorpID, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
             for (let i = 0; i < res.data.length; i++) {
               if (this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode) !== undefined) {
                 this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode).InsuranceCorpBrokerID = res.data[i].InsuranceCorpBrokerID

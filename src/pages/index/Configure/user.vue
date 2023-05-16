@@ -255,7 +255,6 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         Mobile: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ],
         Email: [
@@ -290,7 +289,6 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         Mobile: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ],
         Email: [

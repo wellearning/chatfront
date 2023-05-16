@@ -130,8 +130,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Fill in List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -154,7 +154,8 @@ export default {
       isLoading: false,
       currentId: null,
       typeId: 5,
-      typeName: 'FillinQuestion',
+      btypeId: 3,
+      typeName: 'IRCA-Memo Fill-in Question List',
       questionListVisible: false,
       blocksDetailVisible: false,
       inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}],
@@ -212,7 +213,7 @@ export default {
     showQuestionList: function () {
       this.questionListVisible = true
       if (this.$refs.ql !== undefined) {
-        this.$refs.ql.loadQuestions(this.typeId)
+        // this.$refs.ql.loadQuestions(this.typeId, this.btypeId)
       }
     },
     closeQuestionList: function () {

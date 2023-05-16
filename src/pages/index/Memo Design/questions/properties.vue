@@ -121,8 +121,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Property List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -143,7 +143,8 @@ export default {
       isLoading: false,
       currentId: null,
       typeId: 3,
-      typeName: 'Properties',
+      btypeId: 1,
+      typeName: 'PL Memo Property Question List',
       questionListVisible: false,
       blocksDetailVisible: false,
       inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}, {id: 4, name: 'list', value: 'list'}, {id: 5, name: 'children', value: 'children'}],

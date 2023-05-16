@@ -22,15 +22,17 @@
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="ParameterID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Name" prop="Name" min-width="200"></el-table-column>
+        <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
         <el-table-column label="BusinessType" prop="BusinessType" min-width="100"></el-table-column>
         <el-table-column label="InsuranceType" prop="InsuranceType" min-width="100"></el-table-column>
-        <el-table-column label="ProcessingType" prop="ProcessingType" min-width="200"></el-table-column>
-        <el-table-column label="Sequence" prop="SequenceNo" min-width="100"></el-table-column>
-        <el-table-column label="UW Score" prop="Score" min-width="100"></el-table-column>
-        <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="320" fixed="right">
+        <el-table-column label="ProcessingType" prop="ProcessingType" min-width="100"></el-table-column>
+        <el-table-column label="Sequence" prop="SequenceNo" min-width="80"></el-table-column>
+        <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="80"></el-table-column>
+        <el-table-column label="Action" width="450" fixed="right">
           <template v-slot="scope">
+            <el-button icon="el-icon-arrow-up" type="default" @click="move(scope.row, 'Up')" :loading="isLoading || isLoadingOrganization" size="small"></el-button>
+            <el-button icon="el-icon-arrow-down" type="default" @click="move(scope.row, 'Down')" :loading="isLoading || isLoadingOrganization" size="small"></el-button>
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.ParameterID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
             <el-button v-if="scope.row.DataType === 'List'" icon="el-icon-document" type="primary" @click="showListValue(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">ListValue</el-button>
@@ -194,7 +196,7 @@ export default {
       totalNum: 0,
       finishNum: 0,
       businessTypes: [{ID: 1, Name: 'PolicyChange'}, {ID: 2, Name: 'NewBusiness'}, {ID: 3, Name: 'Commerce'}],
-      insuranceTypes: [{ID: 1, Name: 'Auto'}, {ID: 2, Name: 'Property'}],
+      insuranceTypes: [{ID: 0, Name: 'Both'}, {ID: 1, Name: 'Auto'}, {ID: 2, Name: 'Property'}],
       processingTypes: [{ID: 1, Name: 'Underwriting'}, {ID: 2, Name: 'Upload'}, {ID: 3, Name: 'Decline'}],
       dataTypes: ['Text', 'Number', 'DateTime', 'Check', 'List', 'Computed'],
       // 新增
@@ -309,6 +311,26 @@ export default {
     }
   },
   methods: {
+    move: function (parameter, direction) {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/MoveBusinessParameter', {parameterid: parameter.ParameterID, direction: direction}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          this.listLength = this.list.length
+          if (name !== null) {
+            this.searchName = name
+            this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+          }
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
     // 查询
     search: function (name) {
       this.isLoading = true

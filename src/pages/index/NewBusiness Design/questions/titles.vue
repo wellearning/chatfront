@@ -62,8 +62,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Title List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -83,7 +83,8 @@ export default {
     return {
       isLoading: false,
       typeId: 1,
-      typeName: 'Titles',
+      btypeId: 2,
+      typeName: 'New Business Title Question List',
       questionListVisible: false,
       currentId: null,
       currentDescription: null,

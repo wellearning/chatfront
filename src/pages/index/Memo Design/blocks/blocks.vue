@@ -32,6 +32,7 @@
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
+            <el-button icon="el-icon-copy" type="" @click="duplicate(scope.row.BlockID)" :loading="isLoading" size="small">Duplicate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -388,7 +389,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           let all = [{InsuranceCorpID: 0, Name: 'All Insurance Company'}]
@@ -776,6 +777,36 @@ export default {
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    // 复制
+    duplicate: function (id) {
+      this.$confirm('Are you sure to duplicate it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/DuplicateBlock', {blockid: id}).then(res => {
+          if (res) {
+            console.log('Duplicate', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list.push(res.data)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('duplicate error', err)
           this.isLoading = false
         })
       }).catch(() => {

@@ -4,9 +4,12 @@
       <el-button icon="el-icon-document" type="primary" @click="toPDF()" size="small">To PDF</el-button>
     </div>
     <div id="questionListDom">
+      <h2 class="">{{ typeName }}</h2>
       <el-table :data="list" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Question ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Description" prop="Description" min-width="600"></el-table-column>
+        <el-table-column label="Description" prop="Description" min-width="600">
+
+        </el-table-column>
       </el-table>
 
     </div>
@@ -27,6 +30,9 @@ export default {
     typeID: {
       type: Number
     },
+    btypeID: {
+      type: Number
+    },
     typeName: {
       type: String
     }
@@ -40,7 +46,7 @@ export default {
     },
     loadQuestions: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/memoservice.asmx/GetQuestionsByType', {typeid: id}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetQuestionsByType', {typeid: id, btypeid: this.btypeID}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.list = res.data

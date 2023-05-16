@@ -62,8 +62,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Simple Answer List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -83,7 +83,8 @@ export default {
       isLoading: false,
       currentId: null,
       typeId: 4,
-      typeName: 'SimplerAnswers',
+      btypeId: 3,
+      typeName: 'IRCA Memo Simpler-answer Question List',
       questionListVisible: false,
       currentDescription: null,
       // 搜索

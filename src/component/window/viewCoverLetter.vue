@@ -6,7 +6,7 @@
     </div>
     <div class="viewMemo" id="pdfDom">
       <!--<div class="printDate">Print Date: {{printDate}}</div>-->
-      <img v-if="viewForm.branch !== null && viewForm.branch.LogoUrl!==null " class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
+      <img v-if="viewForm.branch !== null && viewForm.branch.LogoUrl!==null " class="viewLogo" :src="'/api' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
       <el-row  v-if="viewForm.branch !== null" :gutter="20">
         <el-col :span="12">
           <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>

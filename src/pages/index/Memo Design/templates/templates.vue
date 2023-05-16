@@ -30,6 +30,7 @@
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Delete</el-button>
+            <el-button icon="el-icon-copy" type="" @click="duplicate(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Duplicate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -446,6 +447,35 @@ export default {
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    duplicate: function (id) {
+      this.$confirm('Are you sure to duplicate it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/DuplicateTemplate', {templateid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list.push(res.data)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('复制出错', err)
           this.isLoading = false
         })
       }).catch(() => {
