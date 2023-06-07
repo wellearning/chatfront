@@ -51,14 +51,14 @@ export default{
         PDF.save(title + '.pdf')
       })
     }
-    Vue.prototype.downloadData = function (itemtype, itemid, filename) {
+    Vue.prototype.downloadData = function (itemtype, arg1, arg2, filename) {
       // const ServerAddress = 'http://134.175.142.102:8090'
       // var url = ServerAddress + '/api/services/DownloadHandle.ashx'
-      var url = '/api/services/DownloadHandle.ashx'
-      var fd = new FormData()
+      let url = '/api/services/DownloadHandle.ashx'
+      let fd = new FormData()
       fd.append('itemtype', itemtype)
-      fd.append('itemid', itemid)
-      fd.append('filename', filename)
+      fd.append('arg1', arg1)
+      fd.append('arg2', arg2)
       const req = new XMLHttpRequest()
       req.open('POST', url, true)
       req.responseType = 'blob'

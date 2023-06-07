@@ -6,14 +6,30 @@
     <div class="inPageContent">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
-          <el-form-item label="" prop="name">
+          <!--el-form-item label="" prop="name">
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+          </el-form-item-->
+          <el-form-item>
+            <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
+          </el-form-item>
+          <el-form-item label="Year" prop="Year">
+            <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYear()">
+              <el-option v-for="item in searchForm.years" :key="item" :label="item" :value="item"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Month" prop="Month">
+            <el-select v-model="searchForm.Month" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYearMonth()">
+              <el-option v-for="item in searchForm.months" :key="item.value" :label="item.name" :value="item.value"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
+            <el-button icon="el-icon-arrow-right" type="default" title="Next Month" @click="nextMonth()" :loading="isLoading "></el-button>
+          </el-form-item>
+          <el-form-item>
+            <!--el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button-->
             <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isLoading" size="small">ToExcel</el-button>
           </el-form-item>
         </el-form>
@@ -26,7 +42,7 @@
           </template>
         </el-table-column-->
         <el-table-column label="EffectiveDate" min-width="120">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
@@ -103,7 +119,23 @@ export default {
       insuranceCompanyList: [],
       // 搜索
       searchForm: {
-        name: null
+        name: null,
+        Year: 2022,
+        Month: 1,
+        years: [],
+        months: [
+          {name: 'January', value: 1},
+          {name: 'February', value: 2},
+          {name: 'March', value: 3},
+          {name: 'April', value: 4},
+          {name: 'May', value: 5},
+          {name: 'June', value: 6},
+          {name: 'July', value: 7},
+          {name: 'August', value: 8},
+          {name: 'September', value: 9},
+          {name: 'October', value: 10},
+          {name: 'November', value: 11},
+          {name: 'December', value: 12}]
       },
       searchName: null,
       // 列表
@@ -125,7 +157,13 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null, 0)
+    this.searchForm.Year = new Date().getFullYear()
+    this.searchForm.Month = new Date().getMonth() + 1
+    for (let i = 2020; i <= this.searchForm.Year; i++) {
+      this.searchForm.years.push(i)
+    }
+    this.showMain()
+    // this.search(null, 0)
   },
   methods: {
     // 日期格式
@@ -134,9 +172,48 @@ export default {
       else return moment(date).format('YYYY-MM-DD')
     },
     exportExcel: function () {
-      var tablename = 'statistics.xlsx'
-      this.downloadData('PlProcessing', '0', tablename)
+      let month = String(this.searchForm.Month)
+      if (this.searchForm.Month < 10) month = '0' + month
+      let tablename = 'statistics' + this.searchForm.Year + month + '.xlsx'
+      // this.downloadData('PlProcessing', '0', tablename)
+      this.downloadData('PlProcessingMonth', this.searchForm.Year, this.searchForm.Month, tablename)
     },
+    prevMonth: function () {
+      if (this.searchForm.Month === 1) {
+        this.searchForm.Month = 12
+        this.searchForm.Year--
+      } else this.searchForm.Month--
+      this.showMain()
+    },
+    nextMonth: function () {
+      if (this.searchForm.Month === 12) {
+        this.searchForm.Month = 1
+        this.searchForm.Year++
+      } else this.searchForm.Month++
+      this.showMain()
+    },
+    changeYear: function () {
+      this.showMain()
+    },
+    changeYearMonth: function () {
+      this.showMain()
+    },
+    showMain: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterStatistic_month', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
+
     showCoverLetter: function (coverLetter) {
       this.currentCoverLetter = coverLetter
       this.currentCoverLetterID = coverLetter.CoverLetterID
