@@ -247,6 +247,7 @@ export default {
       this.$refs['coverLetterForm'].validate((valid) => {
         if (valid) {
           let coverletter = JSON.parse(JSON.stringify(this.coverLetterForm))
+          coverletter.PremiumOnApp = parseInt(coverletter.PremiumOnApp)
           coverletter.coverLetterTemplates.forEach(template => {
             template.coverLetterBlocks.forEach(block => {
               block.answers.forEach(answer => {

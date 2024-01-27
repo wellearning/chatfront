@@ -1,3 +1,9 @@
+<!--
+FileName: My Account/changePassword.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Change my password of the system.
+-->
 <template>
   <div style="min-width: 600px;">
     <div class="inPageTitle">

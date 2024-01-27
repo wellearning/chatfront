@@ -1,3 +1,9 @@
+<!--
+FileName: Reports/adminBrokerReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show broker report as administrator role.
+-->
 <template>
   <div>
     <div class="inPageTitle">

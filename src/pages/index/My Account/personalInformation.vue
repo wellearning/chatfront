@@ -1,3 +1,9 @@
+<!--
+FileName: My Account/personalInformation.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show personal information.
+-->
 <template>
   <div style="min-width: 600px;">
     <div class="inPageTitle">

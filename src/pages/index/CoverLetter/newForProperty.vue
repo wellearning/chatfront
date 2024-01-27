@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/newForProperty.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Create new property cover letter.
+-->
 <template>
   <div v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(0, 0, 0, 0)">
     <el-form :model="coverLetterForm" ref="coverLetterForm" class="newMemo" :rules="coverLetterFormRules">
@@ -46,7 +52,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="Producer" prop="ProducerID">
-            <el-select v-model="coverLetterForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable>
+            <el-select v-model="coverLetterForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable @change="changeProducer()">
               <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
             </el-select>
           </el-form-item>
@@ -95,7 +101,7 @@ export default {
         InsuranceCorpID: null,
         ClientCode: null,
         StatusID: 0,
-        ProducerID: JSON.parse(this.$store.getters.getAccount).StaffID,
+        ProducerID: null, // JSON.parse(this.$store.getters.getAccount).StaffID,
         RequestDate: moment(new Date()),
         NameInsured: null,
         PremiumOnApp: null,
@@ -151,10 +157,11 @@ export default {
   methods: {
     loadBlockQuestions: function () {
       this.isLoadingBlockQuestions = true
+      let corpid = this.coverLetterForm.InsuranceCorpID
       // let value = JSON.stringify(this.currentTemplates)
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetBlockQuestionsByTemplate', {templateid: this.currentTemplateID}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetBlockQuestionsByTemplate', {templateid: this.currentTemplateID, corpid: corpid}).then(res => {
         if (res) {
-          console.log('NewCoverLetterTemplates', res)
+          console.log('BlockQuestions', res)
           this.blockQuestions = res.data
           if (!this.isLoading) this.matchAnswerBlockQuestion()
         }
@@ -167,7 +174,7 @@ export default {
     loadCoverLetterTemplate: function (templateid, start) {
       this.axios.post('/api/Services/NewBusinessService.asmx/GetNewCoverLetterTemplateShell', {templateid: templateid}).then(res => {
         if (res) {
-          console.log('NewCoverLetterTemplates', res)
+          console.log('NewCoverLetterTemplateShell', res)
           let ctemplate = res.data
           this.coverLetterForm.coverLetterTemplates.push(ctemplate)
           this.currentTemplate.templateBlocks.forEach(tb => {
@@ -190,7 +197,7 @@ export default {
     loadCoverLetterBlock: function (templateblockid, start) {
       this.axios.post('/api/Services/NewBusinessService.asmx/GetNewCoverLetterBlock', {templateblockid: templateblockid, start: start}).then(res => {
         if (res) {
-          console.log('NewCoverLetterTemplates', res)
+          console.log('NewCoverLetterBlock', res)
           let ctemplate = this.coverLetterForm.coverLetterTemplates[0]
           let cblock = res.data
           ctemplate.coverLetterBlocks.push(cblock)
@@ -207,7 +214,7 @@ export default {
           if (!this.isLoadingBlockQuestions) this.matchAnswerBlockQuestion()
         }
       }).catch(err => {
-        console.log('Templates列表出错', err)
+        console.log('NewCoverLetterBlock出错', err)
         this.isLoading = false
       })
     },
@@ -229,6 +236,8 @@ export default {
         if (res) {
           console.log('Templates列表', res)
           this.templatesList = res.data
+          this.coverLetterForm.ProducerID = JSON.parse(this.$store.getters.getAccount).StaffID
+          this.changeProducer()
         }
         this.isLoadingTemplates = false
       }).catch(err => {
@@ -262,6 +271,7 @@ export default {
       }).catch(err => {
         console.log('producer列表出错', err)
         this.isLoadingProducer = false
+        this.initTemplates(2)
       })
     },
     // 重置Memo
@@ -269,8 +279,10 @@ export default {
       this.isAnswering = false
       this.coverLetterForm.StatusID = 0
       this.coverLetterForm.coverLetterTemplates = []
+      this.blockQuestions = []
       // this.currentTemplates = []
       this.totalQuestionNum = 1
+      // this.coverLetterForm = null
     },
     // 选择EffectiveDate
     changeEffectiveDate: function (date) {
@@ -280,6 +292,14 @@ export default {
     // 选择保险公司
     changeInsuranceCompany: function () {
       if (this.isAnswering) this.clearMemo()
+      let producer = this.producerList.find(p => p.StaffID === this.coverLetterForm.ProducerID)
+      let tList = this.templatesList.filter(item => item.ProducerLevel === 0 || item.ProducerLevel === producer.ProducerLevel)
+      this.templatesList = tList
+    },
+    changeProducer: function () {
+      let producer = this.producerList.find(p => p.StaffID === this.coverLetterForm.ProducerID)
+      let tList = this.templatesList.filter(item => item.ProducerLevel === 0 || item.ProducerLevel === producer.ProducerLevel)
+      this.templatesList = tList
     },
     // 选择Templates
     changeTemplates: function () {
@@ -300,7 +320,7 @@ export default {
     beginToAnswer: function () {
       this.isLoading = true
       this.loadBlockQuestions()
-      this.loadCoverLetterTemplate(this.currentTemplateID)
+      this.loadCoverLetterTemplate(this.currentTemplateID, true)
       /*
       this.currentTemplates.forEach(id => {
         let start = (id === this.currentTemplates[0])
@@ -313,6 +333,7 @@ export default {
       this.$refs['coverLetterForm'].validate((valid) => {
         if (valid) {
           let coverletter = JSON.parse(JSON.stringify(this.coverLetterForm))
+          coverletter.PremiumOnApp = parseInt(coverletter.PremiumOnApp)
           coverletter.InsuranceTypeID = this.TemplateTypeID
           let sequenceno = 0
           coverletter.coverLetterTemplates.forEach(template => {

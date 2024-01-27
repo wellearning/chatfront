@@ -11,6 +11,7 @@
 <script>
 export default {
   name: 'answerSimpleAnswer',
+  disabled: false,
   props: {
     question: {
       type: Object
@@ -23,6 +24,9 @@ export default {
     },
     questionSequenceNo: {
       type: Number
+    },
+    disabled: {
+      type: Boolean
     }
   },
   methods: {

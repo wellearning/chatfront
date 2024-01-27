@@ -1,3 +1,9 @@
+<!--
+FileName: Configure/organization.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all organization list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -45,6 +51,13 @@
                     </el-radio>
                   </el-radio-group>
                 </el-form-item>
+                <el-form-item label="ProcessingType" prop="BusinessProcessingTypeID">
+                  <el-radio-group v-model="form.BusinessProcessingTypeID">
+                    <el-radio v-for="item in processingTypeList" :label="item.key" :key="item.key">
+                      <span>{{item.value}}</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
                 <el-form-item label="Name" prop="Name">
                   <el-input v-model="form.Name"></el-input>
                 </el-form-item>
@@ -60,6 +73,24 @@
                 <el-form-item label="PostCode" prop="PostCode">
                   <el-input v-model="form.PostCode"></el-input>
                 </el-form-item>
+                <el-form-item label="Email" prop="PostCode">
+                  <el-input v-model="form.Email"></el-input>
+                </el-form-item>
+                <el-form-item label="Website" prop="PostCode">
+                  <el-input v-model="form.Website"></el-input>
+                </el-form-item>
+                <!--el-upload
+                  class="upload-demo"
+                  ref="upload"
+                  action="https://jsonplaceholder.typicode.com/posts/"
+                  :on-preview="handlePreview"
+                  :on-remove="handleRemove"
+                  :file-list="fileList"
+                  :auto-upload="false">
+                  <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+                  <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
+                  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+                </el-upload-->
               </el-form>
             </div>
           </div>
@@ -77,6 +108,10 @@ export default {
       isLoadingList: false,
       list: [],
       listForParent: [],
+      fileList: [
+        {name: 'food.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'},
+        {name: 'food2.jpeg', url: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100'}
+      ],
       defaultProps: {
         children: 'children',
         label: 'Name'
@@ -86,16 +121,20 @@ export default {
       currentNode: null,
       currentNodeName: null,
       typeList: [{key: 1, value: 'Department', icon: 'el-icon-house'}, {key: 2, value: 'Branch', icon: 'el-icon-office-building'}],
+      processingTypeList: [{key: 1, value: 'Centralized'}, {key: 2, value: 'Independent'}],
       form: {
         InstitutionID: null,
         ParentID: 0,
         Parent: null,
         TypeID: 1,
+        BusinessProcessingTypeID: 1,
         Name: null,
         BranchCode: null,
         Telphone: null,
         Address: null,
-        PostCode: null
+        PostCode: null,
+        Email: null,
+        Website: null
       },
       formRules: {
         Name: [
@@ -113,6 +152,12 @@ export default {
         ],
         PostCode: [
           { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        Email: [
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
+        ],
+        Website: [
+          { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
         ]
       }
     }
@@ -121,6 +166,15 @@ export default {
     this.search()
   },
   methods: {
+    submitUpload () {
+      this.$refs.upload.submit()
+    },
+    handleRemove (file, fileList) {
+      console.log(file, fileList)
+    },
+    handlePreview (file) {
+      console.log(file)
+    },
     // 查询
     search: function () {
       this.isLoadingList = true
@@ -162,11 +216,14 @@ export default {
         this.form.Parent = null
       }
       this.form.TypeID = data.TypeID
+      this.form.BusinessProcessingTypeID = data.BusinessProcessingTypeID
       this.form.Name = data.Name
       this.form.BranchCode = data.BranchCode
       this.form.Telphone = data.Telphone
       this.form.Address = data.Address
       this.form.PostCode = data.PostCode
+      this.form.Email = data.Email
+      this.form.Website = data.Website
     },
     // 显示新增
     showAdd: function () {
@@ -183,7 +240,7 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode}
+          let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
           this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
             if (res) {
               console.log('新增', res)
@@ -216,7 +273,7 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, Name: this.form.Name, StatusID: 1, IsNew: false, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode}
+          let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, IsNew: false, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
           this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
             if (res) {
               console.log('修改', res)

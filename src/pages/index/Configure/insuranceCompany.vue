@@ -1,9 +1,15 @@
+<!--
+FileName: Configure/insuranceCompany.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all insurance company list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">Insurance Company</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization">New</el-button>
+        <el-button v-if="RoleName === 'Developer'" icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -42,8 +48,8 @@
         <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
-            <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
+            <el-button v-if="RoleName === 'Developer'" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
+            <el-button v-if="RoleName === 'Developer'" icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -57,6 +63,16 @@
           </el-form-item>
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="addForm.ShortName" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Parent Corperation" prop="ParentID">
+            <el-select v-model="addForm.ParentID" placeholder="Parent Corperation" no-data-text="No Record" filterable>
+              <el-option v-for="item in corpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="addForm.Province" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="Address" prop="Address">
             <el-input v-model="addForm.Address" clearable></el-input>
@@ -87,6 +103,16 @@
           </el-form-item>
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="editForm.ShortName" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Parent Corperation" prop="ParentID">
+            <el-select v-model="editForm.ParentID" placeholder="Parent Corperation" no-data-text="No Record" filterable>
+              <el-option v-for="item in corpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="editForm.Province" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="Address" prop="Address">
             <el-input v-model="editForm.Address" clearable></el-input>
@@ -143,6 +169,7 @@
 export default {
   data: function () {
     return {
+      RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
       isLoading: false,
       isLoadingOrganization: false,
       currentId: null,
@@ -159,6 +186,8 @@ export default {
       searchName: null,
       // 权限
       privilegesVisible: false,
+      corpList: [],
+      provinceList: [],
       organizationList: [],
       BrokerCodeList: [],
       isPost: false,
@@ -171,6 +200,8 @@ export default {
       addForm: {
         Name: null,
         ShortName: null,
+        ParentID: 0,
+        Province: null,
         Address: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
@@ -213,6 +244,8 @@ export default {
         InsuranceCorpID: null,
         Name: null,
         ShortName: null,
+        ParentID: 0,
+        Province: null,
         Address: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
@@ -257,6 +290,7 @@ export default {
     }
   },
   mounted: function () {
+    this.initProvinceList()
     this.search(null)
     this.initOrganization()
   },
@@ -277,6 +311,20 @@ export default {
     }
   },
   methods: {
+    initProvinceList: function () {
+      this.isLoadingProvinceList = true
+      this.axios.post('/api/Services/baseservice.asmx/GetDictionary', {datatype: 'Province'}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.provinceList = res.data
+          // this.search(null)
+        }
+        this.isLoadingProvinceList = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingProvinceList = false
+      })
+    },
     // 查询组织架构
     initOrganization: function () {
       this.isLoadingOrganization = true
@@ -291,13 +339,24 @@ export default {
         this.isLoadingOrganization = false
       })
     },
+    initInsuranceCorps: function () {
+      let corp = {InsuranceCorpID: 0, Name: 'No Parent'}
+      let clist = []
+      clist.push(corp)
+      this.list.forEach(function (c) {
+        let co = {InsuranceCorpID: c.InsuranceCorpID, Name: c.Name}
+        clist.push(co)
+      })
+      this.corpList = clist
+    },
     // 查询
     search: function (name) {
       this.isLoading = true
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('InsuranceCorps', res.data)
           this.list = res.data
+          this.initInsuranceCorps()
           if (name !== null) {
             this.searchName = name
             this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
@@ -322,10 +381,11 @@ export default {
       this.isLoading = true
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpBrokers', {corpid: corp.InsuranceCorpID}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('InsuranceCorpBrokers', res)
           this.privilegesVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-            this.BrokerCodeList = JSON.parse(JSON.stringify(corp.institutions)).map(item => { return {InsuranceCorpID: corp.InsuranceCorpID, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
+            // this.BrokerCodeList = JSON.parse(JSON.stringify(corp.institutions)).map(item => { return {InsuranceCorpID: corp.InsuranceCorpID, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
+            this.BrokerCodeList = JSON.parse(JSON.stringify(this.organizationList)).map(item => { return {InsuranceCorpID: corp.InsuranceCorpID, Name: item.Name, BranchCode: item.BranchCode, BrokerCode: null, corp: null, broker: null} })
             for (let i = 0; i < res.data.length; i++) {
               if (this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode) !== undefined) {
                 this.BrokerCodeList.find(item => item.BranchCode === res.data[i].BranchCode).InsuranceCorpBrokerID = res.data[i].InsuranceCorpBrokerID
@@ -333,6 +393,7 @@ export default {
               }
             }
           })
+          console.log('BrokerCodeList', this.BrokerCodeList)
         }
         this.isLoading = false
       }).catch(err => {
@@ -377,7 +438,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/baseservice.asmx/RemoveInsuranceCorp', {corpid: id}).then(res => {
+        this.axios.post('/api/Services/baseservice.asmx/RemoveInstitutionInsuranceCorp', {corpid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({

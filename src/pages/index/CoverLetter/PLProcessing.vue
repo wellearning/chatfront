@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/PLProcessing.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show the needed processing cover letter list and do the processing job on the cover letter of the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -20,7 +26,7 @@
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
         <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100"></el-table-column>
+        <el-table-column label="ReviewedBy" prop="UWReviewedBy" min-width="100"></el-table-column>
         <!--el-table-column label="User" prop="Author" min-width="100"></el-table-column-->
         <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
@@ -38,14 +44,15 @@
         </el-table-column>
         <el-table-column label="UWScore" prop="Score" min-width="70"></el-table-column>
         <el-table-column label="Q-Score" prop="QualityScore" min-width="70"></el-table-column>
-        <el-table-column label="Action" width="350" fixed="right">
-          <template slot-scope="scope">
+        <el-table-column label="Action" width="400" fixed="right">
+          <template v-slot="scope">
             <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 || scope.row.StatusID === 3" type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <!--el-button icon="el-icon-upload" v-if="scope.row.StatusID >= 2 && scope.row.StatusID !== 4" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button-->
-            <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 4" type="danger" @click="showDecline(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Decline</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 4" type="danger" @click="reinstate(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.Status === 2 || scope.row.Status === 3" type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.Status === 2" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.Status === 3" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
+            <el-button icon="el-icon-delete" v-if="scope.row.Status !== 4" type="danger" @click="showDecline(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Decline</el-button>
+            <el-button icon="el-icon-edit" v-if="scope.row.Status === 4" type="danger" @click="reinstate(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -77,6 +84,7 @@ export default {
   },
   data: function () {
     return {
+      roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       printObj: {
         id: 'pdfDom',
@@ -145,11 +153,11 @@ export default {
     showUpload: function (coverletter) {
       this.currentCoverLetter = coverletter
       this.currentCoverLetterID = coverletter.CoverLetterID
-      this.ProcessingTypeID = 2
-      this.ProcessingTitle = 'Upload Processing'
+      this.ProcessingTypeID = 5
+      this.ProcessingTitle = 'Uploading Processing'
       this.processingVisible = true
       if (this.$refs.enbp !== undefined) {
-        this.$refs.enbp.loadProperties(2, coverletter.CoverLetterID)
+        this.$refs.enbp.loadProperties(5, coverletter.CoverLetterID)
       }
     },
     showDecline: function (coverletter) {

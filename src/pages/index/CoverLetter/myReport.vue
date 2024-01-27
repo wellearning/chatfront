@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/myReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show my report.
+-->
 <template>
   <div>
     <div class="inPageTitle">

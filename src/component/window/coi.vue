@@ -5,6 +5,7 @@
       <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
     </div>
     <div class="viewCOI" id="coiDom">
+      <img class="coiLogo" :src="logo" crossorigin="anonymous">
       <el-row :gutter="20" style="margin-top:-17px; margin-left:402px; color: steelblue; text-align: right; font-size:14px;">
         <el-col :span="10">
           <div class="viewMemo-subtitle head">{{coiForm.BranchTel}}</div>
@@ -76,7 +77,7 @@
       </el-row>
       <el-row :gutter="20" style="margin-top:15px; margin-left:55px; font-size:18px;">
         <el-col :span="20">
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">For any further details, please forward your request via fax to 1-888-233-3218.</span></div>
+          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">For any further details, please forward your request via email to {{branch.Email === null || branch.Email === '' ? root.Email : branch.Email}}.</span></div>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top:55px; margin-left:80px; font-size:18px;">
@@ -106,13 +107,17 @@ export default {
     return {
       printDate: null,
       Author: JSON.parse(this.$store.getters.getAccount).Name,
+      logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      root: JSON.parse(this.$store.getters.getAccount).rootInstitution,
+      branch: JSON.parse(this.$store.getters.getAccount).institution,
+      // email: this.branch.Email === null ? this.root.Email : this.branch.Email,
       coiForm: {
         BranchStreet: 'BranchStreet',
         BranchCity: 'BranchCity',
         BranchPostcode: '',
         BranchTel: 'BranchTel',
-        BranchEmail: 'Emial: info@chatin.ca',
-        Website: 'http://www.chatin.ca',
+        BranchEmail: 'Email:',
+        Website: 'Website:',
         CurrentDate: 'CurrentDate',
         Lessor: 'Lessor',
         LessorType: 'LR',
@@ -122,7 +127,7 @@ export default {
         InsuranceCompany: 'InsuranceCompany',
         PolicyNumber: 'PolicyNumber',
         EffectiveDate: 'Month Day, Year',
-        ExpiryDate: 'ExpiryDaate',
+        ExpiryDate: 'ExpiryDate',
         VehicleInfo: '(vehicle\'s year, make, model and VIN#)',
         ThirdParty: '',
         AllPerils: '',
@@ -183,6 +188,12 @@ export default {
             this.coiForm.BranchCity = add2.join(',')
             this.coiForm.BranchPostcode = memo.branch.PostCode
             this.coiForm.BranchTel = 'Tel: ' + memo.branch.Telphone
+            let email = this.root.Email
+            let website = this.root.Website
+            if (memo.branch.Email !== null) email = memo.branch.Email
+            if (memo.branch.Website !== null) website = memo.branch.Website
+            this.coiForm.BranchEmail = 'Email: ' + email
+            this.coiForm.Website = 'Website: ' + website
           }
           let insuredname = memo.NameInsured
           let answer0 = memo.answers.find(a => a.QuestionDesc.indexOf('Last name') > 0)

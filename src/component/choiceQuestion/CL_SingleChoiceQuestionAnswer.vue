@@ -9,7 +9,7 @@
             <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
             <span v-if="disabled && item.NeedAddition && answer.checkvalue === item.ChoiceOptionID" style="text-decoration:underline">{{answer.Addition}}&nbsp;&nbsp;</span>
             <span v-else-if="disabled && item.NeedAddition" style="text-decoration:underline"></span>
-            <el-input v-else-if="item.NeedAddition" class="additionContent" v-model="answer.Addition" :disabled="answer.checkvalue !== item.ChoiceOptionID" size="mini"  @change="changeVal(answer.AnswerDesc)"></el-input>
+            <el-input v-else-if="item.NeedAddition && answer.checkvalue === item.ChoiceOptionID" class="additionContent" v-model="answer.Addition" size="mini"  @change="changeVal(answer.AnswerDesc)"></el-input>
           </el-radio>
         </el-radio-group>
       </div>

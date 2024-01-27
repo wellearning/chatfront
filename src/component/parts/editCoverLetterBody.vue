@@ -1,3 +1,9 @@
+<!--
+FileName: editCoverLetterBody.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: The main edit part of the cover letter edition.
+-->
 <template>
 <div>
   <div class="newMemo-content" v-for="ctemplate in coverLetter.coverLetterTemplates" :key="ctemplate.TemplateID">
@@ -76,8 +82,11 @@ export default {
     },
     // 更新跳过个数
     countShipNumber: function (answer) {
-      let question = answer.blockQuestion
       if (!answer.IsRoute) return 1
+      let question = answer.blockQuestion
+      if (question === null) {
+        return 1
+      }
       let sign = answer.InputType
       let value = answer.AnswerDesc
       if (answer.TypeID === 6) value = answer.checkvalue
@@ -262,6 +271,9 @@ export default {
         let cb = ctemplate.coverLetterBlocks[i]
         this.skipBlock(cb)
       }
+      this.skipBlockLeft(cblock, answer)
+    },
+    skipBlockLeft: function (cblock, answer) {
       let currentAID = cblock.answers.findIndex(function (e) { return e.QuestionID === answer.QuestionID })
       for (let i = currentAID + 1; i < cblock.answers.length; i++) {
         let ca = cblock.answers[i]
@@ -302,6 +314,10 @@ export default {
             break
           }
         }
+      } else if (skipsteps === -2) {
+        // 完成答卷
+        this.skipBlock(cblock, answer)
+        // this.coverLetter.StatusID = 1
       } else if (skipsteps === -1) {
         // 完成答卷
         this.skipLeft(ctemplate, cblock, answer)

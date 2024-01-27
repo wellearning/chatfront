@@ -6,7 +6,7 @@
           <div slot="error" class="image-slot">
           </div>
         </el-image>
-        <span class="pageTitle">Intelli Broker</span>
+        <span class="pageTitle" @click="collapse()">Intelli Broker</span>
         <span class="welcome">Welcome, {{account}}</span>
         <el-button icon="el-icon-switch-button" type="primary" round @click="logout()" :loading="isLoading"></el-button>
       </el-header>
@@ -39,7 +39,7 @@ export default {
       isCollapse: false, // todo: 折叠后导航会报Maximum call stack size exceeded
       account: JSON.parse(this.$store.getters.getAccount).Name,
       menu: (JSON.parse(this.$store.getters.getPermissionList))[0].children,
-      logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.LogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.SysLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     }
   },
   mounted: function () {
@@ -54,6 +54,10 @@ export default {
     })
   },
   methods: {
+    collapse: function () {
+      if (this.isCollapse) this.isCollapse = false
+      else this.isCollapse = true
+    },
     // 根据屏幕宽度，改变菜单
     menuStyle: function () {
       if (this.innerWidth > 768) {

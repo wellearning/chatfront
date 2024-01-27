@@ -1,7 +1,13 @@
+<!--
+FileName: Library/questions/titles.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show titles list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Titles for cover letter</span>
+      <span class="inPageNav">Titles for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
         <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
@@ -62,8 +68,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Title List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -83,7 +89,9 @@ export default {
     return {
       isLoading: false,
       typeId: 1,
-      typeName: 'Titles',
+      btypeId: 2,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
+      typeName: ' Title Question List',
       questionListVisible: false,
       currentId: null,
       currentDescription: null,
@@ -120,7 +128,17 @@ export default {
       }
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = parseInt(this.$route.params.id)
+      this.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
+    this.btypeId = parseInt(this.$route.params.id)
+    this.typeName = this.businessTypes[this.btypeId] + this.typeName
     this.search(null)
   },
   methods: {
@@ -149,7 +167,7 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByTypeQuery', {typeid: 1, query: name}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 1, query: name, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
@@ -185,7 +203,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -217,7 +235,7 @@ export default {
         })
       } else {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(obj)}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(obj), btypeid: this.btypeId}).then(res => {
           if (res) {
             console.log('修改', res)
             this.$message({
@@ -267,7 +285,7 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({

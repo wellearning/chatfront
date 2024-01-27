@@ -1,3 +1,9 @@
+<!--
+FileName: Configure/vehicleModel.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all vehicle model list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">

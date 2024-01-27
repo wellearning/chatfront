@@ -33,7 +33,8 @@
   </el-form>
   <div class="newMemo-submit">
     <el-button icon="el-icon-check" type="primary" @click="save(false)" :loading="isLoading ">Save</el-button>
-    <el-button v-if="coverLetter.StatusID === processingtypeid || processingtypeid === 3" icon="el-icon-check" type="primary" @click="save(true)" :loading="isLoading ">Finish</el-button>
+    <!--el-button v-if="coverLetter.StatusID === processingtypeid || processingtypeid === 3" icon="el-icon-check" type="primary" @click="save(true)" :loading="isLoading ">Finish</el-button-->
+    <el-button v-if="coverLetter.Status === processingtypeid || processingtypeid === 3 || (processingtypeid === 2 && !coverLetter.UploadAudited) || (processingtypeid === 4 && !coverLetter.UWAudited)|| (processingtypeid === 5 && !coverLetter.Uploaded)" icon="el-icon-check" type="primary" @click="save(true)" :loading="isLoading ">Finish</el-button>
   </div>
 </div>
 </template>
@@ -105,11 +106,15 @@ export default {
       this.isLoading = true
       this.axios.post('/api/Services/NewBusinessService.asmx/SaveCoverLetterProperties', {properties: value, processingtypeid: this.typeid, finished: finished}).then(res => {
         if (res) {
-          this.coverLetter.Status = res.data.Status
-          this.coverLetter.StatusID = res.data.StatusID
-          this.coverLetter.Score = res.data.Score
-          this.coverLetter.QualityScore = res.data.QualityScore
-          console.log('修改', res)
+          console.log('SaveCoverLetterProperties', res)
+          if (res.data !== null) {
+            this.coverLetter.Status = res.data.Status
+            this.coverLetter.StatusID = res.data.StatusID
+            this.coverLetter.Score = res.data.Score
+            this.coverLetter.QualityScore = res.data.QualityScore
+            this.coverLetter.UploadAudited = res.data.UploadAudited
+            this.coverLetter.UWAudited = res.data.UWAudited
+          }
           this.$message({
             type: 'success',
             message: 'Operation Succeeded'

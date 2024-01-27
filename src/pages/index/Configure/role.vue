@@ -1,9 +1,15 @@
+<!--
+FileName: Configure/role.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all role list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">Role</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTree">New</el-button>
+        <el-button v-if="RoleName === 'Developer'" icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTree">New</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -17,8 +23,8 @@
         <el-table-column label="Action" width="300" fixed="right">
           <template v-slot:="scope">
             <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-document" type="primary" @click="showPrivilege(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Privileges</el-button>
-            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Delete</el-button>
+            <el-button v-if="RoleName === 'Developer' && currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.RoleID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
+            <el-button v-if="RoleName === 'Developer' && currentId === null && !(scope.row.RoleID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.RoleID)" :loading="isLoading || isLoadingTree" size="small">Delete</el-button>
             <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading || isLoadingTree" size="small">Confirm</el-button>
             <el-button v-if="scope.row.RoleID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.RoleID)" :loading="isLoading || isLoadingTree" plain size="small">Cancel</el-button>
           </template>
@@ -62,6 +68,7 @@
 export default {
   data: function () {
     return {
+      RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
       isLoading: false,
       isLoadingTree: false,
       currentId: null,

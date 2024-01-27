@@ -1,3 +1,9 @@
+<!--
+FileName: Memo/memos.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all personal line memo list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -40,9 +46,10 @@
         </el-table-column>
         <el-table-column label="Action" width="480" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
+            <el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
+            <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
             <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
             <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
             <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
@@ -58,155 +65,7 @@
       <!----------------------------------------------Processing弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewFormVisible" width="1184.56px" center :before-close="closeView">
-        <div class="printDiv" v-if="viewForm.StatusID === 1">
-          <el-button icon="el-icon-document" type="primary" @click="pdf(viewForm.Title, viewForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">ToPDF</el-button>
-          <el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
-        </div>
-        <div class="viewMemo" id="pdfDom">
-          <!--<div class="printDate">Print Date: {{printDate}}</div>-->
-          <img v-if="viewForm.branch.LogoUrl !== ''" class="viewLogo" :src="'http://134.175.142.102:8080' + viewForm.branch.LogoUrl + '?time=' + printDate" crossorigin="anonymous">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">Chat Insurance Services Inc ({{viewForm.branch.Name}})</i></div>
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{viewForm.branch.Address}}</i></div>
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{viewForm.branch.Telphone}}</i></div>
-            </el-col>
-            <el-col :span="12">
-              <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.corpbroker.corp.Name}}</b></div>
-              <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.corpbroker.BrokerCode}}</b></div>
-              <!--<div class="viewMemo-subtitle head"><i class="long">Print Date: </i><b>{{printDate}}</b></div>-->
-            </el-col>
-          </el-row>
-          <div class="viewMemo-title">{{viewForm.Title}}</div>
-          <el-row :gutter="20">
-            <el-col :span="5">
-              <div class="viewMemo-subtitle">EffectiveDate:</div>
-            </el-col>
-            <el-col :span="7">
-              <div class="viewMemo-subtitle"><span>{{viewForm.EffectiveDate}}</span></div>
-            </el-col>
-            <el-col :span="5">
-              <div class="viewMemo-subtitle">RequestDate:</div>
-            </el-col>
-            <el-col :span="7">
-              <div class="viewMemo-subtitle"><span>{{viewForm.RequestDate}}</span></div>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="5">
-              <div class="viewMemo-subtitle">PolicyNumber:</div>
-            </el-col>
-            <el-col :span="7">
-              <div class="viewMemo-subtitle"><span>{{viewForm.PolicyNumber}}</span></div>
-            </el-col>
-            <el-col :span="5">
-              <div class="viewMemo-subtitle">Name Insured(s):</div>
-            </el-col>
-            <el-col :span="7">
-              <div class="viewMemo-subtitle"><span>{{viewForm.NameInsured}}</span></div>
-            </el-col>
-          </el-row>
-          <div class="viewMemo-content">
-            <div v-for="i in viewForm.memoTemplates" :key="i.MemoTemplateID">
-              <div v-if="viewForm.memoTemplates.length > 1" class="newMemo-content-template-title">{{i.Title}}</div>
-              <div v-for="it in i.memoBlocks" :key="it.MemoBlockID">
-                <div class="viewMemo-content-answer" v-for="(item, index) in it.normalAnswers" :key="index">
-                  <!--问题类型为：Title-->
-                  <div v-if="item.QuestionType === 'Title' && item.OutputModeID !== 3" class="title">
-                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
-                  </div>
-                  <!--问题类型为：Reminder-->
-                  <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
-                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
-                  </div>
-                  <!--问题类型为：Property-->
-                  <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
-                    <div class="question fontNormal">
-                      <span class="content">{{item.QuestionDesc}}</span>
-                      <span class="answer marginLeft10px">
-                        <span class="content" v-if="item.AnswerDesc === null || item.AnswerDesc === ''"></span>
-                        <span class="content" v-else-if="IsDate(item.AnswerDesc)">{{dateFormat(item.AnswerDesc)}}</span>
-                        <span class="content" v-else>{{item.AnswerDesc}}</span>
-                        <!--span class="content" v-else-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{isNaN(item.AnswerDesc) && !isNaN(Date.parse(item.AnswerDesc)) ? dateFormat(item.AnswerDesc) : item.AnswerDesc}}</span>
-                        <span class="content noAnswer" v-else>No Answer</span-->
-                      </span>
-                    </div>
-                  </div>
-                  <!--问题类型为：SimpleAnswer-->
-                  <div v-else-if="item.QuestionType === 'SimpleAnswer' && item.OutputModeID !== 3">
-                    <div class="question fontNormal">{{item.QuestionDesc}}</div>
-                    <div class="answer">
-                      <span class="content" v-if="item.AnswerDesc !== '' && item.AnswerDesc !== null">{{item.AnswerDesc}}</span>
-                      <span class="content noAnswer" v-else>No Answer</span>
-                    </div>
-                  </div>
-                  <!--问题类型为：Fillin-->
-                  <div v-else-if="item.QuestionType === 'Fillin' && item.OutputModeID !== 3">
-                    <div class="question fontNormal">
-                      <span v-for="part in item.fillinAnswers" :key="part.FillinPartID">
-                       <span class="fillInPart" v-if="part.IsFillin && (part.FillinContent !== '' && part.FillinContent !== null)">{{isNaN(part.FillinContent) && !isNaN(Date.parse(part.FillinContent)) ? dateFormat(part.FillinContent) : part.FillinContent}}</span>
-                        <span class="fillInPart noAnswer" v-else-if="part.IsFillin && (part.FillinContent === '' || part.FillinContent !== null)">No Answer</span>
-                        <span v-else>{{part.Part}}</span>
-                      </span>
-                    </div>
-                  </div>
-                  <!--问题类型为：SingleChoice-->
-                  <div v-else-if="item.QuestionType === 'SingleChoice' && item.OutputModeID !== 3">
-                    <div>
-                      <div class="content" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
-                      <div class="answer">
-                        <span v-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 1">
-                          <span class="content">{{item.optionAnswer.Content}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>
-                        </span>
-                        <span v-else-if="item.optionAnswer !== null && item.optionAnswer.OutputModeID === 2">
-                          <span class="content">{{item.optionAnswer.Outputs}}</span>
-                          <!--<i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>-->
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <!--问题类型为：MultipleChoice-->
-                  <div v-else-if="item.QuestionType === 'MultipleChoice' && item.OutputModeID !== 3">
-                    <div>
-                      <div class="question fontNormal" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
-                      <div class="answer">
-                        <div v-if="item.optionAnswers.length > 0">
-                          <div v-for="(option, indexOption) in item.optionAnswers" :key="indexOption">
-                          <span v-if="option.OutputModeID === 1">
-                            <span class="content">{{option.Content}}</span>
-                            <i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''"><b>{{option.AdditionContent}}</b></i>
-                          </span>
-                            <span v-else-if="option.OutputModeID === 2">
-                            <span class="content">{{option.Outputs}}</span>
-                            <!--<i class="addition" v-if="option.AdditionContent !== null && option.AdditionContent !== ''"><b>{{option.AdditionContent}}</b></i>-->
-                          </span>
-                          </div>
-                        </div>
-                        <div v-else>
-                          <span class="noAnswer">No Answer</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!--<el-row :gutter="20" class="foot">-->
-            <!--<el-col :span="12">-->
-              <!--<div class="viewMemo-subtitle foot">______________________________(Signature of Insureds)</div>-->
-            <!--</el-col>-->
-            <!--<el-col :span="12">-->
-              <!--<div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>-->
-            <!--</el-col>-->
-          <!--</el-row>-->
-          <el-row :gutter="20" class="foot printDateInFoot">
-            <el-col>
-              <b>{{Author + ' ' + printDate}}</b>
-            </el-col>
-          </el-row>
-        </div>
+        <ViewMemo ref="vm" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></ViewMemo>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
       <!----------------------------------------------Pink Slip 弹窗开始----------------------------------------------------->
@@ -257,6 +116,11 @@
         <COI ref="co" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></COI>
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="sheetFormVisible" width="1184.56px"  height="2184.56px" center >
+        <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1"></ViewSheet>
+      </el-dialog>
+      <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -266,12 +130,16 @@ import moment from 'moment'
 import PinkSlip from '@/component/window/pinkSlip'
 import COI from '@/component/window/coi'
 import EditMemoProcessing from '@/component/parts/editMemoProcessing'
+import ViewSheet from '@/component/window/sheet'
+import ViewMemo from '@/component/window/viewMemo'
 
 export default {
   components: {
     EditMemoProcessing,
     PinkSlip,
-    COI
+    COI,
+    ViewSheet,
+    ViewMemo
   },
   data: function () {
     return {
@@ -332,6 +200,7 @@ export default {
       },
       pinkSlipFormVisible: false,
       coiFormVisible: false,
+      sheetFormVisible: false,
       pinkSlipForm: {
         InsuranceCorpName: null,
         InsuranceCorpAddress: null,
@@ -359,13 +228,28 @@ export default {
      * @return {boolean}
      */
     IsDate (dateval) {
-      if (dateval.length > 8 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
+      if (dateval.length > 20 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
       else return false
     },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
+    setCurrent: function (memo) {
+      this.currentMemo = memo
+      this.currentMemoID = memo.MemoID
+    },
+    showMemo: function (id) {
+      this.viewFormVisible = true
+      if (this.$refs.vm !== undefined) {
+        this.$refs.vm.loadMemo(id)
+      }
+    },
+    showViewMemo: function (memo) {
+      this.setCurrent(memo)
+      this.showMemo(memo.MemoID)
+    },
+
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
@@ -559,6 +443,13 @@ export default {
       this.coiFormVisible = true
       if (this.$refs.co !== undefined) {
         this.$refs.co.loadMemo(memoid)
+      }
+    },
+    showSheet: function (memoid) {
+      this.currentMemoID = memoid
+      this.sheetFormVisible = true
+      if (this.$refs.vs !== undefined) {
+        this.$refs.vs.loadBusinessObj(memoid)
       }
     },
     // Pink Slip弹窗

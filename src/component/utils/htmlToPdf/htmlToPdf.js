@@ -2,6 +2,7 @@
 import html2canvas from 'html2canvas'
 import JsPDF from 'jspdf'
 import printJS from 'print-js'
+// import {isNumeric} from "echarts/lib/util/number";
 export default{
   install (Vue, options) {
     Vue.prototype.$printJS = printJS

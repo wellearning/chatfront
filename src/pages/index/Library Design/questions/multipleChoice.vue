@@ -1,13 +1,19 @@
+<!--
+FileName: Library/questions/multipleChoice.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show multiple choice list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Multiple Choice Question</span>
+      <span class="inPageNav">Multiple Choice for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
-        <el-button icon="el-icon-plus" type="primary" @click="toPDF()" :loading="isLoading">Print</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent" id="questionListDom">
+    <div class="inPageContent" id="">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -159,6 +165,11 @@
         <UsedBlockList ref="bl" :questionID="currentId" ></UsedBlockList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="questionListVisible" width="1200px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -166,18 +177,24 @@
 <script>
 import AnswerMultipleChoiceQuestion from '@/component/choiceQuestion/answerMultipleChoiceQuestion'
 import UsedBlockList from '@/component/window/usedBlockList'
+import QuestionList from '@/component/window/multipleChoiceQuestionList'
 
 export default {
   components: {
     AnswerMultipleChoiceQuestion,
-    UsedBlockList
+    UsedBlockList,
+    QuestionList
   },
   data: function () {
     return {
       isLoading: false,
       currentId: null,
       blocksDetailVisible: false,
-      typeName: 'MultpleChoice',
+      typeName: ' Multple Choice Question List',
+      typeId: 7,
+      btypeId: 2,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
+      questionListVisible: false,
       questionTypeList: [{id: 0, name: 'No Type'}, {id: 2, name: 'Reminder'}, {id: 3, name: 'Property'}, {id: 4, name: 'Simple Answer'}, {id: 5, name: 'Fill In Question'}],
       reminders: [],
       properties: [],
@@ -241,7 +258,17 @@ export default {
       total: 0
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = parseInt(this.$route.params.id)
+      this.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
+    this.btypeId = parseInt(this.$route.params.id)
+    this.typeName = this.businessTypes[this.btypeId] + this.typeName
     this.search(null)
     this.loadQuestions(2)
     this.loadQuestions(3)
@@ -249,6 +276,16 @@ export default {
     this.loadQuestions(5)
   },
   methods: {
+    // show question list
+    showQuestionList: function () {
+      this.questionListVisible = true
+      if (this.$refs.ql !== undefined) {
+        this.$refs.ql.loadQuestions(this.typeId, this.btypeId)
+      }
+    },
+    closeQuestionList: function () {
+      this.questionListVisible = false
+    },
     getQuestionList: function (typeid) {
       if (typeid === 2) return this.reminders
       else if (typeid === 3) return this.properties
@@ -262,7 +299,7 @@ export default {
       /*
       this.currentQuestion = null
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByType', {typeid: option.ChildQuestionTypeID}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByType', {typeid: option.ChildQuestionTypeID, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           let all = [{QuestionID: 0, Description: 'No Child Question'}]
@@ -320,7 +357,7 @@ export default {
     },
     loadQuestions: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByType', {typeid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByType', {typeid: id, btypeid: this.btypeId}).then(res => {
         if (!res) {
         } else {
           let all = [{QuestionID: 0, Description: 'No Child Question'}]
@@ -338,7 +375,7 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByTypeQuery', {typeid: 7, query: name}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 7, query: name, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           // 声明value，AdditionContent，防止输入框无法输入
@@ -391,7 +428,7 @@ export default {
           for (let i = 0; i < this.addForm.options.length; i++) {
             this.addForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -427,7 +464,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestion', {questionid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -476,7 +513,7 @@ export default {
             option.childQuestion = null
           })
           let value = JSON.stringify(this.editForm)
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: value}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: value, btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -519,7 +556,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({

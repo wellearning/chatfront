@@ -1,3 +1,9 @@
+<!--
+FileName: CLMemo/myMemos.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show my commercial memo list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -182,8 +188,8 @@
                   <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
                     <div class="question fontNormal">{{item.QuestionDesc}}</div>
                   </div>
-                  <!--问题类型为：Property-->
-                  <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
+                  <!--问题类型为：Attribute-->
+                  <div v-else-if="item.QuestionType === 'Attribute' && item.OutputModeID !== 3">
                     <div class="question">
                       <span>{{item.QuestionDesc}}</span>
                       <span class="answer marginLeft10px">
@@ -608,7 +614,7 @@ export default {
                   // 修改相对于新增，需要的额外字段
                   // if (blocks[p].normalAnswers[q].QuestionType === 'Title') {
                   // } else if (blocks[p].normalAnswers[q].QuestionType === 'Reminder') {
-                  if (blocks[p].normalAnswers[q].QuestionType === 'Property') {
+                  if (blocks[p].normalAnswers[q].QuestionType === 'Attribute') {
                     matchQuestion.question.value = blocks[p].normalAnswers[q].AnswerDesc
                   } else if (blocks[p].normalAnswers[q].QuestionType === 'SimpleAnswer') {
                     matchQuestion.question.value = blocks[p].normalAnswers[q].AnswerDesc
@@ -1002,14 +1008,14 @@ export default {
                     MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }
                 } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 3) {
-                  // 问题类型为：Property
+                  // 问题类型为：Attribute
                   templates[i].memoBlocks[j].normalAnswers[k] = {
                     QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
                     BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
                     QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
                     AnswerDesc: templates[i].memoBlocks[j].normalAnswers[k].question.value,
                     OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
-                    QuestionType: 'Property',
+                    QuestionType: 'Attribute',
                     AnswerID: templates[i].memoBlocks[j].normalAnswers[k].question.AnswerID,
                     MemoBlockID: templates[i].memoBlocks[j].normalAnswers[k].question.MemoBlockID
                   }

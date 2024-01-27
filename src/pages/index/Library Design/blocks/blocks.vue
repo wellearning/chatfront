@@ -1,7 +1,13 @@
+<!--
+FileName: Library/block/blocks.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show block list and all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Blocks</span>
+      <span class="inPageNav">Blocks for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingInsuranceCompany">New</el-button>
       </div>
@@ -29,9 +35,10 @@
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.BlockID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
+            <el-button icon="el-icon-copy" type="" @click="duplicate(scope.row.BlockID)" :loading="isLoading" size="small">Duplicate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,8 +93,151 @@
       <!----------------------------------------------路由编辑弹窗开始------------------------------------------------->
       <el-dialog title="Route" :visible.sync="routesFormVisible" width="800px" top="20vh" center :before-close="closeAddRoutes">
         <el-form :model="routesForm" ref="routesForm" class="form">
+          <el-form-item label="Question">
+            <span>{{routesForm.Description}}</span>
+          </el-form-item>
+          <el-form-item label="Insurance Company">
+            <el-select v-model="currentInsuranceCompany" placeholder="Please Select" no-data-text="No Record" filterable>
+              <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+            <el-row :gutter="10">
+              <el-radio-group v-model="item.RouteLevel">
+                <el-radio :label="0">
+                  <span>Route On Question</span>
+                </el-radio>
+                <el-radio :label="1">
+                  <span>Route On Block</span>
+                </el-radio>
+              </el-radio-group>
+            </el-row>
+            <!--RouteType为BaseOnQuestion开始-->
+            <div v-if="routesForm.RouteTypeID === 1">
+              <el-row :gutter="10">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-show="false">
+                  <el-input v-model="item.Operator" clearable size="small"></el-input>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-show="false">
+                  <el-input v-model="item.Operand" clearable size="small"></el-input>
+                </el-col>
+                <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
+                  <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                    <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                  </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
+                  <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                    <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                    <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                  </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                  <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                </el-col>
+              </el-row>
+            </div>
+            <!--RouteType为BaseOnQuestion结束-->
+            <!--RouteType为BaseOnAnswer开始-->
+            <div v-else>
+              <div v-if="routesForm.question.TypeID === 3">
+                <el-row :gutter="10">
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                    <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in operatorList" :key="it.id" :label="it.name" :value="it.name"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7">
+                    <el-input v-model="item.Operand" clearable size="small"></el-input>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                    <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                  </el-col>
+                </el-row>
+              </div>
+              <div v-else-if="routesForm.question.TypeID === 6">
+                <el-row :gutter="10">
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
+                    <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in operatorList.filter(i => i.name === '=')" :key="it.id" :label="it.name" :value="it.name"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
+                    <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="it in routesForm.question.options" :key="(it.ChoiceOptionID).toString()" :label="it.Content" :value="(it.ChoiceOptionID).toString()"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
+                    <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                    </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
+                    <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option :key="0" label="Stay Here" :value="0"></el-option>
+                      <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
+                      <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                    </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                    </el-select>
+                  </el-col>
+                  <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
+                    <el-button icon="el-icon-minus" type="primary" @click="delOperator(index)" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtn"></el-button>
+                  </el-col>
+                </el-row>
+              </div>
+            </div>
+            <!--RouteType为BaseOnAnswer结束-->
+          </el-form-item>
+          <div v-if="routesForm.question.TypeID === 6">
+            <el-form-item class="confirmBtn" v-if="routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany).length < routesForm.question.options.length">
+              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+            </el-form-item>
+          </div>
+          <div v-else-if="routesForm.question.TypeID === 3 && (routesForm.question.InputType === 'number' || routesForm.question.InputType === 'date')">
+            <el-form-item class="confirmBtn">
+              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+            </el-form-item>
+          </div>
+          <div v-else>
+            <el-form-item class="confirmBtn" v-if="routesForm.routes.find(i => i.InsuranceCorpID === currentInsuranceCompany) === undefined">
+              <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
+            </el-form-item>
+          </div>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
+          </el-form-item>
           <!--RouteType为BaseOnQuestion开始-->
-          <div v-if="routesForm.RouteTypeID === 1">
+          <!--div v-if="routesForm.RouteTypeID === 1">
             <el-form-item label="Question">
               <span>{{routesForm.question.Description}}</span>
             </el-form-item>
@@ -105,17 +255,23 @@
                   <el-input v-model="item.Operand" clearable size="small"></el-input>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-if="addFormVisible">
-                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                  <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option :key="0" label="Stay Here" :value="0"></el-option>
                     <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="block in blocks" :key="block.BlockID" :label="block.Name" :value="block.BlockID"></el-option>
+                  </el-select>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
-                  <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                  <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option :key="0" label="Stay Here" :value="0"></el-option>
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                  </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="block in blocks" :key="block.BlockID" :label="block.Name" :value="block.BlockID"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -129,10 +285,10 @@
             <el-form-item class="confirmBtn">
               <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
             </el-form-item>
-          </div>
+          </div-->
           <!--RouteType为BaseOnQuestion结束-->
           <!--RouteType为BaseOnAnswer开始-->
-          <div v-else>
+          <!--div >
             <div v-if="routesForm.question.TypeID === 3">
               <el-form-item label="Question">
                 <span>{{routesForm.question.Description}}</span>
@@ -188,6 +344,16 @@
                 </el-select>
               </el-form-item>
               <el-form-item v-for="(item, index) in routesForm.routes.filter(i => i.InsuranceCorpID === currentInsuranceCompany)" :key="index" class="confirmBtn confirmBtnBlock smallLine">
+                <el-row :gutter="0">
+                  <el-radio-group v-model="item.RouteLevel">
+                    <el-radio :label="0">
+                      <span>Route On Question</span>
+                    </el-radio>
+                    <el-radio :label="1">
+                      <span>Route On Block</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-row>
                 <el-row :gutter="10">
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-show="false">
                     <el-select v-model="item.Operator" placeholder="Please Select" no-data-text="No Record" filterable size="small">
@@ -200,17 +366,23 @@
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-if="addFormVisible">
-                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option :key="0" label="Stay Here" :value="0"></el-option>
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="block in blocks" :key="block.BlockID" :label="block.Name" :value="block.BlockID"></el-option>
+                    </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
-                    <el-select v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-select v-if="item.RouteLevel === 0" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option :key="0" label="Stay Here" :value="0"></el-option>
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
+                    </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="block in blocks" :key="block.BlockID" :label="block.Name" :value="block.BlockID"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -225,7 +397,7 @@
                 <el-button icon="el-icon-check" type="primary" @click="addRoutes()" :loading="isLoading || isLoadingInsuranceCompany">Confirm</el-button>
               </el-form-item>
             </div>
-          </div>
+          </div-->
           <!--RouteType为BaseOnAnswer结束-->
         </el-form>
       </el-dialog>
@@ -278,7 +450,7 @@
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------BlockQuestionDetail弹窗开始----------------------------------------------------->
       <el-dialog title="Templates Used Detail" :visible.sync="templatesDetailVisible" width="800px" center :before-close="closeTemplatesDetail">
-        <UsedTemplateList ref="tl" :questionID="currentId" ></UsedTemplateList>
+        <UsedTemplateList ref="tl" :blockID="currentId" ></UsedTemplateList>
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
     </div>
@@ -293,15 +465,19 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 1,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
       isLoading: false,
       currentId: null,
       templatesDetailVisible: false,
+      routeLevels: [{id: 0, name: 'Question'}, {id: 1, name: 'Block'}],
       routeTypeList: [{id: 1, name: 'Base On Question'}, {id: 2, name: 'Base On Answer'}],
       isLoadingInsuranceCompany: false,
       currentQuestionType: null,
       currentQuestion: null,
-      questionTypeList: [{id: 1, name: 'Title'}, {id: 2, name: 'Reminder'}, {id: 3, name: 'Property'}, {id: 4, name: 'Simple Answer'}, {id: 5, name: 'Fill In Question'}, {id: 6, name: 'Single Choice Question'}, {id: 7, name: 'Multiple Choice Question'}],
+      questionTypeList: [{id: 1, name: 'Title'}, {id: 2, name: 'Reminder'}, {id: 3, name: 'Attribute'}, {id: 4, name: 'Simple Answer'}, {id: 5, name: 'Fill In Question'}, {id: 6, name: 'Single Choice Question'}, {id: 7, name: 'Multiple Choice Question'}],
       questionList: [],
+      blocks: [],
       currentInsuranceCompany: null,
       insuranceCompanyList: [],
       operatorList: [{id: 1, name: '='}, {id: 2, name: '>'}, {id: 3, name: '<'}, {id: 4, name: '>='}, {id: 5, name: '<='}],
@@ -323,6 +499,7 @@ export default {
       routesFormVisible: false,
       routesForm: {
         QuestionID: 0,
+        RouteLevel: 0,
         question: {
           QuestionID: 0,
           TypeID: 0,
@@ -368,7 +545,16 @@ export default {
       total: 0
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = parseInt(this.$route.params.id)
+      // this.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
+    this.btypeId = this.$route.params.id
     this.search(null)
     this.initInsuranceCompany()
   },
@@ -388,7 +574,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           let all = [{InsuranceCorpID: 0, Name: 'All Insurance Company'}]
@@ -404,7 +590,7 @@ export default {
     changeQuestionType: function (id) {
       this.currentQuestion = null
       this.isLoading = true
-      this.axios.post('/api/Services/EandOService.asmx/GetQuestionsByType', {typeid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetSimpleQuestionsByType', {typeid: id, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           this.questionList = res.data
@@ -431,7 +617,7 @@ export default {
       } else {
         if (form === 'addForm') {
           this.isLoading = true
-          this.axios.post('/api/Services/EandOService.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
               console.log('查询单个', res)
               this.addForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
@@ -445,7 +631,7 @@ export default {
           })
         } else if (form === 'editForm') {
           this.isLoading = true
-          this.axios.post('/api/Services/EandOService.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/GetQuestion', {questionid: this.currentQuestion}).then(res => {
             if (res) {
               console.log('查询单个', res)
               this.editForm.blockQuestions.push({QuestionID: this.currentQuestion, Label: null, SequenceNo: 0, RouteTypeID: 1, IsRoute: false, question: res.data, routes: []})
@@ -496,10 +682,11 @@ export default {
       } else {
         this.searchName = name
       }
-      this.axios.post('/api/Services/EandOService.asmx/SearchBlocks', {query: this.searchName}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/SearchBlocks', {query: this.searchName, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          this.blocks = res.data
           this.total = this.list.length
           this.currentPage = 1
         }
@@ -545,7 +732,7 @@ export default {
               this.addForm.blockQuestions[i].routes = []
             }
           }
-          this.axios.post('/api/Services/EandOService.asmx/SaveBlock', {block: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveBlock', {block: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -593,7 +780,7 @@ export default {
           message: 'Please Select Insurance Company'
         })
       } else {
-        this.routesForm.routes.push({InsuranceCorpID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1})
+        this.routesForm.routes.push({InsuranceCorpID: this.currentInsuranceCompany, Operator: '=', Operand: null, MoveStep: 1, RouteLevel: 0})
       }
     },
     // 删除一行比较属性，因为使用了filter，所以不能直接this.routesForm.routes.splice(index, 1)，这样删除的可能是过滤掉的别的保险公司对应的routing
@@ -677,9 +864,9 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/EandOService.asmx/GetBlock', {blockid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetBlock', {blockid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('block', res)
           this.editFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.editForm = res.data
@@ -692,7 +879,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('查询block出错', err)
         this.isLoading = false
       })
     },
@@ -722,7 +909,7 @@ export default {
               this.editForm.blockQuestions[i].routes = []
             }
           }
-          this.axios.post('/api/Services/EandOService.asmx/SaveBlock', {block: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveBlock', {block: JSON.stringify(this.editForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -763,7 +950,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/EandOService.asmx/RemoveBlock', {blockid: id}).then(res => {
+        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveBlock', {blockid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -776,6 +963,35 @@ export default {
           this.isLoading = false
         }).catch(err => {
           console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    duplicate: function (id) {
+      this.$confirm('Are you sure to duplicate it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/DuplicateBlock', {blockid: id}).then(res => {
+          if (res) {
+            console.log('Duplicate', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.list.push(res.data)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('duplicate error', err)
           this.isLoading = false
         })
       }).catch(() => {

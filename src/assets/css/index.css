@@ -26,6 +26,10 @@ html {
   background: #f5f5f5;
   word-break: normal;
 }
+table tr td {
+  padding-left: 10px;
+  padding-right: 20px;
+}
 .el-container {
   height: 100vh;
   overflow: hidden;
@@ -374,6 +378,9 @@ html {
 .questionRightBtn {
   float: right;
 }
+.leftBtnGroup {
+  margin: 0 0 0 0px !important;
+}
 .questionRightBtnGroup {
   float: right;
   margin: 0 0 0 10px !important;
@@ -518,6 +525,11 @@ html {
   position: relative;
   white-space: pre-line;
 }
+.viewApplicationBlock {
+  padding: 20px 40px;
+  position: relative;
+  white-space: pre-line;
+}
 .viewPinkSlip {
   margin: 50px 0 50px 0;
   padding: 70px 40px;
@@ -534,7 +546,31 @@ html {
   position: relative;
   white-space: pre-line;
   height: 1180px;
-  background-image: url(../images/coi2.png);
+  background-image: url(../images/coi1.png);
+  background-repeat: no-repeat;
+  font-family: "Arial";
+  font-weight: normal;
+  color: black;
+}
+.viewSheet {
+  margin: 0px 0 0px 0;
+  padding: 50px 50px;
+  font-size: 18px;
+  position: relative;
+  white-space: pre-line;
+  background-image: url(../images/sheet_line.png);
+  background-repeat: no-repeat;
+  font-family: "Arial";
+  font-weight: normal;
+  color: black;
+  word-break: break-all;
+}
+.editSheet {
+  margin: 0px 0 0px 0;
+  padding: 20px 0px;
+  font-size: 18px;
+  position: relative;
+  white-space: pre-line;
   background-repeat: no-repeat;
   font-family: "Arial";
   font-weight: normal;
@@ -543,9 +579,17 @@ html {
 .viewLogo {
   position: absolute;
   right: 40px;
-  top: 40px;
+  top: 20px;
   width: auto;
-  height: 30px;
+  height: 50px;
+  display: block;
+}
+.coiLogo {
+  position: absolute;
+  left: 160px;
+  top: 60px;
+  width: auto;
+  height: 50px;
   display: block;
 }
 .printDate {
@@ -555,6 +599,17 @@ html {
   font-size: 18px;
   font-weight: normal;
   color: #606266;
+}
+.viewApplicationBlock .viewMemo-title{
+  font-size: 18px;
+  text-align: left;
+  color: #303133;
+  font-weight: bold;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+.viewApplicationBlock .viewMemo-content{
+  font-size: 16px;
 }
 .viewMemo .viewMemo-title{
   font-size: 36px;

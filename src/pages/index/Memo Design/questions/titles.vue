@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Titles</span>
+      <span class="inPageNav">Titles {{ businessTypes[btypeId] }}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
         <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
@@ -84,6 +84,7 @@ export default {
       isLoading: false,
       typeId: 1,
       btypeId: 1,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
       typeName: 'PL Memo Title Question List',
       questionListVisible: false,
       currentId: null,
@@ -122,6 +123,8 @@ export default {
     }
   },
   mounted: function () {
+    this.btypeId = parseInt(this.$route.params.id)
+    this.typeName = this.businessTypes[this.btypeId] + this.typeName
     this.search(null)
   },
   methods: {

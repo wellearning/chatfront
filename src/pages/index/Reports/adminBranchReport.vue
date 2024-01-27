@@ -1,3 +1,9 @@
+<!--
+FileName: Reports/adminBranchReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show branch report as administrator role.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -95,7 +101,7 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
     </div>
-    <div v-else-if="branchVisible" class="inPageContent">
+    <div v-if="branchVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoading">
@@ -108,7 +114,7 @@
           </el-row>
         </el-main>
       </div>
-      <el-table :data="producers.slice((branchcurrentPage - 1) * pageSize, branchcurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingBranch" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttablebranch">
+      <el-table :data="producers.slice((branchcurrentPage - 1) * branchPageSize, branchcurrentPage * branchPageSize)" empty-text="No Record" v-loading="isLoadingBranch" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttablebranch">
         <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column label="Producer Name" prop="ProducerName" min-width="150" sortable="custom">
@@ -131,9 +137,6 @@
           </template>
         </el-table-column>
         <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
-          <!--template slot="header" >
-            <span @click = "rank('UWScore')" @dblclick="rankdesc('UWScore')" title="Click to rank, double click to rank desc">UW Score</span>
-          </template-->
         </el-table-column>
         <el-table-column label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
           <!--template slot="header" >
@@ -143,10 +146,10 @@
         <el-table-column label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
-      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=branchcurrentPage layout="prev, pager, next" :total=branchtotal class="pageList">
+      <el-pagination background :page-size=branchPageSize :pager-count=pagerCount :current-page.sync=branchcurrentPage layout="prev, pager, next" :total=branchtotal class="pageList">
       </el-pagination>
     </div>
-    <div v-else-if="producerVisible" class="inPageContent">
+    <div v-if="producerVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoadingProducer">
@@ -159,56 +162,29 @@
           </el-row>
         </el-main>
       </div>
-      <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="CoverLetterID" width="80" fixed="left">
-          <template v-slot="header" >
-            <span @click = "crank('CoverLetterID')" @dblclick="crankdesc('CoverLetterID')" title="Click to rank, double click to rank desc">ID</span>
-          </template>
+      <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="csorttable">
+        <el-table-column label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="ClientCode" min-width="1"></el-table-column>
-        <el-table-column label="Client Code" prop="ClientCode" min-width="100">
-          <template v-slot="header" >
-            <span @click = "crank('ClientCode')" @dblclick="crankdesc('ClientCode')" title="Click to rank, double click to rank desc">Client Code</span>
-          </template>
+        <!--el-table-column label="" prop="ClientCode" min-width="1"></el-table-column-->
+        <el-table-column label="Client Code" prop="ClientCode" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150">
-          <template v-slot="header" >
-            <span @click = "crank('NameInsured')" @dblclick="crankdesc('NameInsured')" title="Click to rank, double click to rank desc">Named Insured(s)</span>
-          </template>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="App Type" prop="LeadsFrom" min-width="100">
-          <template v-slot="header" >
-            <span @click = "crank('LeadsFrom')" @dblclick="crankdesc('LeadsFrom')" title="Click to rank, double click to rank desc">App Type</span>
-          </template>
+        <el-table-column label="App Type" prop="LeadsFrom" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="Company" prop="CorpName" min-width="150">
-          <template v-slot="header" >
-            <span @click = "crank('CorpName')" @dblclick="crankdesc('CorpName')" title="Click to rank, double click to rank desc">Company</span>
-          </template>
+        <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="Line of Business" prop="Title" min-width="150"></el-table-column>
-        <template>
-          <span @click = "crank('Title')" @dblclick="crankdesc('Title')" title="Click to rank, double click to rank desc">Line of Business</span>
-        </template>
-        <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120">
-          <!--template v-slot="scope">
-            <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
-          </template-->
+        <el-table-column label="Line of Business" prop="Title" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120" sortable="custom">
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="80"></el-table-column>
-        <el-table-column label="APP Premium" prop="PremiumOnApp" min-width="120">
-          <template v-slot="scope" >
-            <span>${{scope.row.PremiumOnApp.toLocaleString()}}</span>
-          </template>
+        <el-table-column label="Status" prop="StatusName" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="APP Premium" prop="PremiumOnApp" min-width="120" sortable="custom">
         </el-table-column>
-        <el-table-column label="Submit Premium" prop="Premium" min-width="120">
-          <template v-slot="scope" >
-            <span>${{scope.row.Premium.toLocaleString()}}</span>
-          </template>
+        <el-table-column label="Submit Premium" prop="Premium" min-width="120" sortable="custom">
         </el-table-column>
-        <el-table-column label="UW Score" prop="Score" min-width="80">
+        <el-table-column label="UW Score" prop="Score" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="80">
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
         </el-table-column>
         <el-table-column label="Detail" prop="" min-width="80">
           <template v-slot="scope" >
@@ -220,7 +196,7 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=producercurrentPage layout="prev, pager, next" :total=producertotal class="pageList">
       </el-pagination>
     </div>
-    <div v-else-if="coverLetterVisible" class="inPageContent">
+    <div v-if="coverLetterVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoadingCoverLetter">
@@ -235,7 +211,7 @@
       </div>
       <el-table :data="coverletterproperties.slice((coverlettercurrentPage - 1) * pageSize, coverlettercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingCoverLetter" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="PropertyID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="" prop="Name" min-width="1"></el-table-column>
+        <!--el-table-column label="" prop="Name" min-width="1"></el-table-column-->
         <el-table-column label="Name" prop="Name" min-width="150"></el-table-column>
         <el-table-column label="Value" prop="Value" min-width="250"></el-table-column>
         <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
@@ -344,6 +320,7 @@ export default {
       producerVisible: false,
       coverLetterVisible: false,
       branchcurrentPage: 1,
+      branchPageSize: 6,
       branchtotal: 0,
       producercurrentPage: 1,
       producertotal: 0,
@@ -465,18 +442,19 @@ export default {
     },
     showProducer: function (producer) {
       this.adminVisible = false
-      this.branchVisible = false
+      this.branchVisible = true
       this.producerVisible = true
       this.coverLetterVisible = false
       if (producer !== undefined) {
+        // this.currentProducer = this.producers.find(p => p.ProducerID === producer.ProducerID)
         this.currentProducer = producer
         this.loadProducer()
       }
     },
     showCoverLetter: function (letter) {
       this.adminVisible = false
-      this.branchVisible = false
-      this.producerVisible = false
+      this.branchVisible = true
+      this.producerVisible = true
       this.coverLetterVisible = true
       if (letter !== undefined) {
         this.currentCoverLetter = letter
@@ -577,10 +555,10 @@ export default {
           console.log('查询', res)
           this.producers = res.data
           this.producers.forEach(function (c) {
-            // c.nbPremium = '$' + c.NBPremium.toLocaleString()
-            // c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
-            c.nbPremium = c.NBPremium
-            c.remarketPremium = c.RemarketPremium
+            c.nbPremium = '$' + c.NBPremium.toLocaleString()
+            c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
+            // c.nbPremium = c.NBPremium
+            // c.remarketPremium = c.RemarketPremium
           })
           this.branchtotal = this.producers.length
           this.branchcurrentPage = 1

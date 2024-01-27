@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/PLProcessingRecords.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all the processing record list and download the records.
+-->
 <template>
   <div>
     <div class="inPageTitle">

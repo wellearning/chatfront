@@ -1,3 +1,9 @@
+<!--
+FileName: Reports/adminFigureReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show figure report as administrator role.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -172,7 +178,7 @@ export default {
       this.adminVisible = true
       if (this.reportItems.length === 0) return
       this.currentItem = this.reportItems.find(i => i.ParameterID === this.searchForm.ReportItem)
-      this.setColumns(this.currentItem)
+      // this.setColumns(this.currentItem)
       this.search()
       // this.$forceUpdate()
     },
@@ -185,7 +191,7 @@ export default {
       if (parameter.DataType === 'Check') {
         this.tableColumns = [{'Name': 'Counts of ' + parameter.DisplayName, 'Prop': 'RemarketCounts'}, {'Name': 'Percentage', 'Prop': 'Percentage'}]
         this.summary = [{'Name': parameter.DisplayName, 'Counts': 0, 'Percent': 0}]
-      } else if (parameter.DataType === 'List') {
+      } else if (parameter.DataType === 'List' || parameter.DataType === 'Number') {
         this.tableColumns = []
         this.summary = []
         for (var i = 0; i < parameter.listValues.length; i++) {
@@ -198,21 +204,21 @@ export default {
     loadReportItems: function () {
       this.isLoadingReportItems = true
       let service = '/api/Services/BaseService.asmx/GetFiguredBusinessParameters'
-      let param = {businesstypeid: 2}
+      let param = {businesstypeid: 2, processingtypeid: 1}
       this.axios.post(service, param).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('GetFiguredBusinessParameters', res)
           this.reportItems = res.data
           this.isLoadingReportItems = false
         }
       }).catch(err => {
-        console.log('查询出错', err)
+        console.log('GetFiguredBusinessParameters出错', err)
         this.isLoadingReportItems = false
       })
     },
     compute: function () {
       this.summaryCounts = 0
-      if (this.currentItem.DataType === 'List') {
+      if (this.currentItem.DataType === 'List' || this.currentItem.DataType === 'Number') {
         for (var j = 0; j < this.list.length; j++) {
           let item = this.list[j]
           for (var i = 0; i < item.listValueRecords.length; i++) {
@@ -248,6 +254,14 @@ export default {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          if (this.currentItem.DataType === 'Number' && this.list.length > 0) {
+            let records = this.list[0].listValueRecords
+            this.currentItem.listValues = []
+            records.forEach(r => {
+              this.currentItem.listValues.push({Name: r.Name})
+            })
+          }
+          this.setColumns(this.currentItem)
           this.compute()
           /*
           if (this.currentItem.DataType === 'List') {

@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/managerReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show manager report.
+-->
 <template>
   <div>
     <div class="inPageTitle">

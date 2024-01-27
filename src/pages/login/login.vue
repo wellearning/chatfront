@@ -1,3 +1,9 @@
+<!--
+FileName: login/login.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Log in page of the system.
+-->
 <template>
   <div>
     <el-container>
@@ -72,6 +78,8 @@ export default {
               })
               // this.initPermissionList()
               let arr = res.data.role.routetree
+              let strdata = JSON.stringify(arr)
+              console.log('route tree', strdata)
               // let arr = [
               //   {
               //     id: 1,
@@ -225,7 +233,9 @@ export default {
               //   }
               // ]
               this.$store.dispatch('asynSetPermissionList', JSON.stringify(this.translateTreeForStore(arr)))
-              this.$router.addRoutes(this.translateTree(arr))
+              let arr1 = this.translateTree(arr)
+              console.log('routes', arr1)
+              this.$router.addRoutes(arr1)
               this.$router.push({ path: '/' })
             }
             this.isLoading = false
@@ -310,6 +320,7 @@ export default {
           this.translateTreeForStore(arr[i].children)
         } else {
           delete arr[i].children
+          if (arr[i].callPath === undefined) arr[i].callPath = arr[i].path
         }
       }
       return arr

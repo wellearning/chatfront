@@ -1,14 +1,21 @@
+<!--
+FileName: Configure/user.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all user list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">User</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization || isLoadingRole">New</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">New</el-button>
+        <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isLoading" size="small">ToExcel</el-button>
       </div>
     </div>
     <div class="inPageContent">
       <el-row :gutter="20">
-        <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="6">
+        <el-col :xs="24" :sm="24" :md="24" :lg="6" :xl="5">
           <div class="organization-list" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
             <el-tree ref="organizationTree" :data="organizationIdOptions" :props="defaultProps" default-expand-all :expand-on-click-node="false" node-key="InstitutionID" @current-change="nodeChange" empty-text="No Record" :highlight-current="true">
               <span slot-scope="{ node, data }" class="organization-node">
@@ -18,7 +25,7 @@
             </el-tree>
           </div>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="18">
+        <el-col :xs="24" :sm="24" :md="24" :lg="18" :xl="19">
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
@@ -38,9 +45,9 @@
                 </el-form-item>
               </el-form>
             </div>
-            <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)">
-              <el-table-column label="User ID" prop="StaffID" width="80" fixed="left"></el-table-column>
-              <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
+            <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+              <el-table-column label="ID" prop="StaffID" width="80" fixed="left" sortable="custom"></el-table-column>
+              <el-table-column label="Name" prop="Name" min-width="100" sortable="custom"></el-table-column>
               <el-table-column label="BranchCode" prop="institution.BranchCode" min-width="100"></el-table-column>
               <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
               <el-table-column label="Email" prop="Email" min-width="150"></el-table-column>
@@ -66,7 +73,7 @@
                   <el-tooltip class="item" effect="dark" content="Delete" placement="top-end">
                     <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                   </el-tooltip>
-                  <el-tooltip class="item" effect="dark" content="Producer" placement="top-end">
+                  <el-tooltip class="item" effect="dark" content="Producer" placement="top-end" v-if="scope.row.StatusID === 1" >
                     <el-button icon="el-icon-edit" type="primary" @click="showEditProducer(scope.row.StaffID, scope.row.Name)" :loading="isLoading || isLoadingProducer" size="small"></el-button>
                   </el-tooltip>
                 </template>
@@ -102,6 +109,13 @@
           </el-form-item>
           <el-form-item label="ProducerCode" prop="ProducerCode">
             <el-input v-model="addForm.ProducerCode" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="ProducerLevel" prop="ProducerLevel" v-show="true">
+            <el-radio-group v-model="addForm.ProducerLevel">
+              <el-radio v-for="item in producerLevels" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item label="Status" prop="StatusID" v-show="false">
             <el-radio-group v-model="addForm.StatusID">
@@ -141,6 +155,13 @@
           </el-form-item>
           <el-form-item label="ProducerCode" prop="ProducerCode">
             <el-input v-model="editForm.ProducerCode" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="ProducerLevel" prop="ProducerLevel" v-show="true">
+            <el-radio-group v-model="editForm.ProducerLevel">
+              <el-radio v-for="item in producerLevels" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item label="Status" prop="StatusID" v-show="false">
             <el-radio-group v-model="editForm.StatusID">
@@ -229,6 +250,7 @@ export default {
         Mobile: null,
         Email: null,
         ProducerCode: null,
+        ProducerLevel: 1,
         StatusID: 1
       },
       organizationProps: {
@@ -239,6 +261,7 @@ export default {
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
       producerList: [],
+      producerLevels: [{id: 1, name: 'Level 1'}, {id: 2, name: 'Level 2'}],
       addFormRules: {
         Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
@@ -275,6 +298,7 @@ export default {
         Mobile: null,
         Email: null,
         ProducerCode: null,
+        ProducerLevel: 1,
         StatusID: 1
       },
       editFormRules: {
@@ -331,7 +355,7 @@ export default {
       producerForm: {
         StaffID: null,
         Name: null,
-        ProducerID: 0,
+        ProducerID: null,
         producers: [],
         csrproducerlist: []
       },
@@ -346,6 +370,20 @@ export default {
     this.initProducer()
   },
   methods: {
+    exportExcel: function () {
+      let tablename = 'users.xlsx'
+      this.downloadData('users', '0', '0', tablename)
+    },
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     // selectTree返回值
     getValueAdd (value) {
       this.addForm.institution = value
@@ -417,7 +455,7 @@ export default {
         */
         this.isLoading = false
       } else {
-        this.axios.post('/api/Services/baseservice.asmx/GetStaffs', {institutionid: this.searchOrganization}).then(res => {
+        this.axios.post('/api/Services/baseservice.asmx/GetStaffs_s', {institutionid: this.searchOrganization}).then(res => {
           if (res) {
             console.log('查询树', res)
             this.list = res.data
@@ -669,7 +707,8 @@ export default {
       this.axios.post('/api/Services/BaseService.asmx/GetSelectableProducers', {}).then(res => {
         if (res) {
           console.log('producer列表', res)
-          this.producerList = res.data
+          this.producerList = res.data.filter(p => p.StatusID === 1)
+          this.producerList.sort(this.by('Name'))
         }
         this.isLoadingProducer = false
       }).catch(err => {

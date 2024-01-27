@@ -17,7 +17,7 @@
         <el-col :span="12">
           <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredName}}</i></div>
           <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredAddress}}</i></div>
-          <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredCity}}</i></div>
+          <div class="viewMemo-subtitle head"><i style="width: unset;"></i>{{pinkSlipForm.InsuredCity}}</div>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-bottom:60px">
@@ -33,10 +33,10 @@
       </el-row>
       <el-row :gutter="20" style="margin-bottom:60px">
         <el-col :span="8">
-          <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.VehicleInfo}}</i></div>
+          <div class="viewMemo-subtitle head" style="line-height:16px;margin-top:-1px;word-break: keep-all"><i style="width: unset;">{{pinkSlipForm.VehicleInfo}}</i></div>
         </el-col>
         <el-col :span="4">
-          <!--<div class="viewMemo-subtitle head">{{pinkSlipForm.Broker}}</div>-->
+          <div class="head" style="line-height:16px; margin-top:-1px;word-break: keep-all">{{pinkSlipForm.InstitutionName}}</div>
         </el-col>
       </el-row>
       <el-row :gutter="20" class="foot printDateInFoot">
@@ -68,7 +68,8 @@ export default {
         EffectiveDate: null,
         ExpiryDate: null,
         PolicyNumber: null,
-        Broker: ''
+        Broker: '',
+        InstitutionName: JSON.parse(this.$store.getters.getAccount).rootInstitution.Name
       }
     }
   },

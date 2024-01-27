@@ -1,3 +1,9 @@
+<!--
+FileName: Configure/dataDefine.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all defined data list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -5,8 +11,8 @@
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-select v-model="searchForm.dataName" @change="changeData()" placeholder="Please Select" filterable clearable>
-              <el-option v-for="item in dataItems" :key="item" :label="item" :value="item"></el-option>
+            <el-select v-model="dataId" @change="changeData()" placeholder="Please Select" filterable clearable>
+              <el-option v-for="item in dataItems" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -17,16 +23,17 @@
     </div>
     <div class="inPageContent">
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="ItemID" width="100" fixed="left"></el-table-column>
-        <el-table-column :label="searchForm.dataName" min-width="300">
+        <el-table-column label="ID" prop="ItemID" width="100" fixed="left" sortable></el-table-column>
+        <el-table-column label="Name" prop="Name" min-width="300" sortable>
           <template v-slot:="scope">
             <el-input v-model="scope.row.Name" :disabled="!(scope.row.DataItemID === currentId)"></el-input>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="Action" width="350" fixed="right">
           <template v-slot:="scope">
             <el-button v-if="currentId === null && !(scope.row.DataItemID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.DataItemID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
-            <el-button v-if="currentId === null && !(scope.row.DataItemID === currentId)" icon="el-icon-edit" type="primary" @click="showAddress(scope.row)" :loading="isLoading || isLoadingTree" size="small">Address</el-button>
+            <el-button v-if="currentDataItem.child !== undefined" icon="el-icon-edit" type="primary" @click="showAddress(scope.row)" :loading="isLoading || isLoadingTree" size="small">
+              {{ currentDataItem.child }}</el-button>
             <el-button v-if="currentId === null && !(scope.row.DataItemID === currentId)" icon="el-icon-delete" type="danger" @click="del(scope.row.DataItemID)" :loading="isLoading || isLoadingTree" size="small">Delete</el-button>
             <el-button v-if="scope.row.DataItemID === currentId" icon="el-icon-check" type="primary" @click="edit(scope.row)" :loading="isLoading || isLoadingTree" size="small">Confirm</el-button>
             <el-button v-if="scope.row.DataItemID === currentId" icon="el-icon-close" type="primary" @click="cancel(scope.row.DataItemID)" :loading="isLoading || isLoadingTree" plain size="small">Cancel</el-button>
@@ -36,10 +43,10 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog :title="'Add New ' + searchForm.dataName" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
-        <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item :label="searchForm.dataName" prop="name">
-            <el-input v-model="addForm.Name" clearable></el-input>
+      <el-dialog :title="'Add New ' + dataName" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
+        <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form" width="500px">
+          <el-form-item :label="dataName" prop="name">
+            <el-input v-model="addForm.Name" width="500px" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingTree">Confirm</el-button>
@@ -51,14 +58,14 @@
       <el-dialog title="Select Address" :visible.sync="addressFormVisible" width="600px" center :before-close="closeAddress">
         <el-form :model="addressForm" ref="addressForm" :rules="addFormRules" class="form">
           <el-form-item class="marginLeft10">
-            <el-checkbox-group v-model="addressForm.checkedAddresses" >
-              <el-checkbox v-for="address in selectedAddresses" :label="address.Name" :key="address.DataItemID"></el-checkbox>
+            <el-checkbox-group v-model="addressForm.checkedChildren" >
+              <el-checkbox v-for="address in selectedChildren" :label="address.Name" :key="address.DataItemID"></el-checkbox>
             </el-checkbox-group>
           </el-form-item>
           <el-form-item class="marginLeft10">
             <el-select v-model="addressForm.selectedID" filterable placeholder="Please Select">
               <el-option
-                v-for="item in addresses"
+                v-for="item in children"
                 :key="item.DataItemID"
                 :label="item.Name"
                 :value="item.DataItemID">
@@ -85,12 +92,21 @@ export default {
       currentId: null,
       currentDescription: null,
       currentDataItem: null,
+      dataId: null,
+      dataName: '',
       list: [],
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
       total: 0,
-      dataItems: ['Lessor', 'Lienholder', 'Mortgagee'],
+      // dataItems: ['Lessor', 'Lienholder', 'Mortgagee'],
+      dataTypes: [],
+      dataItems: [
+        {id: 0, name: 'Lessor', child: 'Address'},
+        {id: 1, name: 'Lienholder', child: 'Address'},
+        {id: 2, name: 'Mortgagee', child: 'Address'},
+        {id: 3, name: 'RateType', child: 'DataType'}
+      ],
       // 搜索
       searchForm: {
         dataName: ''
@@ -103,35 +119,59 @@ export default {
       addFormRules: {
         Name: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
-          { max: 30, message: 'Within 30 Characters', trigger: 'blur' }
+          { max: 60, message: 'Within 60 Characters', trigger: 'blur' }
         ]
       },
       // Select Address
       addressFormVisible: false,
       addressForm: {
         selectedID: '',
-        checkedAddresses: []
+        checkedChildren: []
       },
-      selectedAddresses: [],
-      addresses: []
+      selectedChildren: [],
+      children: []
     }
   },
   mounted: function () {
-    this.loadAddresses()
+    this.loadDateType()
+    // this.loadChildren()
     // this.search()
   },
   methods: {
     changeData: function () {
-      if (this.searchForm.dataName === '') return
+      if (this.dataId === null) return
+      this.currentDataItem = this.dataItems[this.dataId]
+      this.dataName = this.currentDataItem.name
+      if (this.currentDataItem.child !== undefined) this.loadChildItems()
       this.search()
     },
 
-    loadAddresses: function () {
+    loadDateType: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/BaseService.asmx/GetDictionary', {datatype: 'Address'}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetDataTypes', {}).then(res => {
+        if (res) {
+          console.log('loadDateType', res)
+          let dataTypes = res.data.filter(d => d.ItemValue === 'list')
+          let dilist = this.dataItems
+          dataTypes.forEach(function (dt) {
+            let i = dilist.length
+            let di = {id: i, name: dt.Name}
+            dilist.push(di)
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadDateType出错', err)
+        this.isLoading = false
+      })
+    },
+    loadChildItems: function () {
+      if (this.currentDataItem.child === undefined) return
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/GetDictionary', {datatype: this.currentDataItem.child}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.addresses = res.data
+          this.children = res.data
         }
         this.isLoading = false
       }).catch(err => {
@@ -141,8 +181,15 @@ export default {
     },
     // 查询
     search: function () {
+      if (this.currentDataItem.name === undefined) return
       this.isLoading = true
-      this.axios.post('/api/Services/BaseService.asmx/GetDictionaryWithChildren', {parenttype: this.searchForm.dataName, childtype: 'Address'}).then(res => {
+      let service = '/api/Services/BaseService.asmx/GetDictionaryWithChildren'
+      let para = {parenttype: this.currentDataItem.name, childtype: this.currentDataItem.child}
+      if (this.currentDataItem.child === undefined) {
+        service = '/api/Services/BaseService.asmx/GetDictionary'
+        para = {datatype: this.currentDataItem.name}
+      }
+      this.axios.post(service, para).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
@@ -164,7 +211,7 @@ export default {
     // 显示修改
     showAddress: function (lessor) {
       this.currentLessor = lessor
-      this.selectedAddresses = lessor.children
+      this.selectedChildren = lessor.children
       this.addressFormVisible = true
     },
     // 删除
@@ -207,6 +254,7 @@ export default {
         })
       } else {
         this.isLoading = true
+        obj.ItemValue = obj.Name
         this.axios.post('/api/Services/baseservice.asmx/SaveDataItem', {dataitem: JSON.stringify(obj)}).then(res => {
           if (res) {
             console.log('修改', res)
@@ -235,7 +283,8 @@ export default {
     },
     // 显示新增弹窗
     showAdd: function () {
-      if (this.searchForm.dataName === '') return
+      if (this.currentDataItem === null) return
+      if (this.currentDataItem.name === undefined) return
       this.addFormVisible = true
     },
     // 隐藏新增弹窗
@@ -255,7 +304,7 @@ export default {
         if (valid) {
           this.isLoading = true
           let name = this.addForm.Name
-          this.axios.post('/api/Services/BaseService.asmx/AddDataItem', {datatype: this.searchForm.dataName, name: name, value: name, parentid: 0}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/AddDataItem', {datatype: this.dataName, name: name, value: name, parentid: 0}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -293,8 +342,8 @@ export default {
     selectAddress: function () {
       let childid = this.addressForm.selectedID
       if (childid === null) return
-      let address = this.addresses.find(a => a.DataItemID === childid)
-      this.selectedAddresses.push(address)
+      let address = this.children.find(a => a.DataItemID === childid)
+      this.selectedChildren.push(address)
       let lessor = this.currentLessor
       let parentid = lessor.DataItemID
       this.isLoading = true
@@ -314,8 +363,8 @@ export default {
     },
     removeAddress: function () {
       let children = []
-      let selected = this.selectedAddresses
-      this.addressForm.checkedAddresses.forEach(function (item) {
+      let selected = this.selectedChildren
+      this.addressForm.checkedChildren.forEach(function (item) {
         let address = selected.find(a => a.Name === item)
         children.push(address)
       })
@@ -331,7 +380,7 @@ export default {
             message: 'Operation Succeeded'
           })
           lessor.children = res.data
-          this.selectedAddresses = lessor.children
+          this.selectedChildren = lessor.children
         }
         this.isLoading = false
       }).catch(err => {

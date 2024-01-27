@@ -1,3 +1,9 @@
+<!--
+FileName: CLMemo/newMemo.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Create new commercial memo.
+-->
 <template>
   <div v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(0, 0, 0, 0)">
     <el-form :model="memoForm" ref="memoForm" class="newMemo" :rules="memoFormRules">
@@ -143,7 +149,7 @@ export default {
       isLoadingTemplates: false,
       isLoadingInsuranceCompany: false,
       isLoadingMakers: false,
-      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
+      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Attribute Template'}],
       currentTemplates: [],
       memoForm: {
         Title: null,
@@ -584,14 +590,14 @@ export default {
                     QuestionType: 'Reminder'
                   }
                 } else if (templates[i].memoBlocks[j].normalAnswers[k].question.TypeID === 3) {
-                  // 问题类型为：Property
+                  // 问题类型为：Attribute
                   templates[i].memoBlocks[j].normalAnswers[k] = {
                     QuestionID: templates[i].memoBlocks[j].normalAnswers[k].QuestionID,
                     BlockQuestionID: templates[i].memoBlocks[j].normalAnswers[k].BlockQuestionID,
                     QuestionDesc: templates[i].memoBlocks[j].normalAnswers[k].question.Description,
                     AnswerDesc: templates[i].memoBlocks[j].normalAnswers[k].question.value,
                     OutputModeID: templates[i].memoBlocks[j].normalAnswers[k].question.OutputModeID,
-                    QuestionType: 'Property'
+                    QuestionType: 'Attribute'
                   }
                   // 未回答
                   if (templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === '' || templates[i].memoBlocks[j].normalAnswers[k].AnswerDesc === null) {

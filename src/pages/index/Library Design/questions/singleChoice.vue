@@ -1,13 +1,19 @@
+<!--
+FileName: Library/questions/singleChoice.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show single choice list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Fill In Question</span>
+      <span class="inPageNav">Single Choice for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
-        <el-button icon="el-icon-show" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
+        <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
       </div>
     </div>
-    <div class="inPageContent">
+    <div class="inPageContent" id="">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
@@ -22,7 +28,7 @@
         </el-form>
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="QuesID" prop="QuestionID" width="80" fixed="left"></el-table-column>
+        <el-table-column label="Question ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
           <template slot-scope="scope">
             <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
@@ -30,7 +36,7 @@
         </el-table-column>
         <el-table-column label="Question" min-width="950">
           <template slot-scope="scope">
-            <AnswerFillInQuestion :question="scope.row"></AnswerFillInQuestion>
+            <AnswerSingleChoiceQuestion :question="scope.row"></AnswerSingleChoiceQuestion>
           </template>
         </el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
@@ -43,41 +49,40 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Fill In Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Single Choice Question" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form choiceQuestionForm">
-          <div v-for="(item, index) in addForm.fillinParts" :key="index" class="choice">
-            <!--todo 修改时数字表单校验失败-->
-            <!--<el-form-item label="Part" :prop="'fillinParts.' + index + '.Part'" :rules="item.IsFillin ? [{ required: true, message: 'Please Enter', trigger: 'blur'}, { type: 'number', message: 'Number Only', trigger: 'blur'}] : [{ required: true, message: 'Please Enter', trigger: 'blur'}]">-->
-              <!--<el-input v-model="item.Part" clearable></el-input>-->
-            <!--</el-form-item>-->
-            <el-form-item label="Is Fillin">
-              <el-checkbox v-model="item.IsFillin">if it is fillin, fill the length of the characters.</el-checkbox>
-            </el-form-item>
-            <el-form-item label="Part">
-              <el-input v-model="item.Part" clearable size="small"></el-input>
-            </el-form-item>
-            <el-form-item :label="item.IsFillin ? 'Input Type' : ''" :class="{'marginLeft20': !item.IsFillin}">
-              <el-radio-group v-model="item.InputType" v-show="item.IsFillin">
-                <el-radio v-for="it in inputTypeList" :label="it.value" :key="it.id">
-                  <span>{{it.name}}</span>
-                </el-radio>
-              </el-radio-group>
-              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-            </el-form-item>
-            <!--<el-form-item class="marginLeft20">-->
-              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
-              <!--<el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-              <!--<el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-              <!--<el-button icon="el-icon-arrow-down" v-if="index !== addForm.fillinParts.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-            <!--</el-form-item>-->
-          </div>
-          <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="addForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Question" prop="Description">
+            <el-input v-model="addForm.Description" clearable></el-input>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="addForm.Tips" clearable></el-input>
+          </el-form-item>
+          <div v-for="(item, index) in addForm.options" :key="index" class="choice">
+            <el-form-item label="Choice">
+              <el-input v-model="item.Content" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item label="Choice Tips">
+              <el-input v-model="item.Tips" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item label="Output">
+              <el-input v-model="item.Outputs" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item class="marginLeft20">
+              <el-checkbox v-model="item.NeedAddition">Addition</el-checkbox>
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== addForm.options.length - 1" type="primary" @click="downChoice('addForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+            </el-form-item>
+          </div>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Option</el-button>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
@@ -86,37 +91,40 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Single Choice Question" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form choiceQuestionForm">
-          <div v-for="(item, index) in editForm.fillinParts" :key="index" class="choice">
-            <el-form-item label="Is Fillin">
-              <el-checkbox v-model="item.IsFillin">if it is fillin, fill the length of the characters.</el-checkbox>
-            </el-form-item>
-            <el-form-item label="Part">
-              <el-input v-model.number="item.Part" clearable size="small"></el-input>
-            </el-form-item>
-            <el-form-item :label="item.IsFillin ? 'Input Type' : ''" :class="{'marginLeft20': !item.IsFillin}">
-              <el-radio-group v-model="item.InputType" v-show="item.IsFillin">
-                <el-radio v-for="it in inputTypeList" :label="it.value" :key="it.id">
-                  <span>{{it.name}}</span>
-                </el-radio>
-              </el-radio-group>
-              <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-              <el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
-            </el-form-item>
-            <!--<el-form-item class="marginLeft20">-->
-              <!--<el-checkbox v-model="item.isNextLine">Is Next Line</el-checkbox>-->
-              <!--<el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-              <!--<el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-              <!--<el-button icon="el-icon-arrow-down" v-if="index !== editForm.fillinParts.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>-->
-            <!--</el-form-item>-->
-          </div>
-          <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Fill In Part</el-button>
+          <el-form-item label="Output Way" prop="OutputModeID">
+            <el-radio-group v-model="editForm.OutputModeID">
+              <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Question" prop="Description">
+            <el-input v-model="editForm.Description" clearable></el-input>
           </el-form-item>
           <el-form-item label="Question Tips" prop="Tips">
             <el-input v-model="editForm.Tips" clearable></el-input>
+          </el-form-item>
+          <div v-for="(item, index) in editForm.options" :key="index" class="choice">
+            <el-form-item label="Choice">
+              <el-input v-model="item.Content" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item label="Choice Tips">
+              <el-input v-model="item.Tips" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item label="Output">
+              <el-input v-model="item.Outputs" clearable size="small"></el-input>
+            </el-form-item>
+            <el-form-item class="marginLeft20">
+              <el-checkbox v-model="item.NeedAddition">Addition</el-checkbox>
+              <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-up" v-if="index !== 0" type="primary" @click="upChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+              <el-button icon="el-icon-arrow-down" v-if="index !== editForm.options.length - 1" type="primary" @click="downChoice('editForm', index)" :loading="isLoading" plain size="small" class="questionRightBtnGroup"></el-button>
+            </el-form-item>
+          </div>
+          <el-form-item class="confirmBtn">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading" plain size="small" class="questionRightBtnSingle">Option</el-button>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
@@ -130,8 +138,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Fill in List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="1200px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -139,13 +147,13 @@
 </template>
 
 <script>
-import AnswerFillInQuestion from '@/component/fillInQuestion/answerFillInQuestion'
+import AnswerSingleChoiceQuestion from '@/component/choiceQuestion/answerSingleChoiceQuestion'
 import UsedBlockList from '@/component/window/usedBlockList'
-import QuestionList from '@/component/window/questionList'
+import QuestionList from '@/component/window/singleChoiceQuestionList'
 
 export default {
   components: {
-    AnswerFillInQuestion,
+    AnswerSingleChoiceQuestion,
     UsedBlockList,
     QuestionList
   },
@@ -153,23 +161,30 @@ export default {
     return {
       isLoading: false,
       currentId: null,
-      typeId: 5,
-      typeName: 'FillinQuestion',
+      typeName: ' SingleChoice Question List',
+      typeId: 6,
+      btypeId: 2,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
       questionListVisible: false,
       blocksDetailVisible: false,
-      inputTypeList: [{id: 1, name: 'text', value: 'text'}, {id: 2, name: 'date', value: 'date'}, {id: 3, name: 'number', value: 'number'}],
       // 新增
+      outputWayList: [{id: 1, name: 'Normal'}, {id: 2, name: 'Case Choice'}, {id: 3, name: 'None'}],
       addFormVisible: false,
       addForm: {
-        TypeID: 5,
+        TypeID: 6,
+        Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
         InputType: null,
         fillinParts: [],
-        options: null
+        options: []
       },
       addFormRules: {
+        Description: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
         Tips: [
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
@@ -178,15 +193,20 @@ export default {
       editFormVisible: false,
       editForm: {
         QuestionID: null,
-        TypeID: 5,
+        TypeID: 6,
+        Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
         InputType: null,
         fillinParts: [],
-        options: null
+        options: []
       },
       editFormRules: {
+        Description: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
         Tips: [
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
@@ -204,7 +224,17 @@ export default {
       total: 0
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = parseInt(this.$route.params.id)
+      this.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
+    this.btypeId = parseInt(this.$route.params.id)
+    this.typeName = this.businessTypes[this.btypeId] + this.typeName
     this.search(null)
   },
   methods: {
@@ -212,7 +242,7 @@ export default {
     showQuestionList: function () {
       this.questionListVisible = true
       if (this.$refs.ql !== undefined) {
-        this.$refs.ql.loadQuestions(this.typeId)
+        this.$refs.ql.loadQuestions(this.typeId, this.btypeid)
       }
     },
     closeQuestionList: function () {
@@ -233,45 +263,53 @@ export default {
     // 添加一行
     addChoice: function (form) {
       if (form === 'addForm') {
-        this.addForm.fillinParts.push({Part: null, IsFillin: false, InputType: 'text', SequenceNo: 0})
+        this.addForm.options.push({Content: null, Tips: null, Outputs: null, NeedAddition: false, SequenceNo: 0})
       } else if (form === 'editForm') {
-        this.editForm.fillinParts.push({Part: null, IsFillin: false, InputType: 'text', SequenceNo: 0})
+        this.editForm.options.push({Content: null, Tips: null, Outputs: null, NeedAddition: false, SequenceNo: 0})
       }
     },
     // 删除一行
     delChoice: function (form, index) {
       if (form === 'addForm') {
-        this.addForm.fillinParts.splice(index, 1)
+        this.addForm.options.splice(index, 1)
       } else if (form === 'editForm') {
-        this.editForm.fillinParts.splice(index, 1)
+        this.editForm.options.splice(index, 1)
       }
     },
     // 上移一行
     upChoice: function (form, index) {
       if (form === 'addForm') {
-        this.addForm.fillinParts[index] = this.addForm.fillinParts.splice(index - 1, 1, this.addForm.fillinParts[index])[0]
+        this.addForm.options[index] = this.addForm.options.splice(index - 1, 1, this.addForm.options[index])[0]
       } else if (form === 'editForm') {
-        this.editForm.fillinParts[index] = this.editForm.fillinParts.splice(index - 1, 1, this.editForm.fillinParts[index])[0]
+        this.editForm.options[index] = this.editForm.options.splice(index - 1, 1, this.editForm.options[index])[0]
       }
     },
     // 下移一行
     downChoice: function (form, index) {
       if (form === 'addForm') {
-        this.addForm.fillinParts[index] = this.addForm.fillinParts.splice(index + 1, 1, this.addForm.fillinParts[index])[0]
+        this.addForm.options[index] = this.addForm.options.splice(index + 1, 1, this.addForm.options[index])[0]
       } else if (form === 'editForm') {
-        this.editForm.fillinParts[index] = this.editForm.fillinParts.splice(index + 1, 1, this.editForm.fillinParts[index])[0]
+        this.editForm.options[index] = this.editForm.options.splice(index + 1, 1, this.editForm.options[index])[0]
       }
     },
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByTypeQuery', {typeid: 5, query: name}).then(res => {
+      // let query = ''
+      // if (name !== null) query = name
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 6, query: name, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.list = res.data
+          // 声明value，AdditionContent，防止输入框无法输入
+          let listWidthAdditionContent = res.data
+          for (let i = 0; i < listWidthAdditionContent.length; i++) {
+            listWidthAdditionContent[i].value = null
+            listWidthAdditionContent[i].options.forEach(item => { item.AdditionContent = null })
+          }
+          this.list = listWidthAdditionContent
           if (name !== null) {
             this.searchName = name
-            // this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+            //  this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1 || !item.QuestionID.indexOf(this.searchName))
           }
           this.total = this.list.length
           this.currentPage = 1
@@ -300,7 +338,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['addForm'].resetFields()
-        this.addForm.fillinParts = []
+        this.addForm.options = []
         done()
       }).catch(() => {})
     },
@@ -309,10 +347,10 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          for (let i = 0; i < this.addForm.fillinParts.length; i++) {
-            this.addForm.fillinParts[i].SequenceNo = i + 1
+          for (let i = 0; i < this.addForm.options.length; i++) {
+            this.addForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -320,11 +358,15 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['addForm'].resetFields()
-              this.addForm.fillinParts = []
+              this.addForm.options = []
               this.addFormVisible = false
               // 如果新增记录符合查询条件，将新增的记录添加到数组最后，总数加1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
-                this.list.push(res.data)
+                // 声明value，AdditionContent，防止输入框无法输入
+                let listWidthAdditionContent = res.data
+                listWidthAdditionContent.value = null
+                listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
+                this.list.push(listWidthAdditionContent)
                 this.total = this.list.length
               }
             }
@@ -344,7 +386,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestion', {questionid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -366,7 +408,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$refs['editForm'].resetFields()
-        this.editForm.fillinParts = []
+        this.editForm.options = []
         done()
       }).catch(() => {})
     },
@@ -375,10 +417,10 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          for (let i = 0; i < this.editForm.fillinParts.length; i++) {
-            this.editForm.fillinParts[i].SequenceNo = i + 1
+          for (let i = 0; i < this.editForm.options.length; i++) {
+            this.editForm.options[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -386,11 +428,15 @@ export default {
                 message: 'Operation Succeeded'
               })
               this.$refs['editForm'].resetFields()
-              this.editForm.fillinParts = []
+              this.editForm.options = []
               this.editFormVisible = false
               // 如果修改记录符合查询条件，更新该记录；如果不符合，删除该记录，总数减1
               if (this.searchName === null || (this.searchName !== null && res.data.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)) {
-                this.list = this.list.map(item => { return item.QuestionID === res.data.QuestionID ? res.data : item })
+                // 声明value，AdditionContent，防止输入框无法输入
+                let listWidthAdditionContent = res.data
+                listWidthAdditionContent.value = null
+                listWidthAdditionContent.options.forEach(item => { item.AdditionContent = null })
+                this.list = this.list.map(item => { return item.QuestionID === listWidthAdditionContent.QuestionID ? listWidthAdditionContent : item })
               } else {
                 this.list = this.list.filter(item => item.QuestionID !== res.data.QuestionID)
                 this.total = this.list.length
@@ -417,7 +463,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -438,7 +484,12 @@ export default {
           message: 'Operation Cancelled'
         })
       })
+    },
+    toPDF: function () {
+      this.htmlTitle = this.typeName + this.currentPage
+      this.getPdf('#questionListDom')
     }
+
   }
 }
 </script>

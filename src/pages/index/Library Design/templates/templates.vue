@@ -1,7 +1,13 @@
+<!--
+FileName: Library/templates/templates.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show template list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Templates</span>
+      <span class="inPageNav">Templates for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingBlock">New</el-button>
       </div>
@@ -24,12 +30,15 @@
         <el-table-column label="Template ID" prop="TemplateID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Heat" prop="SequenceNo" min-width="100"></el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300"></el-table-column>
+        <el-table-column label="Province" prop="Province" min-width="200"></el-table-column>
         <el-table-column label="Status" prop="StatusID" :formatter="statusName" width="200"></el-table-column>
-        <el-table-column label="NeedPinkSlip" prop="NeedPinkSlip"  :formatter="printPinkSlip" width="150"></el-table-column>
+        <el-table-column v-if="btypeId === 1" label="NeedPinkSlip" prop="NeedPinkSlip"  :formatter="printPinkSlip" width="150"></el-table-column>
+        <el-table-column v-if="btypeId === 2" label="Level" prop="ProducerLevel"  width="100"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Delete</el-button>
+            <el-button icon="el-icon-copy" type="" @click="duplicate(scope.row.TemplateID)" :loading="isLoading || isLoadingBlock" size="small">Duplicate</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -51,14 +60,34 @@
               <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item v-if="btypeId === 1" label="Need Pink Slip">
+            <el-checkbox v-model="addForm.NeedPinkSlip"></el-checkbox>
+          </el-form-item>
           <el-form-item label="InsuranceCorp" prop="InsuranceCorpID" v-if = "insuranceCorpVisible">
             <el-select v-model="addForm.InsuranceCorpID" placeholder="InsuranceCorp" no-data-text="No Record" filterable>
               <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="addForm.ProvinceID" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.ItemID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="btypeId === 2" label="ProducerLevel" prop="ProducerLevel" v-show="true">
+            <el-radio-group v-model="addForm.ProducerLevel">
+              <el-radio v-for="item in producerLevels" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <!--el-form-item label="Producer Level" v-if="btypeId === 2" prop="ProduceLevel">
+            <el-select v-model="editForm.ProducerLevel" placeholder="" no-data-text="No Record" filterable>
+              <el-option v-for="item in producerLevels" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item-->
           <div v-for="(item, index) in addForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName + (item.ChildTypeID == 1?'(T)':'')}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('addForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -70,6 +99,12 @@
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('addForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
               <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="confirmBtn smallLine">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice_t('addForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Template</el-button>
+            <el-select v-model="currentTemplate" placeholder="Template" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+              <el-option class="questionOption" v-for="item in tempList" :key="item.TemplateID" :label="item.TemplateID + '. ' + item.Title" :value="item.TemplateID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -94,14 +129,34 @@
               <el-option v-for="item in statusList" :key="item.id" :label="item.name" :value="item.id"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item v-if="btypeId === 1" label="Need Pink Slip">
+            <el-checkbox v-model="editForm.NeedPinkSlip"></el-checkbox>
+          </el-form-item>
           <el-form-item label="InsuranceCorp" prop="InsuranceCorpID" v-if = "insuranceCorpVisible">
             <el-select v-model="editForm.InsuranceCorpID" placeholder="InsuranceCorp" no-data-text="No Record" filterable>
               <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="Province" prop="Province">
+            <el-select v-model="editForm.ProvinceID" placeholder="Province" no-data-text="No Record" filterable>
+              <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.ItemID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="btypeId === 2" label="ProducerLevel" prop="ProducerLevel" v-show="true">
+            <el-radio-group v-model="editForm.ProducerLevel">
+              <el-radio v-for="item in producerLevels" :label="item.id" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <!--el-form-item label="Producer Level" v-if="btypeId === 2" prop="ProduceLevel">
+            <el-select v-model="editForm.ProducerLevel" placeholder="" no-data-text="No Record" filterable>
+              <el-option v-for="item in producerLevels" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+          </el-form-item-->
           <div v-for="(item, index) in editForm.templateBlocks" :key="index" class="choice">
             <el-form-item class="marginLeft10">
-              <span><b>{{item.BlockID + '. ' + item.BlockName}}</b></span>
+              <span><b>{{item.BlockID + '. ' + item.BlockName + (item.ChildTypeID == 1?'(T)':'')}}</b></span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-button icon="el-icon-minus" type="primary" @click="delChoice('editForm', index)" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnGroup"></el-button>
@@ -113,6 +168,12 @@
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('editForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Block</el-button>
             <el-select v-model="currentBlock" placeholder="Block" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
               <el-option class="questionOption" v-for="item in blockList" :key="item.BlockID" :label="item.BlockID + '. ' + item.Name" :value="item.BlockID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="confirmBtn smallLine">
+            <el-button icon="el-icon-plus" type="primary" @click="addChoice_t('editForm')" :loading="isLoading || isLoadingBlock" plain size="small" class="questionRightBtnSingle">Templ</el-button>
+            <el-select v-model="currentTemplate" placeholder="Template" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+              <el-option class="questionOption" v-for="item in tempList" :key="item.TemplateID" :label="item.TemplateID + '. ' + item.Title" :value="item.TemplateID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -129,14 +190,20 @@
 export default {
   data: function () {
     return {
+      btypeId: 1,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
       isLoading: false,
       isLoadingBlock: false,
       isLoadingInsuranceCorpList: false,
+      isLoadingProvinceList: false,
       blockList: [],
       currentBlock: null,
+      currentTemplate: null,
       typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
       statusList: [{id: 0, name: 'Draft'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Stopped'}],
+      producerLevels: [{id: 0, name: 'Level 0'}, {id: 1, name: 'Level 1'}, {id: 2, name: 'Level 2'}],
       insuranceCorpList: [],
+      provinceList: [],
       insuranceCorpVisible: false,
       // 新增
       addFormVisible: false,
@@ -145,6 +212,8 @@ export default {
         StatusID: 0,
         Title: null,
         InsuranceCorpID: 0,
+        ProvinceID: 0,
+        ProducerLevel: 1,
         NeedPinkSlip: false,
         templateBlocks: []
       },
@@ -164,7 +233,9 @@ export default {
         TypeID: null,
         StatusID: 0,
         Title: null,
-        InsuranceCorpID: null,
+        InsuranceCorpID: 0,
+        ProvinceID: null,
+        ProducerLevel: null,
         NeedPinkSlip: false,
         templateBlocks: [],
         IsNew: false
@@ -192,9 +263,19 @@ export default {
       total: 0
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = Number(parseInt(this.$route.params.id))
+      // his.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
-    this.search(null)
+    this.btypeId = Number(this.$route.params.id)
+    // this.search(null)
     this.initBlock()
+    this.initProvinceList()
     this.initInsuranceCorpList()
   },
   methods: {
@@ -217,10 +298,11 @@ export default {
     // 查询保险公司
     initInsuranceCorpList: function () {
       this.isLoadingInsuranceCorpList = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('查询', res)
           this.insuranceCorpList = res.data
+          this.search(null)
         }
         this.isLoadingInsuranceCorpList = false
       }).catch(err => {
@@ -228,11 +310,28 @@ export default {
         this.isLoadingInsuranceCorpList = false
       })
     },
+    // 查询保险公司
+    initProvinceList: function () {
+      this.isLoadingProvinceList = true
+      this.axios.post('/api/Services/baseservice.asmx/GetDictionary', {datatype: 'Province'}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          let all = [{ItemID: 0, Name: 'All Province'}]
+          this.provinceList = [...all, ...res.data]
+          // this.provinceList = res.data
+          // this.search(null)
+        }
+        this.isLoadingProvinceList = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingProvinceList = false
+      })
+    },
 
     // blocks列表
     initBlock: function () {
       this.isLoadingBlock = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/SearchBlocks', {query: ''}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/SearchBlocks', {query: '', btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('blocks列表', res)
           this.blockList = res.data
@@ -264,6 +363,22 @@ export default {
         }
         this.currentBlock = null
         this.initBlock()
+      }
+    },
+    addChoice_t: function (form) {
+      if (this.currentTemplate === null) {
+        this.$message({
+          type: 'warning',
+          message: 'Please Select Template'
+        })
+      } else {
+        if (form === 'addForm') {
+          this.addForm.templateBlocks.push({ChildTypeID: 1, BlockID: this.currentTemplate, BlockName: this.tempList.find(it => it.TemplateID === this.currentTemplate).Title})
+        } else if (form === 'editForm') {
+          this.editForm.templateBlocks.push({ChildTypeID: 1, BlockID: this.currentTemplate, BlockName: this.tempList.find(it => it.TemplateID === this.currentTemplate).Title})
+        }
+        this.currentTemplate = null
+        // this.initBlock()
       }
     },
     // 删除一行
@@ -300,10 +415,20 @@ export default {
       } else {
         this.searchName = name
       }
-      this.axios.post('/api/Services/NewBusinessService.asmx/SearchTemplates', {query: this.searchName}).then(res => {
+      let corpList = this.insuranceCorpList
+      this.axios.post('/api/Services/BaseService.asmx/SearchTemplates', {query: this.searchName, btypeid: this.btypeId}).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('SearchTemplates', res)
+          res.data.forEach(function (temp) {
+            let corp = corpList.find(c => c.InsuranceCorpID === temp.InsuranceCorpID)
+            if (corp !== undefined) {
+              temp.CorpName = corp.ShortName
+            } else temp.CorpName = ''
+          })
           this.list = res.data
+          if (this.tempList.length === 0) {
+            this.tempList = res.data
+          }
           this.total = this.list.length
           this.currentPage = 1
         }
@@ -349,7 +474,8 @@ export default {
           for (let i = 0; i < this.addForm.templateBlocks.length; i++) {
             this.addForm.templateBlocks[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveTemplate', {template: JSON.stringify(this.addForm)}).then(res => {
+          let value = JSON.stringify(this.addForm)
+          this.axios.post('/api/Services/BaseService.asmx/SaveTemplate', {template: value, btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -382,9 +508,9 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetTemplate', {templateid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetTemplate', {templateid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('GetTemplate', res)
           this.editFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.editForm = res.data
@@ -423,7 +549,7 @@ export default {
           for (let i = 0; i < this.editForm.templateBlocks.length; i++) {
             this.editForm.templateBlocks[i].SequenceNo = i + 1
           }
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveTemplate', {template: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveTemplate', {template: JSON.stringify(this.editForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -463,7 +589,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveTemplate', {templateid: id}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/RemoveTemplate', {templateid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -471,6 +597,44 @@ export default {
               message: 'Operation Succeeded'
             })
             this.list = this.list.filter(item => item.TemplateID !== id)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+
+    setCorpName: function (temp) {
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === temp.InsuranceCorpID)
+      if (corp !== undefined) {
+        temp.CorpName = corp.ShortName
+      } else temp.CorpName = ''
+    },
+
+    duplicate: function (id) {
+      this.$confirm('Are you sure to duplicate it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/DuplicateTemplate', {templateid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.setCorpName(res.data)
+            this.list.push(res.data)
             this.total = this.list.length
           }
           this.isLoading = false

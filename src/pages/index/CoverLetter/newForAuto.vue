@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/newForAuto.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Create new auto cover letter.
+-->
 <template>
   <div v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(0, 0, 0, 0)">
     <el-form :model="coverLetterForm" ref="coverLetterForm" class="newMemo" :rules="coverLetterFormRules">
@@ -46,7 +52,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="AppPremium" prop="PremiumOnApp">
-            <el-input v-model="coverLetterForm.PremiumOnApp" type="number" placeholder="App Premium" title="AppPremium"></el-input>
+            <el-input v-model="coverLetterForm.PremiumOnApp" type="number" prefix-icon="$" placeholder="App Premium" title="AppPremium"></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -240,12 +246,26 @@ export default {
     },
     // 选择保险公司
     changeInsuranceCompany: function () {
+      let producer = this.producerList.find(p => p.StaffID === this.coverLetterForm.ProducerID)
       this.coverLetterForm.coverLetterTemplates = []
-      this.currentTemplates = this.templatesList.filter(item => item.InsuranceCorpID === this.coverLetterForm.InsuranceCorpID)
+      this.currentTemplates = this.templatesList.filter(item => (item.ProducerLevel === 0 || item.ProducerLevel === producer.ProducerLevel) && item.InsuranceCorpID === this.coverLetterForm.InsuranceCorpID)
+      if (this.currentTemplates.length === 0) {
+        // find it's parent corp template
+        let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === this.coverLetterForm.InsuranceCorpID)
+        if (corp.ParentID > 0) {
+          this.currentTemplates = this.templatesList.filter(item => (item.ProducerLevel === 0 || item.ProducerLevel === producer.ProducerLevel) && item.InsuranceCorpID === corp.ParentID)
+        }
+      }
       if (this.currentTemplates.length === 1) {
         this.coverLetterForm.Title = this.currentTemplates[0].Title
+      } else if (this.currentTemplates.length === 0) {
+        this.coverLetterForm.Title = ''
       } else {
-        this.coverLetterForm.Title = 'Multiple Changes'
+        let tList = this.currentTemplates.filter(item => item.ProducerLevel === 0)
+        if (tList.length > 1) {
+          this.currentTemplates = tList
+        }
+        this.coverLetterForm.Title = this.currentTemplates[0].Title // 'Multiple Changes'
       }
       if (this.isAnswering) this.isAnswering = false
     },
@@ -255,6 +275,13 @@ export default {
     },
     // 开始回答
     beginToAnswer: function () {
+      if (this.currentTemplates.length === 0) {
+        this.$message({
+          type: 'warning',
+          message: 'No template available'
+        })
+        return
+      }
       this.isLoading = true
       this.loadBlockQuestions()
       this.currentTemplates.forEach(ct => {
@@ -283,6 +310,7 @@ export default {
       this.$refs['coverLetterForm'].validate((valid) => {
         if (valid) {
           let coverletter = JSON.parse(JSON.stringify(this.coverLetterForm))
+          coverletter.PremiumOnApp = parseInt(coverletter.PremiumOnApp)
           coverletter.InsuranceTypeID = this.TemplateTypeID
           coverletter.coverLetterTemplates.forEach(template => {
             template.coverLetterBlocks.forEach(block => {

@@ -106,11 +106,13 @@ export default {
       this.isLoading = true
       this.axios.post('/api/Services/MemoService.asmx/SaveMemoProperties', {properties: value, processingtypeid: this.typeid, finished: finished}).then(res => {
         if (res) {
-          this.memo.Status = res.data.Status
-          this.memo.StatusID = res.data.StatusID
-          this.memo.Score = res.data.Score
-          this.memo.QualityScore = res.data.QualityScore
-          console.log('修改', res)
+          console.log('SaveMemoProperties', res)
+          if (res.data !== null) {
+            this.memo.Status = res.data.Status
+            this.memo.StatusID = res.data.StatusID
+            this.memo.Score = res.data.Score
+            this.memo.QualityScore = res.data.QualityScore
+          }
           this.$message({
             type: 'success',
             message: 'Operation Succeeded'
@@ -119,7 +121,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('修改出错', err)
+        console.log('SaveMemoProperties出错', err)
         this.isLoading = false
       })
     }

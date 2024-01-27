@@ -1,3 +1,9 @@
+<!--
+FileName: CoverLetter/coverLetters.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all cover letter list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -35,12 +41,18 @@
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
+        <el-table-column label="Action" width="450" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-delete" v-if="scope.row.StatusID >= 0 " type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
-            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
+            <!--el-button icon="el-icon-delete" v-if="scope.row.StatusID >= 0 " type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button-->
+            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.Status > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && !scope.row.UploadAudited" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && scope.row.UploadAudited" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAuditNeeded && !scope.row.UWAudited" type="primary" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAudited" type="success" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && !scope.row.UWAuditNeeded " type="default" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to set UwAudit needed"></el-button>
+            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.UWAuditNeeded " type="success" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to remove UwAudit needed"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -56,6 +68,11 @@
         <EditAutoCoverLetter ref="eacl" :coverletterid="currentCoverLetterID" :insuranceCorps="insuranceCompanyList" @close="closeEditCoverLetter"></EditAutoCoverLetter>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Processing弹窗开始----------------------------------------------------->
+      <el-dialog :title="ProcessingTitle" :visible.sync="processingVisible" width="1184.56px" center :before-close="beforeCloseProcessing" :after-close="closeProcessing">
+        <EditNBProcessing ref="enbp" :coverLetter="currentCoverLetter" :processingtypeid="ProcessingTypeID" @close="closeProcessing"></EditNBProcessing>
+      </el-dialog>
+      <!----------------------------------------------Processing弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -64,14 +81,19 @@
 import moment from 'moment'
 import ViewCoverLetter from '@/component/window/viewCoverLetter'
 import EditAutoCoverLetter from '@/component/parts/editAutoCoverLetter'
+import EditNBProcessing from '@/component/parts/editNBProcessing'
 
 export default {
   components: {
+    EditNBProcessing,
     EditAutoCoverLetter,
     ViewCoverLetter
   },
   data: function () {
     return {
+      roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
+      isUploadAuditVisible: false,
+      isUWAuditVisible: false,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       printObj: {
         id: 'pdfDom',
@@ -102,10 +124,16 @@ export default {
       editAutoCoverLetterWindowVisible: false,
       // 查阅
       viewFormVisible: false,
-      pinkSlipFormVisible: false
+      pinkSlipFormVisible: false,
+      // processing
+      ProcessingTypeID: null,
+      ProcessingTitle: '',
+      processingVisible: false
     }
   },
   mounted: function () {
+    this.isUploadAuditVisible = this.roleName === 'Processing Advanced Member' || this.roleName === 'Developer' || this.roleName === 'Admin'
+    this.isUWAuditVisible = this.roleName === 'Developer' || this.roleName === 'Admin'
     this.initInsuranceCompany()
     this.search(null, 0)
   },
@@ -127,6 +155,43 @@ export default {
         console.log('保险公司列表出错', err)
         this.isLoadingInsuranceCompany = false
       })
+    },
+    showUpload: function (coverletter) {
+      this.currentCoverLetter = coverletter
+      this.currentCoverLetterID = coverletter.CoverLetterID
+      this.ProcessingTypeID = 2
+      this.ProcessingTitle = 'Upload Audit'
+      this.processingVisible = true
+      if (this.$refs.enbp !== undefined) {
+        this.$refs.enbp.loadProperties(2, coverletter.CoverLetterID)
+      }
+    },
+    setUwAudit: function (coverletter) {
+      let id = coverletter.CoverLetterID
+      this.axios.post('/api/Services/NewBusinessService.asmx/SetAuditCoverLetter', {coverletterid: id}).then(res => {
+        if (res) {
+          console.log('删除', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          coverletter.UWAuditNeeded = res.data.UWAuditNeeded
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('删除出错', err)
+        this.isLoading = false
+      })
+    },
+    showUwAudit: function (coverletter) {
+      this.currentCoverLetter = coverletter
+      this.currentCoverLetterID = coverletter.CoverLetterID
+      this.ProcessingTypeID = 4
+      this.ProcessingTitle = 'Underwriting Audit'
+      this.processingVisible = true
+      if (this.$refs.enbp !== undefined) {
+        this.$refs.enbp.loadProperties(4, coverletter.CoverLetterID)
+      }
     },
 
     showCoverLetter: function (coverLetter) {
@@ -170,6 +235,24 @@ export default {
         // this.currentBlock = null
         done()
       }).catch(() => {})
+    },
+    beforeCloseProcessing: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        done()
+      }).catch(() => {})
+    },
+    closeProcessing: function () {
+      this.$refs.enbp.closeview()
+      // this.currentCoverLetter = null
+      this.ProcessingTypeID = 0
+      this.processingVisible = false
+      if (this.$refs.enbp !== undefined) {
+        this.$refs.enbp.close()
+      }
     },
 
     // 删除

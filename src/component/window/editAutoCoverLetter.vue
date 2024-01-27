@@ -157,7 +157,7 @@ export default {
       this.initInsuranceCompany()
       this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetter', {coverletterid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('loadCoverLetter', res)
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.coverLetterForm = res.data
             this.coverLetterForm.InsuranceCorp = this.insuranceCorps.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
@@ -169,7 +169,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('loadCoverLetter出错', err)
         this.isLoading = false
       })
     },

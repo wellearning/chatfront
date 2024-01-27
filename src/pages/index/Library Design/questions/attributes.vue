@@ -1,7 +1,13 @@
+<!--
+FileName: Library/questions/attributes.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show attribute list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Reminders</span>
+      <span class="inPageNav">Attributes for {{businessTypes[btypeId]}}</span>
       <div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button>
         <el-button icon="el-icon-plus" type="primary" @click="showQuestionList()" :loading="isLoading">Print</el-button>
@@ -22,13 +28,15 @@
         </el-form>
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Reminder ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
+        <el-table-column label="Attribute ID" prop="QuestionID" width="100" fixed="left"></el-table-column>
         <el-table-column label="Use Times" prop="UseTimes" width="100" fixed="left">
           <template slot-scope="scope">
             <a href="#" @click="showBlocksDetail(scope.row.QuestionID)">{{scope.row.UseTimes}}</a>
           </template>
         </el-table-column>
         <el-table-column label="Content" prop="Description" min-width="300"></el-table-column>
+        <el-table-column label="Input Type" prop="InputType" width="100"></el-table-column>
+        <el-table-column label="Data Source" prop="DataSource" width="200"></el-table-column>
         <el-table-column label="Action" width="300" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small">Edit</el-button>
@@ -39,17 +47,36 @@
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Reminder" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <el-dialog title="Add New Attribute" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
-          <el-form-item label="Content" prop="Description">
-            <el-input v-model="addForm.Description" clearable type="textarea" :autosize="{ minRows: 5, maxRows: 20}"></el-input>
-          </el-form-item>
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="addForm.OutputModeID">
               <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
                 <span>{{item.name}}</span>
               </el-radio>
             </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Content" prop="Description">
+            <el-input v-model="addForm.Description" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Input Type" prop="InputType">
+            <el-radio-group v-model="addForm.InputType">
+              <el-radio v-for="item in inputTypeList" :label="item.value" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="addForm.InputType === 'list'" label="Data Source" prop="DataSource" >
+            <el-select v-model="addForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in dataTypes" :key="item.ItemID" :label="item.Name" :value="item.ItemValue"></el-option>
+            </el-select>
+            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
+          </el-form-item>
+          <el-form-item v-if="addForm.InputType === 'children'||addForm.InputType === 'computed'" label="Data Source" prop="DataSource" >
+            <el-input v-model="addForm.DataSource" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Question Tips" prop="Tips">
+            <el-input v-model="addForm.Tips" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
@@ -58,17 +85,67 @@
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="Edit Reminder" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
+      <el-dialog title="Edit Attribute" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
-          <el-form-item label="Content" prop="Description">
-            <el-input v-model="editForm.Description" clearable type="textarea" :autosize="{ minRows: 5, maxRows: 20}"></el-input>
-          </el-form-item>
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="editForm.OutputModeID">
               <el-radio v-for="item in outputWayList" :label="item.id" :key="item.id">
                 <span>{{item.name}}</span>
               </el-radio>
             </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Attribute Name" prop="Description">
+            <el-input v-model="editForm.Description" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Input Type" prop="InputType">
+            <el-radio-group v-model="editForm.InputType">
+              <el-radio v-for="item in inputTypeList" :label="item.value" :key="item.id">
+                <span>{{item.name}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'list'" label="Data Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in listDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
+            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'children'" label="Parent Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in listAttributes" :key="item.QuestionID" :label="item.Description" :value="item.Description"></el-option>
+            </el-select>
+            <!--el-input v-model="editForm.DataSource" clearable></el-input-->
+          </el-form-item>
+          <el-form-item  v-if="editForm.InputType === 'computed'" label="Rate Source" >
+            <el-col :span="18">
+              <el-select v-model="currentRateIndex" placeholder="Rate Source" size="small" class="" >
+                <el-option v-for="(item, index) in rates" :key="index" :label="item.Name" :value="index"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :span="6">
+              <el-button icon="el-icon-plus" type="primary" size="small" @click="addRate(editForm.DataSource)"></el-button>
+            </el-col>
+          </el-form-item>
+          <el-form-item  v-if="editForm.InputType === 'computed'" label="Attribute Source" >
+            <el-col :span="18">
+              <el-select v-model="currentAttributeIndex" placeholder="Attribute Source" size="small" class="" >
+                <el-option v-for="(item, index) in attributes" :key="index" :label="item.Description" :value="index"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :span="6">
+              <el-button icon="el-icon-plus" type="primary" size="small" @click="addAttribute()"></el-button>
+            </el-col>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'computed'" label="Formula" prop="DataSource" >
+            <el-input v-model="editForm.DataSource" clearable></el-input>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'array'" label="Data Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in objectDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Question Tips" prop="Tips">
+            <el-input v-model="editForm.Tips" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading">Confirm</el-button>
@@ -82,8 +159,8 @@
       </el-dialog>
       <!----------------------------------------------BlockQuestionDetail弹窗结束----------------------------------------------------->
       <!----------------------------------------------QuestionList弹窗开始----------------------------------------------------->
-      <el-dialog title="Reminder List" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
-        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName"></QuestionList>
+      <el-dialog title="" :visible.sync="questionListVisible" width="800px" center :before-close="closeQuestionList">
+        <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
@@ -93,6 +170,7 @@
 <script>
 import UsedBlockList from '@/component/window/usedBlockList'
 import QuestionList from '@/component/window/questionList'
+
 export default {
   components: {
     UsedBlockList,
@@ -102,47 +180,68 @@ export default {
     return {
       isLoading: false,
       currentId: null,
-      typeId: 2,
-      typeName: 'Reminders',
+      typeId: 3,
+      currentRateIndex: null,
+      currentAttributeIndex: null,
+      btypeId: 2,
+      businessTypes: ['', 'PL Memo', 'NB CoverLetter', 'IRCA Memo', 'CL Application'],
+      typeName: 'Attribute',
+      attributes: [],
+      listAttributes: [],
+      rates: [],
       questionListVisible: false,
       blocksDetailVisible: false,
-      outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
+      inputTypeList: [
+        {id: 1, name: 'text', value: 'text'},
+        {id: 2, name: 'date', value: 'date'},
+        {id: 3, name: 'number', value: 'number'},
+        {id: 4, name: 'list', value: 'list'},
+        {id: 5, name: 'children', value: 'children'},
+        {id: 6, name: 'computed', value: 'computed'},
+        {id: 7, name: 'array', value: 'array'},
+        {id: 8, name: 'money', value: 'money'}
+      ],
       // 新增
+      outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
       addFormVisible: false,
       addForm: {
-        TypeID: 2,
+        TypeID: 3,
+        RateID: 0,
+        AttributeID: 0,
         Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
-        InputType: null,
+        InputType: 'text',
+        DataSource: null,
         fillinParts: null,
         options: null
       },
       addFormRules: {
         Description: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
-          // { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
       },
       // 修改
       editFormVisible: false,
       editForm: {
         QuestionID: null,
-        TypeID: 2,
+        TypeID: 3,
         Description: null,
         Tips: null,
         OutputModeID: 1,
         StatusID: 1,
         InputType: null,
+        DataSource: null,
         fillinParts: null,
         options: null,
         IsNew: false
       },
       editFormRules: {
         Description: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
-          // { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ]
       },
       // 搜索
@@ -150,6 +249,11 @@ export default {
         name: null
       },
       searchName: null,
+      dataSourceVisible: false,
+      isLoadingDataTypes: false,
+      dataTypes: [],
+      objectDataTypes: [],
+      listDataTypes: [],
       // 列表
       tempList: [],
       list: [],
@@ -159,11 +263,31 @@ export default {
       total: 0
     }
   },
+  watch: {
+    $route (to, from) {
+      console.log(to.params.id)
+      this.btypeId = parseInt(this.$route.params.id)
+      this.typeName = this.businessTypes[this.btypeId] + this.typeName
+      this.search(null)
+    }
+  },
   mounted: function () {
+    this.btypeId = parseInt(this.$route.params.id)
+    this.typeName = this.businessTypes[this.btypeId] + this.typeName
+    this.loadRateTypes()
+    this.loadAttributes()
+    this.loadDataTypes()
     this.search(null)
   },
   methods: {
-    // show question list
+    addRate: function () {
+      let rate = this.rates[this.currentRateIndex]
+      this.editForm.DataSource += rate.Name
+    },
+    addAttribute: function () {
+      let item = this.attributes[this.currentAttributeIndex]
+      this.editForm.DataSource += item.Description
+    },
     showQuestionList: function () {
       this.questionListVisible = true
       if (this.$refs.ql !== undefined) {
@@ -185,10 +309,55 @@ export default {
       this.blocksDetailVisible = false
       this.currentId = null
     },
+    // 获取数据类型列表
+    loadRateTypes: function () {
+      this.isLoadingDataTypes = true
+      this.axios.post('/api/Services/baseService.asmx/GetDataItems', { datatype: 'RateType' }).then(res => {
+        if (res) {
+          console.log('RateTypes', res)
+          this.rates = res.data
+        }
+        this.isLoadingDataTypes = false
+      }).catch(err => {
+        console.log('RateTypes', err)
+        this.isLoadingDataTypes = false
+      })
+    },
+    // 获取数据类型列表
+    loadAttributes: function () {
+      this.isLoadingDataTypes = true
+      this.axios.post('/api/Services/baseService.asmx/GetQuestionsByType', { typeid: 3, btypeid: this.btypeId }).then(res => {
+        if (res) {
+          console.log('Attributes', res)
+          this.attributes = res.data.filter(q => q.InputType === 'number' || q.InputType === 'computed')
+          this.listAttributes = res.data.filter(q => q.InputType === 'list')
+        }
+        this.isLoadingDataTypes = false
+      }).catch(err => {
+        console.log('Attributes', err)
+        this.isLoadingDataTypes = false
+      })
+    },
+    // 获取数据类型列表
+    loadDataTypes: function () {
+      this.isLoadingDataTypes = true
+      this.axios.post('/api/Services/baseService.asmx/GetDataTypes', { }).then(res => {
+        if (res) {
+          console.log('数据类型列表', res)
+          this.dataTypes = res.data
+          this.objectDataTypes = res.data.filter(d => d.ItemValue === 'object')
+          this.listDataTypes = res.data.filter(d => d.ItemValue === 'list')
+        }
+        this.isLoadingDataTypes = false
+      }).catch(err => {
+        console.log('数据类型列表', err)
+        this.isLoadingDataTypes = false
+      })
+    },
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestionsByTypeQuery', {typeid: 2, query: name}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 3, query: name, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
@@ -213,7 +382,20 @@ export default {
     },
     // 显示新增弹窗
     showAdd: function () {
-      this.addFormVisible = true
+      this.editFormTitle = 'Add New Attribute'
+      let question = {
+        QuestionID: 0,
+        TypeID: 3,
+        Description: '',
+        Tips: '',
+        OutputModeID: 1,
+        StatusID: 1,
+        InputType: 'text',
+        DataSource: '',
+        IsNew: true
+      }
+      this.editForm = question
+      this.editFormVisible = true
     },
     // 隐藏新增弹窗
     closeAdd: function (done) {
@@ -231,7 +413,7 @@ export default {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -262,7 +444,7 @@ export default {
     // 修改弹窗
     showEdit: function (id) {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetQuestion', {questionid: id}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestion', {questionid: id}).then(res => {
         if (res) {
           console.log('查询单个', res)
           this.editFormVisible = true
@@ -292,9 +474,14 @@ export default {
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          this.axios.post('/api/Services/NewBusinessService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm)}).then(res => {
+          this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.editForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)
+              if (this.editForm.IsNew) {
+                let question = res.data
+                this.list.splice(0, 0, question)
+                this.total = this.list.length
+              }
               this.$message({
                 type: 'success',
                 message: 'Operation Succeeded'
@@ -330,7 +517,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/NewBusinessService.asmx/RemoveQuestion', {questionid: id}).then(res => {
+        this.axios.post('/api/Services/BaseService.asmx/RemoveQuestion', {questionid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({

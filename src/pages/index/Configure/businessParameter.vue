@@ -1,3 +1,9 @@
+<!--
+FileName: Configure/businessParameter.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all business parameter list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -29,7 +35,7 @@
         <el-table-column label="Sequence" prop="SequenceNo" min-width="80"></el-table-column>
         <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
         <el-table-column label="Q-Score" prop="QualityScore" min-width="80"></el-table-column>
-        <el-table-column label="Action" width="450" fixed="right">
+        <el-table-column v-if="RoleName === 'Developer'" label="Action" width="450" fixed="right">
           <template v-slot="scope">
             <el-button icon="el-icon-arrow-up" type="default" @click="move(scope.row, 'Up')" :loading="isLoading || isLoadingOrganization" size="small"></el-button>
             <el-button icon="el-icon-arrow-down" type="default" @click="move(scope.row, 'Down')" :loading="isLoading || isLoadingOrganization" size="small"></el-button>
@@ -172,6 +178,7 @@
 export default {
   data: function () {
     return {
+      RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
       isLoading: false,
       isLoadingOrganization: false,
       currentId: null,
@@ -197,7 +204,7 @@ export default {
       finishNum: 0,
       businessTypes: [{ID: 1, Name: 'PolicyChange'}, {ID: 2, Name: 'NewBusiness'}, {ID: 3, Name: 'Commerce'}],
       insuranceTypes: [{ID: 0, Name: 'Both'}, {ID: 1, Name: 'Auto'}, {ID: 2, Name: 'Property'}],
-      processingTypes: [{ID: 1, Name: 'Underwriting'}, {ID: 2, Name: 'Upload'}, {ID: 3, Name: 'Decline'}],
+      processingTypes: [{ID: 1, Name: 'Underwriting'}, {ID: 2, Name: 'UploadAudit'}, {ID: 3, Name: 'Decline'}, {ID: 4, Name: 'U/W Audit'}, {ID: 5, Name: 'Uploading'}],
       dataTypes: ['Text', 'Number', 'DateTime', 'Check', 'List', 'Computed'],
       // 新增
       addFormVisible: false,
@@ -410,7 +417,7 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        this.$refs['editForm'].resetFields()
+        // this.$refs['editForm'].resetFields()
         done()
       }).catch(() => {})
     },

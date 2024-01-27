@@ -1,3 +1,9 @@
+<!--
+FileName: CLMemo/memos.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show all commercial memo list and do all operations on the list.
+-->
 <template>
   <div>
     <div class="inPageTitle">
@@ -41,6 +47,7 @@
             <el-button icon="el-icon-view" type="primary" @click="view(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
             <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
+            <el-button icon="el-icon-view" v-if="true" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Sheet</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button>
           </template>
         </el-table-column>
@@ -110,8 +117,8 @@
                   <div v-else-if="item.QuestionType === 'Reminder' && item.OutputModeID !== 3">
                     <div class="question fontNormal">{{item.QuestionDesc}}</div>
                   </div>
-                  <!--问题类型为：Property-->
-                  <div v-else-if="item.QuestionType === 'Property' && item.OutputModeID !== 3">
+                  <!--问题类型为：Attribute-->
+                  <div v-else-if="item.QuestionType === 'Attribute' && item.OutputModeID !== 3">
                     <div class="question fontNormal">
                       <span class="content">{{item.QuestionDesc}}</span>
                       <span class="answer marginLeft10px">
@@ -184,14 +191,6 @@
               </div>
             </div>
           </div>
-          <!--<el-row :gutter="20" class="foot">-->
-            <!--<el-col :span="12">-->
-              <!--<div class="viewMemo-subtitle foot">______________________________(Signature of Insureds)</div>-->
-            <!--</el-col>-->
-            <!--<el-col :span="12">-->
-              <!--<div class="viewMemo-subtitle foot">______________________________(Signature Date)</div>-->
-            <!--</el-col>-->
-          <!--</el-row>-->
           <el-row :gutter="20" class="foot printDateInFoot">
             <el-col>
               <b>{{Author + ' ' + printDate}}</b>
@@ -204,48 +203,15 @@
       <el-dialog title="" :visible.sync="pinkSlipFormVisible" width="1184.56px"  height="2184.56px" center >
         <PinkSlip ref="ps" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></PinkSlip>
       </el-dialog>
-
-      <!-- <el-dialog title="" :visible.sync="pinkSlipFormVisible" width="1184.56px"  height="2184.56px" center :before-close="closeView">
-        <div class="printDiv" >
-          <el-button icon="el-icon-document" type="primary" @click="pdfPinkSlip(pinkSlipForm.InsuredName, pinkSlipForm.EffectiveDate)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>
-        </div>
-        <div class="viewPinkSlip" id="pinkSlipDom">
-          <el-row :gutter="20" style="margin-bottom:30px">
-            <el-col :span="12">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuranceCorpName}}</i></div>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" style="margin-bottom:35px">
-            <el-col :span="12">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredName}}</i></div>
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredAddress}}</i></div>
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.InsuredCity}}</i></div>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" style="margin-bottom:60px">
-            <el-col :span="4">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.EffectiveDate}}</i></div>
-            </el-col>
-            <el-col :span="4">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.ExpiryDate}}</i></div>
-            </el-col>
-            <el-col :span="4">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.PolicyNumber}}</i></div>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" style="margin-bottom:60px">
-            <el-col :span="8">
-              <div class="viewMemo-subtitle head"><i style="width: unset;">{{pinkSlipForm.VehicleInfo}}</i></div>
-            </el-col>
-            <el-col :span="4">
-            </el-col>
-          </el-row>
-        </div>
-      </el-dialog> -->
       <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
       <!----------------------------------------------COI 弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="coiFormVisible" width="1184.56px"  height="2184.56px" center >
         <COI ref="co" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></COI>
+      </el-dialog>
+      <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------COI 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="sheetFormVisible" width="1184.56px"  height="2184.56px" center >
+        <Sheet ref="sh" :memoid="currentMemoID" :insuranceCorps="insuranceCompanyList"></Sheet>
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
     </div>
@@ -256,11 +222,13 @@
 import moment from 'moment'
 import PinkSlip from '@/component/window/pinkSlip'
 import COI from '@/component/window/coi'
+import Sheet from '@/component/window/sheet'
 
 export default {
   components: {
     PinkSlip,
-    COI
+    COI,
+    Sheet
   },
   data: function () {
     return {
@@ -320,6 +288,7 @@ export default {
       },
       pinkSlipFormVisible: false,
       coiFormVisible: false,
+      sheetFormVisible: false,
       pinkSlipForm: {
         InsuranceCorpName: null,
         InsuranceCorpAddress: null,
@@ -343,7 +312,7 @@ export default {
      * @return {boolean}
      */
     IsDate (dateval) {
-      if (dateval.length > 8 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
+      if (dateval.length > 20 && isNaN(dateval) && !isNaN(Date.parse(dateval))) return true
       else return false
     },
     // 日期格式
@@ -513,6 +482,13 @@ export default {
       this.coiFormVisible = true
       if (this.$refs.co !== undefined) {
         this.$refs.co.loadMemo(memoid)
+      }
+    },
+    showSheet: function (memoid) {
+      this.currentMemoID = memoid
+      this.sheetFormVisible = true
+      if (this.$refs.sh !== undefined) {
+        this.$refs.sh.loadMemo(memoid)
       }
     },
     // Pink Slip弹窗

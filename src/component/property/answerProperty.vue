@@ -11,6 +11,12 @@
       <el-select v-else-if="question.InputType === 'children'" class="additionContent"  v-model="question.value" size="mini" @focus="loadChildren(question)" @change="changeVal(question.value, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
         <el-option class="questionOption" v-for="item in dataList" :key="item.Name" :label="item.Name" :value="item.Name"></el-option>
       </el-select>
+      <span v-else-if="question.InputType === 'computed'"  class="additionContent">{{question.value}}</span>
+      <el-form v-else-if="question.InputType === 'array'">
+        <el-form-item v-for="item in question.dataSourceItems" :key="item.ItemID" :label="item.Name">
+          <el-input class="additionContent" v-model="item.value" size="mini" @change="changeVal('alreadyAnswer', 'text')" placeholder="Text" style="width: 300px;"></el-input>
+        </el-form-item>
+      </el-form>
       <!--<el-input-number v-else-if="question.InputType === 'number'" class="additionContent" v-model="question.value" size="mini" @input="changeVal(question.value)" placeholder="Number"></el-input-number>-->
       <div class="questionTips">{{question.Tips}}</div>
     </div>

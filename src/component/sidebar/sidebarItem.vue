@@ -9,7 +9,7 @@
     <SidebarItem v-for="submenu in subRoute.children" :subRoute="submenu" :key="submenu.id"></SidebarItem>
   </el-submenu>
   <!-- 当前 subRoute 无子节点 -->
-  <el-menu-item v-else :index="subRoute.path">
+  <el-menu-item v-else :index="subRoute.callPath">
     <i class="el-icon-s-promotion"></i>
     <span slot="title">{{subRoute.name}}</span>
   </el-menu-item>
