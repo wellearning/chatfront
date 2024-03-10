@@ -8,9 +8,32 @@ Function: Show all cover letter list and do all operations on the list.
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">All CoverLetters</span>
+      <div class="rightBtnBox">
+        <el-form :model="searchForm" ref="searchForm" class="searchForm">
+          <el-form-item>
+            <el-date-picker @change="search()"
+                            v-model="searchForm.periodDates" class="middleWidth"
+                            type="daterange"
+                            unlink-panels
+                            placeholder="StartDate - EndDate">
+            </el-date-picker>
+          </el-form-item>
+          <el-form-item label="Frequently Used" prop="Year">
+            <el-select v-model="searchForm.period" placeholder="" class="middleWidth" no-data-text="No Record" filterable @change="changePeriod()">
+              <el-option v-for="item in periods" :key="item.value" :label="item.name" :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="" prop="name">
+            <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
     </div>
     <div class="inPageContent">
-      <div class="searchBox">
+      <!--div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
@@ -22,37 +45,39 @@ Function: Show all cover letter list and do all operations on the list.
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
-      </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
-        <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="User" prop="Author" min-width="100"></el-table-column>
-        <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
-        <el-table-column label="Line of Business" prop="Title" min-width="200"></el-table-column>
-        <el-table-column label="Company" prop="CorpName" min-width="100"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="100">
+      </div-->
+      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" height="600" empty-text="No Record" v-loading="isLoadingCoverLetters || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="ClieCode" prop="ClientCode" title="Client Code" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="User" prop="Author" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="Producer" prop="Producer" min-width="110" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="180" sortable="custom"></el-table-column>
+        <el-table-column label="Line of Business" prop="Title" min-width="180"></el-table-column>
+        <el-table-column label="Company" prop="CorpName" min-width="130"></el-table-column>
+        <el-table-column label="EffeDate" prop="EffectiveDate" min-width="100" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="RequestDate" min-width="100">
+        <el-table-column label="RequDate" prop="RequestDate" min-width="110" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="450" fixed="right">
+        <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <!--el-button icon="el-icon-delete" v-if="scope.row.StatusID >= 0 " type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button-->
-            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.Status > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && !scope.row.UploadAudited" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && scope.row.UploadAudited" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAuditNeeded && !scope.row.UWAudited" type="primary" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAudited" type="success" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && !scope.row.UWAuditNeeded " type="default" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to set UwAudit needed"></el-button>
-            <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.UWAuditNeeded " type="success" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to remove UwAudit needed"></el-button>
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
+              <!--el-button icon="el-icon-delete" v-if="scope.row.StatusID >= 0 " type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button-->
+              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.Status > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && !scope.row.UploadAudited" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && scope.row.UploadAudited" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAuditNeeded && !scope.row.UWAudited" type="primary" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAudited" type="success" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && !scope.row.UWAuditNeeded " type="default" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to set UwAudit needed"></el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.UWAuditNeeded " type="success" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to remove UwAudit needed"></el-button>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
@@ -101,18 +126,30 @@ export default {
       },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
-      // isLoadingStaffs: false,
+      isLoadingCoverLetters: false,
       isLoadingInsuranceCompany: false,
-      // staffsList: [],
+      producerList: [],
+      producerCount: 0,
+      statusList: [],
       insuranceCompanyList: [],
       // 搜索
       searchForm: {
-        name: null
+        name: null,
+        periodDates: '',
+        period: 1
       },
       searchName: null,
+      periods: [
+        {name: 'Month to Date', value: 1},
+        {name: 'Year to Date', value: 2},
+        {name: 'Last 30 Days', value: 30},
+        {name: 'Last 90 Days', value: 90},
+        {name: 'Last 182 Days', value: 182},
+        {name: 'Last 365 Days', value: 365}],
       // 列表
       tempList: [],
       list: [],
+      totalList: [],
       currentCoverLetterID: null,
       currentCoverLetter: null,
       pageSize: 20,
@@ -134,10 +171,44 @@ export default {
   mounted: function () {
     this.isUploadAuditVisible = this.roleName === 'Processing Advanced Member' || this.roleName === 'Developer' || this.roleName === 'Admin'
     this.isUWAuditVisible = this.roleName === 'Developer' || this.roleName === 'Admin'
+    this.changePeriod()
+    this.loadProducers(0)
+    this.loadCoverLetterStatuses()
     this.initInsuranceCompany()
-    this.search(null, 0)
+    // this.loadCoverLetters(0)
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
+    changePeriod: function () {
+      if (this.searchForm.period === 1) {
+        let year = new Date().getFullYear()
+        let month = new Date().getMonth()
+        let startDate = new Date(year, month, 1)
+        let endDate = new Date(year + 1, month, 1)
+        this.searchForm.periodDates = [startDate, endDate]
+      } else if (this.searchForm.period === 2) {
+        let year = new Date().getFullYear()
+        let month = new Date().getMonth()
+        let startDate = new Date(year, 0, 1)
+        let endDate = new Date(year + 1, month, 1)
+        this.searchForm.periodDates = [startDate, endDate]
+      } else {
+        let now = new Date().getTime()
+        let startDate = new Date(now - this.searchForm.period * 24 * 60 * 60 * 1000)
+        let endDate = new Date()
+        this.searchForm.periodDates = [startDate, endDate]
+      }
+      this.loadCoverLetters(0)
+    },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
@@ -145,14 +216,62 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
         console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadCoverLetterStatuses: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'CoverLetterStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.statusList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadProducers: function (start) {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
+        if (res) {
+          console.log('producerList', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producerList = res.data
+          } else {
+            this.producerList = this.producerList.concat(res.data)
+          }
+          if (this.producerList.length >= this.producerCount) {
+            this.isLoadingInsuranceCompany = false
+            if (!this.isLoadingCoverLetters) {
+              this.totalList.forEach(a => {
+                let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+                if (producer !== undefined) a.Producer = producer.Name
+                else a.Producer = ''
+                if (a.StaffID === a.ProducerID) a.Author = a.Producer
+                else {
+                  let author = this.producerList.find(p => p.StaffID === a.StaffID)
+                  if (producer !== undefined) a.Author = author.Name
+                  else a.Author = ''
+                }
+              })
+            }
+          } else {
+            this.loadProducers(this.producerList.length)
+          }
+        }
+      }).catch(err => {
+        console.log('producerList', err)
         this.isLoadingInsuranceCompany = false
       })
     },
@@ -285,7 +404,74 @@ export default {
         })
       })
     },
+    loadCoverLetters: function (start) {
+      this.isLoadingCoverLetters = true
+      if (start === 0) this.totalList = []
+      let startDate = this.dateFormat(this.searchForm.periodDates[0])
+      let endDate = this.dateFormat(this.searchForm.periodDates[1])
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetters', {startdate: startDate, enddate: endDate, start: start}).then(res => {
+        if (res) {
+          console.log('CoverLetters', res)
+          if (start === 0) {
+            this.total = res.count
+            this.totalList = res.data
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length === this.total) {
+            this.totalList.forEach(a => {
+              this.attachInfo(a)
+            })
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.isLoadingCoverLetters = false
+          } else this.loadCoverLetters(this.totalList.length)
+        }
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoadingCoverLetters = false
+      })
+    },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.Name
+      else a.CorpName = ''
+      // let status = this.statusList.find(s => s.key === a.StatusID)
+      // if (status !== undefined) a.Status = status.value
+      // else a.Status = ''
+      if (!this.isLoadingInsuranceCompany) {
+        let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+        if (producer !== undefined) a.Producer = producer.Name
+        else a.Producer = ''
+        if (a.StaffID === a.ProducerID) a.Author = a.Producer
+        else {
+          let author = this.producerList.find(p => p.StaffID === a.StaffID)
+          if (producer !== undefined) a.Author = author.Name
+          else a.Author = ''
+        }
+      }
+    },
     // 查询
+    search: function () {
+      let query = this.searchForm.name
+      if (query === '') {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+          r.CoverLetterID === Number(query) ||
+          r.Producer.indexOf(query) >= 0 ||
+          r.NameInsured.indexOf(query) >= 0 ||
+          r.CorpName.indexOf(query) >= 0 ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ClientCode.indexOf(query) >= 0
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+    },
+    /*
     search: function (name, start) {
       this.isLoading = true
       if (start === 0) this.list = []
@@ -316,6 +502,7 @@ export default {
         this.isLoading = false
       })
     },
+     */
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
@@ -324,9 +511,11 @@ export default {
     },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
+      /*
       if (val === this.pageCount && !this.isAll) {
         this.search(null, this.total)
       }
+       */
     },
     // 查阅弹窗
     view: function (id) {

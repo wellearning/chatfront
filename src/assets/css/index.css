@@ -552,6 +552,30 @@ table tr td {
   font-weight: normal;
   color: black;
 }
+.viewQuestionnaire {
+  margin: 0px 0 0px 0;
+  padding: 50px 50px;
+  font-size: 18px;
+  position: relative;
+  white-space: pre-line;
+  background-image: url(../images/sheet_line.png);
+  background-repeat: no-repeat;
+  font-family: "Arial";
+  font-weight: normal;
+  color: black;
+  word-break: break-all;
+}
+.viewCSIO {
+  margin: 0px 0 0px 0;
+  padding: 50px 50px;
+  font-size: 18px;
+  position: relative;
+  white-space: pre-line;
+  font-family: "Arial";
+  font-weight: normal;
+  color: black;
+  word-break: break-all;
+}
 .viewSheet {
   margin: 0px 0 0px 0;
   padding: 50px 50px;

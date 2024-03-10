@@ -46,11 +46,14 @@
               <!--span>{{t.title}}</span-->
               <el-form class="" label-width="0px" style="padding-top: 16px" label-position="center" size="large">
                 <el-form-item>
-                  <el-col :span="14">
+                  <el-col :span="12">
                     <el-input v-model="t.title" placeholder="Title of the table" clearable></el-input>
                   </el-col>
-                  <el-col :span="6" v-if="t.trs.length === 0">
-                    <el-button size="small" type="primary" @click="addTableQ(t)">Add Array Question</el-button>
+                  <el-col :span="8">
+                    <el-button-group>
+                      <el-button size="small" type="primary" @click="addTableQ(t)">AddArrayQuestion</el-button>
+                      <el-button size="small" type="primary" @click="addTableVisibleCondition(t)">AddVisibleQuestion</el-button>
+                    </el-button-group>
                   </el-col>
                   <el-col :span="2">
                     <el-checkbox v-model="t.repeatable">Repeatable</el-checkbox>
@@ -302,6 +305,12 @@ export default {
       if (this.currentQuestion.InputType !== 'array') return
       if (table.title === undefined) table.title = ''
       table.title = this.currentQuestion.Description + '{{' + this.currentQuestion.QuestionID + '}}'
+    },
+    addTableVisibleCondition: function (table) {
+      if (table === undefined) return
+      if (this.currentQuestion === null) return
+      if (table.title === undefined) table.title = ''
+      table.title += '[[' + this.currentQuestion.QuestionID + ']]'
     },
     createSheet: function (sheetId, templateId) {
       let newSheet = {}

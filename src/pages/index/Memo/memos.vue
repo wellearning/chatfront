@@ -23,36 +23,40 @@ Function: Show all personal line memo list and do all operations on the list.
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="MemoID" prop="MemoID" width="80" fixed="left"></el-table-column>
-        <el-table-column label="Policy Change Type" prop="Title" min-width="320"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="150">
+      <el-table height="600" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="MemoID" width="80" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="Policy Change Type" prop="Title" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="EffeDate" prop="EffectiveDate" min-width="120" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="User" prop="Author" min-width="150"></el-table-column>
-        <el-table-column label="Corp" prop="CorpName" min-width="100"></el-table-column>
-        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250"></el-table-column>
-        <el-table-column label="UWScore" prop="Score" min-width="100"></el-table-column>
-        <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
-        <!--el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column-->
-        <el-table-column label="PrintPS" prop="PrintPSTimes" min-width="100"></el-table-column>
-        <el-table-column label="RequestDate" min-width="150">
+        <el-table-column label="RequDate" prop="RequestDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="480" fixed="right">
+        <el-table-column label="User" prop="Author" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="Corp" prop="CorpName" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="UWScore" prop="Score" min-width="100"></el-table-column>
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
+        <!--el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column-->
+        <el-table-column label="PrintPS" prop="PrintPSTimes" min-width="100"></el-table-column>
+        <el-table-column label="Action" width="420" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
+              <el-button icon="el-icon-edit" v-if="RoleName === 'Developer'" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
@@ -121,6 +125,11 @@ Function: Show all personal line memo list and do all operations on the list.
         <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1"></ViewSheet>
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------修改弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="editMemoWindowVisible" width="1184.56px" center >
+        <EditMemo ref="eacl" :memoid="currentMemoID" :templateList="templateList" :insuranceCorps="insuranceCompanyList" @close="closeEditMemo"></EditMemo>
+      </el-dialog>
+      <!----------------------------------------------修改弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -132,17 +141,20 @@ import COI from '@/component/window/coi'
 import EditMemoProcessing from '@/component/parts/editMemoProcessing'
 import ViewSheet from '@/component/window/sheet'
 import ViewMemo from '@/component/window/viewMemo'
+import EditMemo from '@/component/parts/editMemo'
 
 export default {
   components: {
     EditMemoProcessing,
     PinkSlip,
     COI,
+    EditMemo,
     ViewSheet,
     ViewMemo
   },
   data: function () {
     return {
+      RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       Author: JSON.parse(this.$store.getters.getAccount).Name,
       printObj: {
@@ -152,7 +164,9 @@ export default {
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
       // isLoadingStaffs: false,
+      isLoadingTemplates: false,
       isLoadingInsuranceCompany: false,
+      templateList: [],
       // staffsList: [],
       insuranceCompanyList: [],
       // 搜索
@@ -216,6 +230,7 @@ export default {
       // processing
       ProcessingTypeID: null,
       ProcessingTitle: '',
+      editMemoWindowVisible: false,
       processingVisible: false
     }
   },
@@ -224,6 +239,16 @@ export default {
     this.initInsuranceCompany()
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     /**
      * @return {boolean}
      */
@@ -249,14 +274,43 @@ export default {
       this.setCurrent(memo)
       this.showMemo(memo.MemoID)
     },
+    showEditMemo: function (memo) {
+      let id = memo.MemoID
+      this.setCurrent(memo)
+      this.editMemoWindowVisible = true
+      if (this.$refs.eacl !== undefined) {
+        this.$refs.eacl.loadMemo(id)
+      }
+    },
+    closeEditMemo: function (id, type) {
+      this.editMemoWindowVisible = false
+      if (type === 'saveAndPrint') {
+        this.showMemo(id)
+      }
+      this.search(this.searchForm.name, 0)
+    },
+    // Templates列表
+    initTemplates: function () {
+      this.isLoadingTemplates = true
+      this.axios.post('/api/Services/MemoService.asmx/SearchTemplates', {query: ''}).then(res => {
+        if (res) {
+          console.log('Templates列表', res)
+          this.templateList = res.data
+        }
+        this.isLoadingTemplates = false
+      }).catch(err => {
+        console.log('Templates列表出错', err)
+        this.isLoadingTemplates = false
+      })
+    },
 
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {

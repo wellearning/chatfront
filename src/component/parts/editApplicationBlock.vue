@@ -394,7 +394,10 @@ export default {
         } else if (ca.TypeID === 6 && ca.checkvalue === 0) cb.Finished = false
         else if (ca.TypeID === 7 && ca.checklist.length === 0) cb.Finished = false
       })
-      if (cb.Finished) this.$emit('checkOver')
+      if (cb.Finished) {
+        cb.StatusID = 1
+      } else cb.StatusID = 3
+      this.$emit('checkOver')
     },
     skipBlockLeft: function (answer) {
       let cblock = this.applicationBlock

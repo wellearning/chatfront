@@ -7,9 +7,8 @@ Function: Show my commercial application list and do all operations on the list.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">My Applications</span>
+      <span class="inPageNav">My Policies</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">New Application</el-button>
       </div>
     </div>
     <div class="inPageContent">
@@ -35,10 +34,12 @@ Function: Show my commercial application list and do all operations on the list.
               <el-table-column prop="Status" label="Status" min-width="100"/>
               <el-table-column label="Sub-Action" width="380">
                 <template slot-scope="scope">
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  <el-button-group>
+                    <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
+                    <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                    <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                    <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  </el-button-group>
                 </template>
               </el-table-column>
             </el-table>
@@ -59,7 +60,7 @@ Function: Show my commercial application list and do all operations on the list.
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
+              <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading" size="small">Renew</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -101,11 +102,6 @@ Function: Show my commercial application list and do all operations on the list.
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
-      <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="csioFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewCSIO ref="vc" :businessObjId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
-      </el-dialog>
-      <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -118,15 +114,14 @@ import ViewApplication from '@/component/window/viewApplication'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
-import ViewCSIO from '@/component/window/csio'
+
 export default {
   components: {
     ViewSheet,
     editApplicationBlock,
     ViewApplicationBlock,
     EditApplication,
-    ViewApplication,
-    ViewCSIO
+    ViewApplication
   },
   data: function () {
     return {
@@ -209,18 +204,17 @@ export default {
       // 查阅
       editApplicationWindowVisible: false,
       sheetFormVisible: false,
-      csioFormVisible: false,
       viewApplicationBlockVisible: false,
       viewApplicationVisible: false,
       editApplicationBlockVisible: false
     }
   },
   mounted: function () {
-    // this.search(null)
+    // this.loadProducers()
     this.loadApplicationStatus()
-    this.initTemplates()
     this.initInsuranceCompany()
     this.loadApplications(0)
+    this.initTemplates()
     if (this.$store.state.ApplicationID !== undefined && this.$store.state.ApplicationID !== '') {
       this.view(this.$store.state.ApplicationID)
       this.$store.state.ApplicationID = ''
@@ -590,9 +584,9 @@ export default {
     loadApplications: function (start) {
       this.isLoading = true
       if (start === 0) this.totalList = []
-      this.axios.post('/api/Services/CommerceService.asmx/GetMyApplications', {start: start}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetMyPolicies', {start: start}).then(res => {
         if (res) {
-          console.log('Application查询', res)
+          console.log('Policies查询', res)
           if (start === 0) {
             this.total = res.count
             this.totalList = res.data
@@ -757,13 +751,6 @@ export default {
       this.sheetFormVisible = true
       if (this.$refs.vs !== undefined) {
         this.$refs.vs.loadBusinessObj(applicationid)
-      }
-    },
-    showCSIO: function (applicationid) {
-      this.currentApplicationID = applicationid
-      this.csioFormVisible = true
-      if (this.$refs.vc !== undefined) {
-        this.$refs.vc.loadBusinessObj(applicationid)
       }
     }
   }

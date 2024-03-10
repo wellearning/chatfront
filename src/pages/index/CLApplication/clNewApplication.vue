@@ -6,108 +6,119 @@ Function: Create new commercial application.
 -->
 <template>
   <div v-loading="isLoading || isLoadingTemplates" element-loading-background="rgba(0, 0, 0, 0)">
-    <el-form :model="applicationForm" ref="applicationForm" class="newMemo" :rules="applicationFormRules">
-      <el-row :gutter="20" class="title">
-        <el-col :span="6">&#12288;</el-col>
-        <el-col :span="12">
-          <el-form-item prop="Title">
-            <el-input v-model="applicationForm.Title" placeholder="Title" disabled></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">&#12288;</el-col>
-      </el-row>
-      <el-row :gutter="20" class="subtitle">
-        <el-col :span="7">
-          <el-form-item label="Effective Date" prop="EffectiveDate">
-            <el-date-picker v-model="applicationForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="Client Code" prop="ClientCode">
-            <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-form-item label="Producer" prop="ProducerID">
-            <el-select v-model="applicationForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable>
-              <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="7">
-          <el-form-item label="Application" prop="Templates">
-            <el-select v-model="currentTemplateID" placeholder="Application Type" no-data-text="No Record" filterable collapse-tags :disabled="applicationForm.NameInsured === null" @change="changeTemplates()">
-              <el-option v-for="item in templatesList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row :gutter="20" class="subtitle">
-        <el-col :span="7">
-          <el-form-item label="Applicant" prop="NameInsured">
-            <el-input v-model="applicationForm.NameInsured" placeholder="Last, First Name or Business Name" title="Last Name, First Name or Business Name"></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="Owner/Principal" prop="PersonContact">
-            <el-input v-model="applicationForm.PersonContact" placeholder="Last name, First name" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-form-item label="Phone" prop="PhoneNumber">
-            <el-input v-model="applicationForm.PhoneNumber" placeholder="" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="7">
-          <el-form-item label="Email" prop="Email">
-            <el-input v-model="applicationForm.Email" placeholder="" title=""></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row :gutter="20" class="subtitle">
-        <el-col :span="7">
-          <el-form-item label="Mailing Address" prop="Address">
-            <el-input v-model="applicationForm.Address" placeholder="Street No" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item label="City" prop="City">
-            <el-input v-model="applicationForm.City" placeholder="City" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-form-item label="Province" prop="Province">
-            <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="7">
-          <el-form-item label="PostCode" prop="PostCode">
-            <el-input v-model="applicationForm.MailingAddress" placeholder="" title=""></el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
-    <div class="newMemo-submit">
-      <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering">Start</el-button>
-    </div>
-    <EditApplicationBody v-if="isAnswering" :applicTemplate="applicationForm.applicationTemplate" @checkOver="checkOver()"></EditApplicationBody>
-    <div class="newMemo-submit">
-      <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
-      <el-button icon="el-icon-check" type="primary" @click="submit('saveAndPrint')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && applicationForm.StatusID === 1">Finish</el-button>
+    <EditDirectionBlock v-if="isDirecting" :busiTypeID=4 @directReady="directReady"></EditDirectionBlock>
+    <div v-else>
+      <el-form :model="applicationForm" ref="applicationForm" class="newMemo" :rules="applicationFormRules">
+        <el-row :gutter="20" class="title">
+          <el-col :span="6">&#12288;</el-col>
+          <el-col :span="12">
+            <el-form-item prop="Title">
+              <el-input v-model="applicationForm.Title" placeholder="Title" disabled></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">&#12288;</el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="7">
+            <el-form-item label="Effective Date" prop="EffectiveDate">
+              <el-date-picker v-model="EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="Client Code" prop="ClientCode">
+              <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="Producer" prop="ProducerID">
+              <el-select v-model="applicationForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable>
+                <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <el-form-item label="Application" prop="Templates">
+              <el-select v-model="currentTemplateID" placeholder="Application Type" no-data-text="No Record" filterable collapse-tags :disabled="applicationForm.NameInsured === null" @change="changeTemplates()">
+                <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="5">
+            <el-form-item label="Applicant" prop="NameInsured">
+              <el-input v-model="applicationForm.NameInsured" placeholder="Last, First Name or Business Name" title="Last Name, First Name or Business Name"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="5">
+            <el-form-item label="Owner/Principal" prop="PersonContact">
+              <el-input v-model="applicationForm.PersonContact" placeholder="Last name, First name" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="5">
+            <el-form-item label="DOB" prop="DateOfBirth">
+              <el-date-picker v-model="applicationForm.DateOfBirth" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="Phone" prop="PhoneNumber">
+              <el-input v-model="applicationForm.PhoneNumber" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="5">
+            <el-form-item label="Email" prop="Email">
+              <el-input v-model="applicationForm.Email" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="7">
+            <el-form-item label="Mailing Address" prop="Address">
+              <el-input v-model="applicationForm.Address" placeholder="Street No" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="City" prop="City">
+              <el-input v-model="applicationForm.City" placeholder="City" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="Province" prop="Province">
+              <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <el-form-item label="PostCode" prop="PostCode">
+              <el-input v-model="applicationForm.MailingAddress" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <div class="newMemo-submit">
+        <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering" :disabled="currentTemplateID === null">Start</el-button>
+      </div>
+      <EditApplicationBody v-if="isAnswering" :applicTemplate="applicationForm.applicationTemplate" @checkOver="checkOver()"></EditApplicationBody>
+      <div class="newMemo-submit">
+        <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
+        <el-button icon="el-icon-check" type="primary" @click="submit('finish')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && applicationForm.StatusID === 1">Finish</el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import EditDirectionBlock from '@/component/parts/editDirectionBlock'
 import EditApplicationBody from '@/component/parts/editApplicationTemplate'
 import moment from 'moment'
 
 export default {
   components: {
+    EditDirectionBlock,
     EditApplicationBody
   },
   data: function () {
     return {
+      isDirecting: true,
       EffectiveDate: null,
       isAnswering: false,
       isLoading: false,
@@ -117,13 +128,14 @@ export default {
       isLoadingBlockQuestions: false,
       applicationForm: {
         Title: null,
-        EffectiveDate: null,
+        // EffectiveDate: null,
         ClientCode: '',
         Address: '',
         City: '',
-        Province: 'On',
+        Province: 'ON',
         PostCode: '',
         PersonContact: '',
+        DateOfBirth: null,
         PhoneNumber: '',
         Email: '',
         StatusID: 0,
@@ -145,6 +157,9 @@ export default {
         RequestDate: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
+        DateOfBirth: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
         ClientCode: [
           { required: false, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
@@ -157,14 +172,15 @@ export default {
         ]
       },
       TemplateTypeID: 2,
-      templatesList: [],
+      templateList: [],
       currentTemplateID: null,
       currentTemplate: null,
       currentTemplates: [],
       insuranceCompanyList: [],
       producerList: [],
       blockQuestions: [],
-      properties: []
+      properties: [],
+      directionBlock: null
     }
   },
   mounted: function () {
@@ -176,6 +192,11 @@ export default {
   watch: {
   },
   methods: {
+    directReady: function (templateid) {
+      if (templateid !== undefined) this.currentTemplateID = templateid
+      this.changeTemplates()
+      this.isDirecting = false
+    },
     loadBlockQuestions: function () {
       this.isLoadingBlockQuestions = true
       this.axios.post('/api/Services/BaseService.asmx/GetBlockQuestionsByTemplate', {templateid: this.currentTemplateID}).then(res => {
@@ -215,7 +236,7 @@ export default {
       this.axios.post('/api/Services/BaseService.asmx/GetTemplatesByBusinessType', {btypeid: 4}).then(res => {
         if (res) {
           console.log('Templates列表', res)
-          this.templatesList = res.data
+          this.templateList = res.data
         }
         this.isLoadingTemplates = false
       }).catch(err => {
@@ -226,10 +247,10 @@ export default {
     // 初始化保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpsByBusinessLine', {lineid: 1}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpsByBusinessLine', {lineid: 2}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 1)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
@@ -271,8 +292,8 @@ export default {
     // 选择Templates
     changeTemplates: function () {
       if (this.isAnswering) this.clearApplication()
-      this.currentTemplate = this.templatesList.find(item => item.TemplateID === this.currentTemplateID)
-      this.applicationForm.Title = this.currentTemplate.Title
+      this.currentTemplate = this.templateList.find(item => item.TemplateID === this.currentTemplateID)
+      if (this.currentTemplate !== undefined) this.applicationForm.Title = this.currentTemplate.Title
     },
     // 开始回答
     beginToAnswer: function () {
@@ -289,6 +310,7 @@ export default {
       this.$refs['applicationForm'].validate((valid) => {
         if (valid) {
           let application = JSON.parse(JSON.stringify(this.applicationForm))
+          if (this.EffectiveDate !== null) application.EffectiveDate = this.EffectiveDate
           application.InsuranceTypeID = this.TemplateTypeID
           let sequenceno = 0
           let template = application.applicationTemplate
@@ -307,7 +329,7 @@ export default {
             })
           })
           let value = JSON.stringify(application)
-          if (type === 'save' || (type === 'saveAndPrint')) {
+          if (type === 'save' || (type === 'finish')) {
             // console.log('提交问题', form)
             this.isLoading = true
             this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
@@ -320,8 +342,8 @@ export default {
                 this.$refs['applicationForm'].resetFields()
                 this.currentTemplates = []
                 this.applicationFormVisible = false
-                if (type === 'saveAndPrint') {
-                  this.$store.state.ApplicationID = res.data.ApplicationID
+                if (type === 'finish') {
+                  // this.$store.state.ApplicationID = res.data.ApplicationID
                 }
                 this.$router.push({path: '/clMyApplications'})
               }

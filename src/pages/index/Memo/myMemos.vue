@@ -26,25 +26,32 @@ Function: Show my personal line memo list and do all operations on the list.
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Memo ID" prop="MemoID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Policy Change Type" prop="Title" min-width="250"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="150">
+      <el-table height="560" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="MemoID" width="100" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="Policy Change Type" prop="Title" min-width="250" sortable="custom"></el-table-column>
+        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="CorpName" prop="CorpName" min-width="150"></el-table-column>
-        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="150"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="300"></el-table-column>
-        <el-table-column label="Action" width="400" fixed="right">
+        <el-table-column label="RequDate" prop="RequestDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
-            <!--el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button-->
-            <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Form</el-button>
-            <el-button icon="el-icon-edit" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
-            <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
-            <!--<el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>-->
+            <span>{{dateFormat(scope.row.RequestDate)}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="CorpName" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="300" sortable="custom"></el-table-column>
+        <el-table-column label="Action" width="340" fixed="right">
+          <template slot-scope="scope">
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Form</el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
+              <!--<el-button icon="el-icon-delete" type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>-->
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
@@ -221,6 +228,16 @@ export default {
     }
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     setCurrent: function (memo) {
       this.currentMemo = memo
       this.currentMemoID = memo.MemoID
@@ -349,7 +366,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           this.insuranceCompanyList = res.data

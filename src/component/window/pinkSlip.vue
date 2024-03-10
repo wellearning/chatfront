@@ -101,7 +101,15 @@ export default {
             this.pinkSlipForm.InsuranceCorpName = insuranceCorp.Name
             this.pinkSlipForm.InsuranceCorpAddress = insuranceCorp.Address
             this.pinkSlipForm.EffectiveDate = moment(memo.EffectiveDate).format('DD/MM/YYYY')
-            this.pinkSlipForm.ExpiryDate = moment(memo.EffectiveDate).add(30, 'days').format('DD/MM/YYYY')
+            let answerExpiryDate = memo.answers.find(a => a.QuestionDesc.indexOf('Expiry Date') > 0)
+            if (answerExpiryDate !== undefined) {
+              if (answerExpiryDate.AnswerDesc !== null && answerExpiryDate.AnswerDesc !== '') {
+                this.pinkSlipForm.ExpiryDate = moment(answerExpiryDate.AnswerDesc).format('DD/MM/YYYY')
+              }
+            }
+            if (this.pinkSlipForm.ExpiryDate === null) {
+              this.pinkSlipForm.ExpiryDate = moment(memo.EffectiveDate).add(30, 'days').format('DD/MM/YYYY')
+            }
             this.pinkSlipForm.PolicyNumber = memo.PolicyNumber
             // this.pinkSlipForm.InsuredName = memo.NameInsured
             // this.pinkSlipForm.InsuredAddress = memo.AddressInsured

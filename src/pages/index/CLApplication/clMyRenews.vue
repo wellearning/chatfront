@@ -7,10 +7,10 @@ Function: Show my commercial application list and do all operations on the list.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">My Applications</span>
-      <div class="rightBtnBox">
+      <span class="inPageNav">My Application renewal</span>
+      <!--div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">New Application</el-button>
-      </div>
+      </div-->
     </div>
     <div class="inPageContent">
       <div class="searchBox">
@@ -53,14 +53,11 @@ Function: Show my commercial application list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Action" width="400">
+        <el-table-column label="Action" width="300">
           <template slot-scope="scope">
-            <el-button-group>
-              <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
-            </el-button-group>
+            <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
+            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+            <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -73,7 +70,7 @@ Function: Show my commercial application list and do all operations on the list.
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewApplicationVisible" width="1184.56px" center :before-close="closeViewApplication">
-        <ViewApplication ref="ps" :applicationid="currentApplicationID" :insuranceCorps="insuranceCorpList"></ViewApplication>
+        <ViewApplication ref="ps" :applicationid="currentApplicationID" :insuranceCorps="insuranceCompanyList"></ViewApplication>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
       <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
@@ -101,11 +98,6 @@ Function: Show my commercial application list and do all operations on the list.
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
-      <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="csioFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewCSIO ref="vc" :businessObjId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
-      </el-dialog>
-      <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -118,15 +110,14 @@ import ViewApplication from '@/component/window/viewApplication'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
-import ViewCSIO from '@/component/window/csio'
+
 export default {
   components: {
     ViewSheet,
     editApplicationBlock,
     ViewApplicationBlock,
     EditApplication,
-    ViewApplication,
-    ViewCSIO
+    ViewApplication
   },
   data: function () {
     return {
@@ -162,7 +153,6 @@ export default {
       tempList: [],
       currentlist: [],
       list: [],
-      totalList: [],
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -172,8 +162,7 @@ export default {
       isLoadingApplicationBlock: false,
       isLoadingInsuranceCompany: false,
       templatesList: [],
-      statusList: [],
-      insuranceCorpList: [],
+      insuranceCompanyList: [],
       currentTemplates: [],
       applicationFormVisible: false,
       applicationForm: {
@@ -209,18 +198,15 @@ export default {
       // 查阅
       editApplicationWindowVisible: false,
       sheetFormVisible: false,
-      csioFormVisible: false,
       viewApplicationBlockVisible: false,
       viewApplicationVisible: false,
       editApplicationBlockVisible: false
     }
   },
   mounted: function () {
-    // this.search(null)
-    this.loadApplicationStatus()
+    this.search(null)
     this.initTemplates()
     this.initInsuranceCompany()
-    this.loadApplications(0)
     if (this.$store.state.ApplicationID !== undefined && this.$store.state.ApplicationID !== '') {
       this.view(this.$store.state.ApplicationID)
       this.$store.state.ApplicationID = ''
@@ -587,45 +573,6 @@ export default {
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
-    loadApplications: function (start) {
-      this.isLoading = true
-      if (start === 0) this.totalList = []
-      this.axios.post('/api/Services/CommerceService.asmx/GetMyApplications', {start: start}).then(res => {
-        if (res) {
-          console.log('Application查询', res)
-          if (start === 0) {
-            this.total = res.count
-            this.totalList = res.data
-          } else {
-            this.totalList = this.totalList.concat(res.data)
-          }
-          if (this.totalList.length === this.total) {
-            this.totalList.forEach(a => {
-              a.EffectiveDate = moment(a.EffectiveDate)
-              a.ExpiryDate = moment(a.ExpiryDate)
-              a.RequestDate = moment(a.RequestDate)
-              a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
-              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
-              if (corp !== undefined) a.CorpName = corp.Name
-              else a.CorpName = ''
-            })
-            this.list = this.totalList
-            this.pageCount = Math.ceil(this.total / this.pageSize)
-            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.isLoading = false
-          } else this.loadApplications(this.totalList.length)
-        }
-      }).catch(err => {
-        console.log('查询出错', err)
-        this.isLoading = false
-      })
-    },
 
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
@@ -636,23 +583,28 @@ export default {
       }
     },
     // 查询
-    search: function () {
-      let query = this.searchForm.name
-      if (query === '') {
-        this.list = this.totalList
-      } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
-          r.ApplicationID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
-          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
-          r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
-        )
-      }
-      this.total = this.list.length
-      this.pageCount = Math.ceil(this.total / this.pageSize)
-      this.currentPage = 1
-      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    search: function (name) {
+      if (name === undefined) name = ''
+      this.isLoading = true
+      this.axios.post('/api/Services/CommerceService.asmx/GetMyApplications', {query: name}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          /*
+            if (name !== null) {
+              this.searchName = name
+              this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
+            }
+            */
+          this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
     },
     // 重置查询
     resetSearch: function () {
@@ -705,26 +657,13 @@ export default {
         this.isLoadingTemplates = false
       })
     },
-    loadApplicationStatus: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
-        if (res) {
-          console.log('statusList', res)
-          this.statusList = res.data
-        }
-        this.isLoadingInsuranceCompany = false
-      }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
-      })
-    },
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCorpList = res.data
+          this.insuranceCompanyList = res.data
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
@@ -757,13 +696,6 @@ export default {
       this.sheetFormVisible = true
       if (this.$refs.vs !== undefined) {
         this.$refs.vs.loadBusinessObj(applicationid)
-      }
-    },
-    showCSIO: function (applicationid) {
-      this.currentApplicationID = applicationid
-      this.csioFormVisible = true
-      if (this.$refs.vc !== undefined) {
-        this.$refs.vc.loadBusinessObj(applicationid)
       }
     }
   }

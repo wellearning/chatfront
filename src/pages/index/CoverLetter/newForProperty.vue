@@ -251,7 +251,7 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorpsByBusinessLine', {lineid: 1}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {

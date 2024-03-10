@@ -1,8 +1,8 @@
 <template>
   <div v-if="application !== null">
-    <div class="printDiv" v-if="application.StatusID === 1">
+    <!--div class="printDiv" v-if="application.StatusID === 1">
       <el-button icon="el-icon-document" type="primary" @click="pdf(application.Title, application.RequestDate)" :loading="isLoading" size="small">Print</el-button>
-    </div>
+    </div-->
     <div class="viewMemo" id="pdfDom">
       <img v-if="application.branch !== null " class="viewLogo" :src="'/api' + application.branch.FormLogoUrl + '?time=' + printDate" crossorigin="anonymous">
       <el-row :gutter="20">
@@ -20,10 +20,10 @@
       <div class="viewMemo-title">{{application.Title}}</div>
       <el-row :gutter="20">
         <el-col :span="4">
-          <div class="viewMemo-subtitle">RequestDate:</div>
+          <div class="viewMemo-subtitle">EffectiveDate:</div>
         </el-col>
         <el-col :span="8">
-          <div class="viewMemo-subtitle"><span>{{application.RequestDate}}</span></div>
+          <div class="viewMemo-subtitle"><span>{{application.EffectiveDate}}</span></div>
         </el-col>
       </el-row>
       <el-row :gutter="20">
@@ -181,6 +181,9 @@ export default {
           this.loadCount = 0
           this.totalBlocks = 0
           this.application.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+          let effdate = moment(res.data.EffectiveDate)
+          if (effdate.year() > 2020) this.application.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
+          else this.application.EffectiveDate = ''
           this.application.applicationTemplate.applicationBlocks.forEach(ablock => {
             this.loadApplicationBlock(ablock)
           })

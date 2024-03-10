@@ -3,7 +3,7 @@
     <div v-if="dataReady" class="newMemo-content">
       <div>{{ applicationTemplate.Title}}</div>
       <div v-for="(ab,index) in applicationTemplate.applicationBlocks" :key="index">
-        <div v-if="ab.isFirst && ab.StatusID===1" class="question">
+        <div v-if="ab.isFirst && (ab.StatusID===1 || ab.StatusID===3)" class="question">
           <span>{{ ab.Title}}</span>
           <el-button v-if="!ab.isFirstTemplate" icon="el-icon-minus" type="primary" plain size="small" @click="removeTemplate(ab)">Remove {{ab.Title}}</el-button>
         </div>
@@ -25,12 +25,10 @@
 
 <script>
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
-import editChildApplicationTemplate from '@/component/parts/editChildApplicationTemplate'
 
 export default {
   components: {
-    editApplicationBlock,
-    editChildApplicationTemplate
+    editApplicationBlock
   },
   name: 'editApplicationTemplate',
   data: function () {
@@ -385,7 +383,7 @@ export default {
         console.log('applicationBlocks', this.applicationTemplate.applicationBlocks)
         console.log('atemplate', atemplate)
         this.resetApplicationBlocks()
-        atemplate.applicationBlocks[0].StatusID = 1
+        atemplate.applicationBlocks[0].StatusID = 3
         atemplate.applicationBlocks[0].answers[0].StatusID = 1
       } else {
         ablock.isLastTemplate = false
@@ -394,7 +392,7 @@ export default {
           ab.RepeatedID = ablock.RepeatedID + 1
           ab.topTemplateBlockID = atemplate.TemplateBlockID
           if (ab.isFirst) {
-            ab.StatusID = 1
+            ab.StatusID = 3
             ab.answers[0].StatusID = 1
           }
           if (ab.isLast) ab.isLastTemplate = true
@@ -402,6 +400,7 @@ export default {
           this.applicationTemplate.applicationBlocks.splice(index, 0, ab)
         })
       }
+      this.checkOver()
       console.log('applicationBlocks', this.applicationTemplate.applicationBlocks)
     },
     removeTemplate: function (ab) {
@@ -518,9 +517,9 @@ export default {
     start: function () {
       // if (!this.dataReady || !this.computeReady) return
       let ab = this.applicationTemplate.applicationBlocks[0]
-      let tb = this.applicationTemplate.templateBlocks.find(t => t.TemplateBlockID === ab.topTemplateBlockID)
-      tb.StatusID = 1
-      ab.StatusID = 1
+      // let tb = this.applicationTemplate.templateBlocks.find(t => t.TemplateBlockID === ab.topTemplateBlockID)
+      // tb.StatusID = 1
+      ab.StatusID = 3
       ab.answers[0].StatusID = 1
     },
     showNextBlock: function (child) {
@@ -535,7 +534,7 @@ export default {
       console.log('Next child is ', nextchild)
       nextchild.answers[0].StatusID = 1
       nextchild.isAnswer = true
-      nextchild.StatusID = 1
+      nextchild.StatusID = 3
     },
     showSkipBlock: function (currentBlockId, repeatedId, targitBlockId) {
       console.log('Skip Block ID is ', currentBlockId)
@@ -552,7 +551,7 @@ export default {
       let nextChild = children[index]
       this.resetLeftChildren(nextChild)
       nextChild.answers[0].StatusID = 1
-      nextChild.StatusID = 1
+      nextChild.StatusID = 3
     },
     resetLeftChildren: function (ablock) {
       let atemplate = this.applicationTemplate
@@ -602,8 +601,8 @@ export default {
       // let children = this.applicationTemplate.templateBlocks
       let children = this.applicationTemplate.applicationBlocks
       console.log('applicationBlocks', children)
-      children.forEach(tb => {
-        if (tb.StatusID === 0) atemplate.StatusID = 0
+      children.forEach(cb => {
+        if (cb.StatusID === 0 || cb.StatusID === 3) atemplate.StatusID = 0
       })
       this.$emit('checkOver')
     }

@@ -43,7 +43,7 @@
       </el-row>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col>
-          <b>{{printDate}}</b>
+          <b>Printed by {{Author}} on {{printDate}}</b>
         </el-col>
       </el-row>
     </div>
@@ -62,6 +62,7 @@ export default {
       Author: JSON.parse(this.$store.getters.getAccount).Name,
       logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       businessObj: null,
+      producer: null,
       templateId: 0,
       sheet: {
         title: '',
@@ -138,7 +139,8 @@ export default {
       sheetSelectedVisible: false,
       currentSheet: null,
       sheets: {},
-      loadArrayCount: 0
+      repeatedCount: 10,
+      loadArrayCount: 0 // Array table 需要异步加载，这个是控制其完全加载的参数
     }
   },
   props: {
@@ -184,15 +186,30 @@ export default {
       this.sheetVisible = true
       this.createSheet(s)
     },
-    getArrayAnswer: function (title) {
+    getArrayAnswer: function (title, index) {
       let patt = /{{\d+}}/
       let maList = title.match(patt)
       if (maList.length === 0) return undefined
       let ma = maList[0]
       let p = ma.replace(/{{|}}/g, '')
       let qid = Number(p)
-      let answer = this.businessObj.answers.find(a => a.QuestionID === qid)
+      if (index === undefined) index = 0
+      let answer = this.businessObj.answers.filter(a => a.QuestionID === qid)[index]
       return answer
+    },
+    getTableVisible: function (table, index) {
+      let patt = /\[\[\d+\]\]/
+      let maList = table.title.match(patt)
+      if (maList === null) return true
+      let ma = maList[0]
+      table.title = table.title.replace(patt, '')
+      let p = ma.replace(/\[\[|\]\]/g, '')
+      let qid = Number(p)
+      if (index === undefined) index = 0
+      let answer = this.businessObj.answers.filter(a => a.QuestionID === qid)[index]
+      if (answer === undefined) return false
+      if (answer.StatusID === 1) return true
+      else return false
     },
     replaceAttribute: function (text, index) {
       let patt = /{{(\d+\.)?\w+}}/g
@@ -201,6 +218,7 @@ export default {
       for (let i = 0; i < maList.length; i++) {
         let ma = maList[i]
         let p = ma.replace(/{{|}}/g, '')
+        let value = ''
         if (p.indexOf('.') > 0) {
           let qid = Number(p.substring(0, p.indexOf('.')))
           let outputway = p.substring(p.indexOf('.') + 1)
@@ -216,7 +234,7 @@ export default {
           if (answer.InputType === 'array') {
             continue
           }
-          let value = answer.AnswerDesc
+          value = answer.AnswerDesc
           if (outputway === 'Out') value = answer.Outputs
           else if (outputway === 'Addi') value = answer.Addition
           if (answer.TypeID === 6) {
@@ -253,13 +271,20 @@ export default {
             // let time = new Date(value)
             // value = moment(time).format('YYYY-MM-DD')
           }
-          text = text.replace(ma, value)
+          // text = text.replace(ma, value)
         } else if (this.businessObj[p] !== undefined) {
           let prop = this.businessObj[p]
           if (prop === null) prop = ''
-          if (p.indexOf('Date') >= 0) prop = moment(prop).format('YYYY-MM-DD')
-          text = text.replace(ma, prop)
+          if (p.indexOf('Date') >= 0) {
+            prop = moment(prop).format('YYYY-MM-DD')
+            let date = moment(prop)
+            if (date.year() < 2001) prop = ''
+          }
+          value = prop
         }
+        if (value === null) value = ''
+        value = '<span style = "font-weight: bold;">' + value + '</span>'
+        text = text.replace(ma, value)
       }
       return text
     },
@@ -272,7 +297,7 @@ export default {
         let table = sheet.tables[i]
         if (table.repeatable) {
           // sheet.tables.splice(i, 1)
-          for (let index = 0; index < 10; index++) {
+          for (let index = 0; index < this.repeatedCount; index++) {
             let t = this.parseTable(table, index)
             if (t !== null) {
               let tables = tableslist[index]
@@ -282,12 +307,15 @@ export default {
               }
               tables.push(t)
               // sheet.tables.splice(i, 0, t)
-            } else break
+            } else {
+              if (this.repeatedCount === 10 || index > this.repeatedCount) this.repeatedCount = index
+              break
+            }
           }
         } else {
           let tables = tableslist[0]
-          this.parseTable(table)
-          tables.push(table)
+          let parsetable = this.parseTable(table)
+          if (parsetable !== null) tables.push(table)
         }
       }
       sheet.tables = []
@@ -303,6 +331,7 @@ export default {
       if (table.title === undefined) {
         table.title = ''
       }
+      if (!this.getTableVisible(table, index)) return null
       let title = table.title
       for (let j = 0; j < table.trs.length; j++) {
         let tr = table.trs[j]
@@ -315,13 +344,12 @@ export default {
             td.colspan = spans[0]
             td.rowspan = spans[1]
           }
-          td.text = this.replaceAttribute(text)
           if (index !== undefined) {
             let value = this.replaceAttribute(text, index)
             if (value === null) {
               return null
             } else td.text = value
-          }
+          } else td.text = this.replaceAttribute(text)
         }
       }
 
@@ -331,7 +359,10 @@ export default {
       }
       if (title.indexOf('{{') >= 0) {
         // the table is added by an array property
-        let answer = this.getArrayAnswer(title)
+        let answer = this.getArrayAnswer(title, index)
+        // 如果answer没有回答或跳过，则不显示该table
+        if (answer === undefined) return null
+        if (answer.StatusID !== 1) return null
         title = title.replace(/{{\d+}}/, '')
         table.title = title
         if (table.trs === undefined) table.trs = []
@@ -362,7 +393,14 @@ export default {
             let tr = {tds: []}
             table.trs.push(tr)
             for (let name in item) {
-              let td = {text: item[name], colspan: 1}
+              let value = item[name]
+              if (name.indexOf('Date') >= 0) {
+                value = moment(value).format('YYYY-MM-DD')
+                let date = moment(value)
+                if (date.year() < 2001) value = ''
+              }
+
+              let td = {text: '<b>' + value + '</b>', colspan: 1}
               tr.tds.push(td)
             }
           })
@@ -389,10 +427,10 @@ export default {
         let $div = $('<div style="margin-bottom: 20px"></div>')
         $sheet.append($div)
         if (table.title !== undefined) {
-          let $title = $('<div style="font-weight: bold; font-size: 16px"></div>').text(table.title)
+          let $title = $('<div style="font-weight: bold; font-size: 18px"></div>').text(table.title)
           $div.append($title)
         }
-        let $table = $('<table border="1"  style="word-break: keep-all; width: 730pt; min-height: 25px; line-height: 36px; text-align: left; border-collapse: collapse;">')
+        let $table = $('<table border="1"  style="font-weight: normal;  font-size: 16px; word-break: keep-all; width: 730pt; min-height: 25px; line-height: 36px; text-align: left; border-collapse: collapse;">')
         $div.append($table)
         table.trs.forEach(function (tr) {
           let $tr = $('<tr></tr>')
@@ -432,7 +470,29 @@ export default {
         this.isLoading = false
       })
     },
-
+    loadProducer: function () {
+      let service = '/api/Services/baseservice.asmx/GetStaff'
+      let producerid = this.businessObj.StaffID
+      if (this.businessObj.ProducerID !== undefined) producerid = this.businessObj.ProducerID
+      let para = {staffid: producerid}
+      this.isLoading = true
+      this.axios.post(service, para).then(res => {
+        if (res) {
+          console.log('producer', res)
+          this.producer = res.data
+          this.sheetForm.BranchTel = this.producer.institution.Telphone
+          this.sheetForm.BranchEmail = this.producer.institution.Email
+          this.sheetForm.Website = this.producer.institution.Website
+          this.sheetForm.BranchStreet = this.producer.institution.Address
+          this.sheetForm.BranchCity = ''
+          this.sheetForm.BranchPostcode = this.producer.institution.PostCode
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadProducer出错', err)
+        this.isLoading = false
+      })
+    },
     loadBusinessObj: function (id) {
       this.isLoading = true
       $('#sheet').children().remove()
@@ -456,6 +516,7 @@ export default {
           console.log('businessObj', res)
           this.businessObj = res.data
           this.loadSheets(id)
+          this.loadProducer()
         }
         this.isLoading = false
       }).catch(err => {
@@ -502,11 +563,14 @@ export default {
           this.businessObj = res.data
           this.loadCount = 0
           this.totalBlocks = 0
-          this.businessObj.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+          // this.businessObj.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+          // let effdate = moment(res.data.EffectiveDate)
+          // if (effdate.year() > 2020) this.businessObj.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
+          // else this.businessObj.EffectiveDate = ''
           this.businessObj.applicationTemplate.applicationBlocks.forEach(ablock => {
             this.loadApplicationBlock(ablock, id)
           })
-
+          this.loadProducer()
           this.isLoading = false
         }
       }).catch(err => {
@@ -521,6 +585,7 @@ export default {
           aBlock.answers = res.data.answers
           this.loadCount++
           aBlock.answers.forEach(function (answer) {
+            answer.RepeatedID = aBlock.RepeatedID
             if (answer.TypeID === 6) {
               answer.optionAnswer = answer.optionAnswers.find(oa => oa.IsChecked)
             }

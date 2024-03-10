@@ -36,11 +36,11 @@ Function: Show all the processing record list and download the records.
           </el-form-item>
           <el-form-item>
             <!--el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button-->
-            <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isLoading" size="small">ToExcel</el-button>
+            <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isDownloading" size="small">ToExcel</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
+      <el-table height="500" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
         <!--el-table-column label="Enter Date" min-width="100">
           <template slot-scope="scope">
@@ -118,6 +118,7 @@ export default {
   },
   data: function () {
     return {
+      isDownloading: false,
       isLoading: false,
       // isLoadingStaffs: false,
       isLoadingInsuranceCompany: false,
@@ -178,11 +179,11 @@ export default {
       else return moment(date).format('YYYY-MM-DD')
     },
     exportExcel: function () {
+      this.isDownloading = true
       let month = String(this.searchForm.Month)
       if (this.searchForm.Month < 10) month = '0' + month
       let tablename = 'statistics' + this.searchForm.Year + month + '.xlsx'
-      // this.downloadData('PlProcessing', '0', tablename)
-      this.downloadData('PlProcessingMonth', this.searchForm.Year, this.searchForm.Month, tablename)
+      this.downloadData('PlProcessingMonth', this.searchForm.Year, this.searchForm.Month, tablename, this)
     },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {

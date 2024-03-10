@@ -8,9 +8,9 @@ Function: Show branch report as administrator role.
   <div>
     <div class="inPageTitle">
       <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">Admin Branch Report</a>
-      <a v-if="branchVisible||producerVisible||coverLetterVisible" style="color:darkblue" class="inPageNav" href="#" @click="showBranch()" title="Click here to return to the branch report.">  - {{currentBranch.InstitutionName}}</a>
-      <a v-if="producerVisible||coverLetterVisible" href="#" style="color:darkblue" class="inPageNav" @click="showProducer()" title="Click here to return to the producer report."> - {{currentProducer.ProducerName}}</a>
-      <span v-if="coverLetterVisible" class="inPageNav"> - {{currentCoverLetter.ClientCode}}</span>
+      <a v-if="branchVisible||producerVisible||memoVisible" style="color:darkblue" class="inPageNav" href="#" @click="showBranch()" title="Click here to return to the branch report.">  - {{currentBranch.InstitutionName}}</a>
+      <a v-if="producerVisible||memoVisible" href="#" style="color:darkblue" class="inPageNav" @click="showProducer()" title="Click here to return to the producer report."> - {{currentProducer.ProducerName}}</a>
+      <span v-if="memoVisible" class="inPageNav"> - {{currentMemo.ClientCode}}</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
@@ -162,8 +162,8 @@ Function: Show branch report as administrator role.
           </el-row>
         </el-main>
       </div>
-      <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="csorttable">
-        <el-table-column label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
+      <el-table :data="memos.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="csorttable">
+        <el-table-column label="ID" prop="MemoID" width="80" fixed="left" sortable="custom">
         </el-table-column>
         <!--el-table-column label="" prop="ClientCode" min-width="1"></el-table-column-->
         <el-table-column label="Client Code" prop="ClientCode" min-width="100" sortable="custom">
@@ -188,7 +188,7 @@ Function: Show branch report as administrator role.
         </el-table-column>
         <el-table-column label="Detail" prop="" min-width="80">
           <template v-slot="scope" >
-            <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
+            <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showMemo(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
         </el-table-column>
 
@@ -196,20 +196,20 @@ Function: Show branch report as administrator role.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=producercurrentPage layout="prev, pager, next" :total=producertotal class="pageList">
       </el-pagination>
     </div>
-    <div v-if="coverLetterVisible" class="inPageContent">
+    <div v-if="memoVisible" class="inPageContent">
       <div class="searchBox">
         <el-main class="" >
-          <el-row :gutter="20" class="title" v-loading="isLoadingCoverLetter">
-            <el-col :span="4" class="">CoverLetterID: {{currentCoverLetter.CoverLetterID}} </el-col>
-            <el-col :span="4">Client Code: {{currentCoverLetter.ClientCode}}</el-col>
-            <el-col :span="4">Name Insured: {{currentCoverLetter.NameInsured}}</el-col>
-            <el-col :span="4">Premium: ${{currentCoverLetter.Premium.toLocaleString()}}</el-col>
-            <el-col :span="4">UW Score: {{currentCoverLetter.Score}}</el-col>
-            <el-col :span="4">Quality Score: {{currentCoverLetter.QualityScore}}</el-col>
+          <el-row :gutter="20" class="title" v-loading="isLoadingMemo">
+            <el-col :span="4" class="">MemoID: {{currentMemo.MemoID}} </el-col>
+            <el-col :span="4">Client Code: {{currentMemo.ClientCode}}</el-col>
+            <el-col :span="4">Name Insured: {{currentMemo.NameInsured}}</el-col>
+            <el-col :span="4">Premium: ${{currentMemo.Premium.toLocaleString()}}</el-col>
+            <el-col :span="4">UW Score: {{currentMemo.Score}}</el-col>
+            <el-col :span="4">Quality Score: {{currentMemo.QualityScore}}</el-col>
           </el-row>
         </el-main>
       </div>
-      <el-table :data="coverletterproperties.slice((coverlettercurrentPage - 1) * pageSize, coverlettercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingCoverLetter" element-loading-background="rgba(255, 255, 255, 0.5)">
+      <el-table :data="memoproperties.slice((memocurrentPage - 1) * pageSize, memocurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingMemo" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="PropertyID" width="100" fixed="left"></el-table-column>
         <!--el-table-column label="" prop="Name" min-width="1"></el-table-column-->
         <el-table-column label="Name" prop="Name" min-width="150"></el-table-column>
@@ -218,7 +218,7 @@ Function: Show branch report as administrator role.
         <el-table-column label="Quality Score" prop="QualityScore" min-width="80"></el-table-column>
 
       </el-table>
-      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=coverlettercurrentPage layout="prev, pager, next" :total=coverlettertotal class="pageList">
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=memocurrentPage layout="prev, pager, next" :total=memototal class="pageList">
       </el-pagination>
     </div>
   </div>
@@ -256,7 +256,7 @@ export default {
       isLoadingMonthToDate: false,
       isLoadingBranch: false,
       isLoadingProducer: false,
-      isLoadingCoverLetter: false,
+      isLoadingMemo: false,
       // 搜索
       searchForm: {
         name: null,
@@ -311,21 +311,21 @@ export default {
         }
       },
       producers: [],
-      coverletters: [],
-      coverletterproperties: [],
+      memos: [],
+      memoproperties: [],
       currentProducer: null,
-      currentCoverLetter: null,
+      currentMemo: null,
       adminVisible: true,
       branchVisible: false,
       producerVisible: false,
-      coverLetterVisible: false,
+      memoVisible: false,
       branchcurrentPage: 1,
       branchPageSize: 6,
       branchtotal: 0,
       producercurrentPage: 1,
       producertotal: 0,
-      coverlettercurrentPage: 1,
-      coverlettertotal: 0,
+      memocurrentPage: 1,
+      memototal: 0,
       pageSize: 10,
       pagerCount: 5,
       currentPage: 1,
@@ -394,10 +394,10 @@ export default {
       else this.crank(column.prop)
     },
     crank: function (name) {
-      this.coverletters.sort(this.by(name))
+      this.memos.sort(this.by(name))
     },
     crankdesc: function (name) {
-      this.coverletters.sort(this.bydesc(name))
+      this.memos.sort(this.bydesc(name))
     },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {
@@ -426,7 +426,7 @@ export default {
       this.adminVisible = false
       this.branchVisible = true
       this.producerVisible = false
-      this.coverLetterVisible = false
+      this.memoVisible = false
       if (branch !== undefined) {
         this.currentBranch = branch
         this.loadBranch()
@@ -436,7 +436,7 @@ export default {
       this.adminVisible = true
       this.branchVisible = false
       this.producerVisible = false
-      this.coverLetterVisible = false
+      this.memoVisible = false
       this.loadMonthToDate()
       this.search()
     },
@@ -444,21 +444,21 @@ export default {
       this.adminVisible = false
       this.branchVisible = true
       this.producerVisible = true
-      this.coverLetterVisible = false
+      this.memoVisible = false
       if (producer !== undefined) {
         // this.currentProducer = this.producers.find(p => p.ProducerID === producer.ProducerID)
         this.currentProducer = producer
         this.loadProducer()
       }
     },
-    showCoverLetter: function (letter) {
+    showMemo: function (letter) {
       this.adminVisible = false
       this.branchVisible = true
       this.producerVisible = true
-      this.coverLetterVisible = true
+      this.memoVisible = true
       if (letter !== undefined) {
-        this.currentCoverLetter = letter
-        this.loadCoverLetter()
+        this.currentMemo = letter
+        this.loadMemo()
       }
     },
     // 日期格式
@@ -572,22 +572,22 @@ export default {
     loadProducer: function () {
       let producerid = this.currentProducer.ProducerID
       this.isLoadingProducer = true
-      let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer'
+      let service = '/api/Services/NewBusinessService.asmx/GetMemos_producer'
       let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}
       if (this.viewMonthly === 'Year to Date') {
-        service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year'
+        service = '/api/Services/NewBusinessService.asmx/GetMemos_producer_year'
         param = {producerid: producerid, year: this.searchForm.Year}
       }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
-          this.coverletters = res.data
-          this.coverletters.forEach(function (c) {
+          this.memos = res.data
+          this.memos.forEach(function (c) {
             c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
             c.submitPremium = '$' + c.Premium.toLocaleString()
             c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
           })
-          this.producertotal = this.coverletters.length
+          this.producertotal = this.memos.length
           this.producercurrentPage = 1
         }
         this.isLoadingProducer = false
@@ -596,20 +596,20 @@ export default {
         this.isLoadingProducer = false
       })
     },
-    loadCoverLetter: function () {
-      let coverletterid = this.currentCoverLetter.CoverLetterID
-      this.isLoadingCoverLetter = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties_score', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
+    loadMemo: function () {
+      let memoid = this.currentMemo.MemoID
+      this.isLoadingMemo = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetMemoProperties_score', {memoid: memoid, processingtypeid: 1}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.coverletterproperties = res.data
-          this.coverlettertotal = this.coverletterproperties.length
-          this.coverlettercurrentPage = 1
-          this.isLoadingCoverLetter = false
+          this.memoproperties = res.data
+          this.memototal = this.memoproperties.length
+          this.memocurrentPage = 1
+          this.isLoadingMemo = false
         }
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoadingCoverLetter = false
+        this.isLoadingMemo = false
       })
     },
     // 重置查询

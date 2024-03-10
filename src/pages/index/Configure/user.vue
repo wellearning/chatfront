@@ -57,7 +57,7 @@ Function: Show all user list and do all operations on the list.
                   <el-tag v-else type="danger" size="medium">Inactive</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="ProducerCode" prop="ProducerCode" min-width="110"></el-table-column>
+              <el-table-column label="PCode" prop="ProducerCode" min-width="110" sortable="custom"></el-table-column>
               <el-table-column label="Role" prop="role.Name" min-width="110"></el-table-column>
               <el-table-column label="Action" width="300" fixed="right">
                 <template slot-scope="scope">

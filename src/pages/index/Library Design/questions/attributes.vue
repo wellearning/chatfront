@@ -47,7 +47,7 @@ Function: Show attribute list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Attribute" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
+      <!--el-dialog title="Add New Attribute" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
           <el-form-item label="Output Way" prop="OutputModeID">
             <el-radio-group v-model="addForm.OutputModeID">
@@ -66,11 +66,10 @@ Function: Show attribute list and do all operations on the list.
               </el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item v-if="addForm.InputType === 'list'" label="Data Source" prop="DataSource" >
+          <el-form-item v-if="addForm.InputType === 'list' || addForm.InputType === 'checkList'" label="Data Source" prop="DataSource" >
             <el-select v-model="addForm.DataSource" placeholder="Data Type" size="small" class="" >
               <el-option v-for="item in dataTypes" :key="item.ItemID" :label="item.Name" :value="item.ItemValue"></el-option>
             </el-select>
-            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
           </el-form-item>
           <el-form-item v-if="addForm.InputType === 'children'||addForm.InputType === 'computed'" label="Data Source" prop="DataSource" >
             <el-input v-model="addForm.DataSource" clearable></el-input>
@@ -82,7 +81,7 @@ Function: Show attribute list and do all operations on the list.
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
           </el-form-item>
         </el-form>
-      </el-dialog>
+      </el-dialog-->
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="Edit Attribute" :visible.sync="editFormVisible" width="1000px" center :before-close="closeEdit">
@@ -108,13 +107,16 @@ Function: Show attribute list and do all operations on the list.
             <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
               <el-option v-for="item in listDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
             </el-select>
-            <!--<el-input v-model="editForm.DataSource" clearable></el-input>-->
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'checklist'" label="Data Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in checklistDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item v-if="editForm.InputType === 'children'" label="Parent Source" prop="DataSource" >
             <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
               <el-option v-for="item in listAttributes" :key="item.QuestionID" :label="item.Description" :value="item.Description"></el-option>
             </el-select>
-            <!--el-input v-model="editForm.DataSource" clearable></el-input-->
           </el-form-item>
           <el-form-item  v-if="editForm.InputType === 'computed'" label="Rate Source" >
             <el-col :span="18">
@@ -199,7 +201,8 @@ export default {
         {id: 5, name: 'children', value: 'children'},
         {id: 6, name: 'computed', value: 'computed'},
         {id: 7, name: 'array', value: 'array'},
-        {id: 8, name: 'money', value: 'money'}
+        {id: 8, name: 'money', value: 'money'},
+        {id: 9, name: 'checklist', value: 'checklist'}
       ],
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
@@ -254,6 +257,7 @@ export default {
       dataTypes: [],
       objectDataTypes: [],
       listDataTypes: [],
+      checklistDataTypes: [],
       // 列表
       tempList: [],
       list: [],
@@ -347,6 +351,7 @@ export default {
           this.dataTypes = res.data
           this.objectDataTypes = res.data.filter(d => d.ItemValue === 'object')
           this.listDataTypes = res.data.filter(d => d.ItemValue === 'list')
+          this.checklistDataTypes = res.data.filter(d => d.ItemValue === 'checklist')
         }
         this.isLoadingDataTypes = false
       }).catch(err => {

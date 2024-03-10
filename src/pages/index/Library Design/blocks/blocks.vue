@@ -47,9 +47,20 @@ Function: Show block list and all operations on the list.
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
       <el-dialog title="Add New Block" :visible.sync="addFormVisible" width="1000px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form choiceQuestionForm">
-          <el-form-item label="Name" prop="Name">
-            <el-input v-model="addForm.Name" clearable></el-input>
-          </el-form-item>
+          <el-row>
+            <el-col span="16">
+              <el-form-item label="Name" prop="Name">
+                <el-input v-model="addForm.Name" clearable></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col span="8">
+              <el-form-item label="Type" prop="TypeID">
+                <el-select v-model="addForm.TypeID" placeholder="Block Type" size="small" class="">
+                  <el-option v-for="item in blockTypes" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
           <div v-for="(item, index) in addForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
@@ -110,6 +121,9 @@ Function: Show block list and all operations on the list.
                 <el-radio :label="1">
                   <span>Route On Block</span>
                 </el-radio>
+                <el-radio :label="2">
+                  <span>Route On Template</span>
+                </el-radio>
               </el-radio-group>
             </el-row>
             <!--RouteType为BaseOnQuestion开始-->
@@ -127,8 +141,11 @@ Function: Show block list and all operations on the list.
                     <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
-                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                  <el-select v-else-if="item.RouteLevel === 1" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                  </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="template in templates" :key="template.TemplateID" :label="template.TemplateID + '.' + template.Title" :value="template.TemplateID"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="21" :sm="21" :md="21" :lg="21" :xl="21" v-else-if="editFormVisible">
@@ -137,8 +154,11 @@ Function: Show block list and all operations on the list.
                     <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 1 ? 'Move Next' : 'skip ' + (it - 1)" :value="it"></el-option>
                     <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                   </el-select>
-                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                  <el-select v-else-if="item.RouteLevel === 1" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                     <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                  </el-select>
+                  <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-option v-for="template in templates" :key="template.TemplateID" :label="template.TemplateID + '.' + template.Title" :value="template.TemplateID"></el-option>
                   </el-select>
                 </el-col>
                 <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -196,8 +216,11 @@ Function: Show block list and all operations on the list.
                       <el-option v-for="it in addForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
-                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-select v-else-if="item.RouteLevel === 1" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                    </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="template in templates" :key="template.TemplateID" :label="template.TemplateID + '.' + template.Title" :value="template.TemplateID"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="7" :sm="7" :md="7" :lg="7" :xl="7" v-else-if="editFormVisible">
@@ -206,8 +229,11 @@ Function: Show block list and all operations on the list.
                       <el-option v-for="it in editForm.blockQuestions.length - currentIndex" :key="it" :label="it === 0 ? 'Stay Here' : 'skip ' + (it - 1)" :value="it"></el-option>
                       <el-option :key="-1" label="Move To End" :value="-1"></el-option>
                     </el-select>
-                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                    <el-select v-else-if="item.RouteLevel === 1" v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
                       <el-option v-for="block in blocks" :key="block.BlockID" :label="block.BlockID + '.' + block.Name" :value="block.BlockID"></el-option>
+                    </el-select>
+                    <el-select v-else v-model="item.MoveStep" placeholder="Please Select" no-data-text="No Record" filterable size="small">
+                      <el-option v-for="template in templates" :key="template.TemplateID" :label="template.TemplateID + '.' + template.Title" :value="template.TemplateID"></el-option>
                     </el-select>
                   </el-col>
                   <el-col :xs="3" :sm="3" :md="3" :lg="3" :xl="3">
@@ -472,12 +498,14 @@ export default {
       templatesDetailVisible: false,
       routeLevels: [{id: 0, name: 'Question'}, {id: 1, name: 'Block'}],
       routeTypeList: [{id: 1, name: 'Base On Question'}, {id: 2, name: 'Base On Answer'}],
+      blockTypes: [{id: 1, name: 'Normal'}, {id: 2, name: 'Direction'}, {id: 3, name: 'Questionnaire'}],
       isLoadingInsuranceCompany: false,
       currentQuestionType: null,
       currentQuestion: null,
       questionTypeList: [{id: 1, name: 'Title'}, {id: 2, name: 'Reminder'}, {id: 3, name: 'Attribute'}, {id: 4, name: 'Simple Answer'}, {id: 5, name: 'Fill In Question'}, {id: 6, name: 'Single Choice Question'}, {id: 7, name: 'Multiple Choice Question'}],
       questionList: [],
       blocks: [],
+      templates: [],
       currentInsuranceCompany: null,
       insuranceCompanyList: [],
       operatorList: [{id: 1, name: '='}, {id: 2, name: '>'}, {id: 3, name: '<'}, {id: 4, name: '>='}, {id: 5, name: '<='}],
@@ -557,6 +585,7 @@ export default {
     this.btypeId = this.$route.params.id
     this.search(null)
     this.initInsuranceCompany()
+    this.loadTemplates()
   },
   methods: {
     // show used block list
@@ -570,6 +599,20 @@ export default {
     closeTemplatesDetail: function () {
       this.templatesDetailVisible = false
       this.currentId = null
+    },
+    // Templates
+    loadTemplates: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetTemplatesByBusinessType', {btypeid: this.btypeId}).then(res => {
+        if (res) {
+          console.log('loadTemplates', res)
+          this.templates = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('loadTemplates', err)
+        this.isLoadingInsuranceCompany = false
+      })
     },
     // 保险公司列表
     initInsuranceCompany: function () {
@@ -732,7 +775,9 @@ export default {
               this.addForm.blockQuestions[i].routes = []
             }
           }
-          this.axios.post('/api/Services/BaseService.asmx/SaveBlock', {block: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
+          let value = JSON.stringify(this.addForm)
+          console.log('block to save', value)
+          this.axios.post('/api/Services/BaseService.asmx/SaveBlock', {block: value, btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({

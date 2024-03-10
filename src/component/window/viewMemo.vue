@@ -4,12 +4,12 @@
       <el-button icon="el-icon-document" type="primary" @click="pdf(memo.Title, memo.EffectiveDate)" :loading="isLoading" size="small">Print</el-button>
     </div-->
     <div class="viewMemo" id="pdfDom">
-      <img v-if="memo.branch.FormLogoUrl !== null " class="viewLogo" :src="'/api' + memo.branch.FormLogoUrl + '?time=' + printDate" crossorigin="anonymous">
+      <img v-if="branch.FormLogoUrl !== null " class="viewLogo" :src="'/api' + branch.FormLogoUrl + '?time=' + printDate" crossorigin="anonymous">
       <el-row :gutter="20">
         <el-col :span="12">
-          <div class="viewMemo-subtitle head"><i style="width: unset;">{{rootInstitution.Name}} ({{memo.branch.Name}})</i></div>
-          <div class="viewMemo-subtitle head"><i style="width: unset;">{{memo.branch.Address}}</i></div>
-          <div class="viewMemo-subtitle head"><i style="width: unset;">{{memo.branch.Telphone}}</i></div>
+          <div class="viewMemo-subtitle head"><i style="width: unset;">{{rootInstitution.Name}} ({{branch.Name}})</i></div>
+          <div class="viewMemo-subtitle head"><i style="width: unset;">{{branch.Address}}</i></div>
+          <div class="viewMemo-subtitle head"><i style="width: unset;">{{branch.Telphone}}</i></div>
         </el-col>
         <el-col :span="12">
           <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{memo.InsuranceCorp}}</b></div>
@@ -153,6 +153,13 @@ export default {
         id: 'pdfDom',
         popTitle: ''
       },
+      branch: {
+        FormLogoUrl: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        Name: JSON.parse(this.$store.getters.getAccount).institution.Name,
+        Address: JSON.parse(this.$store.getters.getAccount).institution.Address,
+        Telphone: JSON.parse(this.$store.getters.getAccount).institution.Telphone
+      },
+      logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       isLoading: false,
       totalBlocks: 0,
       rootInstitution: JSON.parse(this.$store.getters.getAccount).rootInstitution,
@@ -191,6 +198,7 @@ export default {
         if (res) {
           console.log('loadMemo', res)
           this.memo = res.data
+          if (res.data.branch !== null) this.branch = res.data.branch
           this.loadingCount = 0
           this.totalBlocks = 0
           this.memo.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')

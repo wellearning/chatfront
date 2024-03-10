@@ -26,11 +26,18 @@ Function: Show all insurance company list and do all operations on the list.
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="Company ID" prop="InsuranceCorpID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Company Name" prop="Name" min-width="200"></el-table-column>
-        <el-table-column label="Short Name" prop="ShortName" min-width="100"></el-table-column>
+      <el-table height="500" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="InsuranceCorpID" width="100" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="Company Name" prop="Name" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="SName" prop="ShortName" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Code" prop="Code" min-width="80" sortable="custom"></el-table-column>
         <el-table-column label="Address" prop="Address" min-width="200"></el-table-column>
+        <el-table-column label="Avai" prop="Used" min-width="80" sortable="custom">
+          <template v-slot:="scope">
+            <span v-if="scope.row.Used" size="medium">Yes</span>
+            <span v-else></span>
+          </template>
+        </el-table-column>
         <el-table-column label="BusinessLine" width="100">
           <template v-slot:="scope">
             <span v-if="scope.row.BusinessLineID === 0" size="medium">Both</span>
@@ -41,28 +48,35 @@ Function: Show all insurance company list and do all operations on the list.
         <el-table-column label="Status" width="100">
           <template v-slot:="scope">
             <span v-if="scope.row.StatusID === 0" size="medium">Draft</span>
-            <span v-if="scope.row.StatusID === 1" size="medium">Normal</span>
+            <span v-else-if="scope.row.StatusID === 1" size="medium">Normal</span>
             <span v-else type="danger" size="medium">Stopped</span>
           </template>
         </el-table-column>
-        <el-table-column label="Action" width="320" fixed="right">
+        <el-table-column label="Action" width="400" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
-            <el-button v-if="RoleName === 'Developer'" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
-            <el-button v-if="RoleName === 'Developer'" icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
+            <el-button-group>
+              <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
+              <el-button v-if="RoleName === 'Developer'" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
+              <el-button v-if="RoleName === 'Developer'" icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
+              <el-button v-if="scope.row.Used" icon="el-icon-minus" type="" @click="moveout(scope.row)" :loading="isLoading" size="small">MoveOut</el-button>
+              <el-button v-else icon="el-icon-plus" type="" @click="addin(scope.row)" :loading="isLoading" size="small">AddIn</el-button>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Insurance Company" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
+      <el-dialog title="Add New Insurance Company" :visible.sync="addFormVisible" width="700px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form">
           <el-form-item label="Name" prop="Name">
             <el-input v-model="addForm.Name" clearable></el-input>
           </el-form-item>
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="addForm.ShortName" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Code" prop="Code">
+            <el-input v-model="addForm.Code" clearable></el-input>
           </el-form-item>
           <el-form-item label="Parent Corperation" prop="ParentID">
             <el-select v-model="addForm.ParentID" placeholder="Parent Corperation" no-data-text="No Record" filterable>
@@ -89,6 +103,20 @@ Function: Show all insurance company list and do all operations on the list.
           <el-form-item label="RentedDwelling" prop="RentedDwelling">
             <el-input v-model.number="addForm.RentedDwelling" clearable></el-input>
           </el-form-item>
+          <el-form-item label="BusinessLine" prop="BusinessLineID">
+            <el-radio-group v-model="addForm.BusinessLineID">
+              <el-radio v-for="item in businessLineList" :label="item.key" :key="item.key">
+                <span>{{item.value}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Status" prop="StatusID">
+            <el-radio-group v-model="addForm.StatusID">
+              <el-radio v-for="item in statusList" :label="item.key" :key="item.key">
+                <span>{{item.value}}</span>
+              </el-radio>
+            </el-radio-group>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
           </el-form-item>
@@ -103,6 +131,9 @@ Function: Show all insurance company list and do all operations on the list.
           </el-form-item>
           <el-form-item label="Short Name" prop="ShortName">
             <el-input v-model="editForm.ShortName" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Code" prop="Code">
+            <el-input v-model="editForm.Code" clearable></el-input>
           </el-form-item>
           <el-form-item label="Parent Corperation" prop="ParentID">
             <el-select v-model="editForm.ParentID" placeholder="Parent Corperation" no-data-text="No Record" filterable>
@@ -200,13 +231,16 @@ export default {
       addForm: {
         Name: null,
         ShortName: null,
+        Code: null,
         ParentID: 0,
         Province: null,
         Address: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
         HomeMinimum: null,
-        RentedDwelling: null
+        RentedDwelling: null,
+        BusinessLineID: 0,
+        StatusID: 1
       },
       addFormRules: {
         Name: [
@@ -244,6 +278,7 @@ export default {
         InsuranceCorpID: null,
         Name: null,
         ShortName: null,
+        Code: null,
         ParentID: 0,
         Province: null,
         Address: null,
@@ -311,6 +346,16 @@ export default {
     }
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     initProvinceList: function () {
       this.isLoadingProvinceList = true
       this.axios.post('/api/Services/baseservice.asmx/GetDictionary', {datatype: 'Province'}).then(res => {
@@ -352,7 +397,7 @@ export default {
     // 查询
     search: function (name) {
       this.isLoading = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
           console.log('InsuranceCorps', res.data)
           this.list = res.data
@@ -438,7 +483,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/baseservice.asmx/RemoveInstitutionInsuranceCorp', {corpid: id}).then(res => {
+        this.axios.post('/api/Services/baseservice.asmx/RemoveInsuranceCorp', {corpid: id}).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -447,6 +492,64 @@ export default {
             })
             this.list = this.list.filter(item => item.InsuranceCorpID !== id)
             this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    // Add in
+    addin: function (corp) {
+      this.$confirm('Are you sure to add it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/baseservice.asmx/AddinInsuranceCorp', {corpid: corp.InsuranceCorpID}).then(res => {
+          if (res) {
+            console.log('Addin', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            corp.Used = true
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    // Add in
+    moveout: function (corp) {
+      this.$confirm('Are you sure to move out it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/baseservice.asmx/MoveoutInsuranceCorp', {corpid: corp.InsuranceCorpID}).then(res => {
+          if (res) {
+            console.log('Addin', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            corp.Used = false
           }
           this.isLoading = false
         }).catch(err => {

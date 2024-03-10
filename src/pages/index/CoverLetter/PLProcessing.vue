@@ -23,36 +23,38 @@ Function: Show the needed processing cover letter list and do the processing job
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left"></el-table-column>
-        <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="ReviewedBy" prop="UWReviewedBy" min-width="100"></el-table-column>
+      <el-table height="600" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="CoverLetterID" width="70" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="ClieCode" prop="ClientCode" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="ReviewedBy" prop="UWReviewedBy" min-width="130" sortable="custom"></el-table-column>
         <!--el-table-column label="User" prop="Author" min-width="100"></el-table-column-->
-        <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
-        <el-table-column label="Line of Business" prop="Title" min-width="200"></el-table-column>
-        <el-table-column label="Company" prop="CorpName" min-width="100"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="120">
+        <el-table-column label="Producer" prop="Producer" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="180" sortable="custom"></el-table-column>
+        <el-table-column label="Line of Business" prop="Title" min-width="180" sortable="custom"></el-table-column>
+        <el-table-column label="Company" prop="CorpName" min-width="130" sortable="custom"></el-table-column>
+        <el-table-column label="EffeDate" prop="EffectiveDate" min-width="120" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="RequestDate" min-width="110">
+        <el-table-column label="RequDate" prop="RequestDate" min-width="110" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="UWScore" prop="Score" min-width="70"></el-table-column>
         <el-table-column label="Q-Score" prop="QualityScore" min-width="70"></el-table-column>
-        <el-table-column label="Action" width="400" fixed="right">
+        <el-table-column label="Action" width="300" fixed="right">
           <template v-slot="scope">
-            <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.Status === 2 || scope.row.Status === 3" type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.Status === 2" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.Status === 3" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
-            <el-button icon="el-icon-delete" v-if="scope.row.Status !== 4" type="danger" @click="showDecline(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Decline</el-button>
-            <el-button icon="el-icon-edit" v-if="scope.row.Status === 4" type="danger" @click="reinstate(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 2 || scope.row.Status === 3" type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 2" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 3" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Upload</el-button>
+              <el-button icon="el-icon-delete" v-if="scope.row.Status !== 4" type="danger" @click="showDecline(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Decline</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 4" type="danger" @click="reinstate(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
@@ -122,6 +124,16 @@ export default {
     this.search(null, 0)
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')

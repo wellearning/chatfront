@@ -1,0 +1,365 @@
+<template>
+    <div>
+      <el-form :model="applicationForm" ref="applicationForm" class="newMemo" :rules="applicationFormRules">
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="ApplicationID" prop="ApplicationID">
+              <el-input v-model="applicationForm.ApplicationID" type="number" disabled></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Effective Date" prop="EffectiveDate">
+              <el-date-picker v-model="applicationForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Expiry Date" prop="ExpiryDate">
+              <el-date-picker v-model="applicationForm.ExpiryDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="AppType" prop="TypeID">
+              <el-select v-model="applicationForm.TypeID" placeholder="App Type" no-data-text="No Record" filterable >
+                <el-option v-for="item in appTypes" :key="item.key" :label="item.value" :value="item.key"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" v-if="applicationForm.TypeID === 2" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Remarket From" prop="LeadFromCorpID">
+              <el-select v-model="applicationForm.LeadFromCorpID" placeholder="Lead From" no-data-text="No Record" filterable >
+                <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Client Code" prop="ClientCode">
+              <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Policy Number" prop="PolicyNumber">
+              <el-input v-model="applicationForm.PolicyNumber" placeholder="Policy Number" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Premium" prop="Premium">
+              <el-input v-model="applicationForm.Premium" type="number" placeholder="Premium" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
+              <el-select v-model="applicationForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
+                <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="ApplicationType" prop="TemplateID">
+              <el-select v-model="applicationForm.TemplateID" placeholder="Template" no-data-text="No Record" @change="changeTemplate()" filterable >
+                <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Address" prop="Address">
+              <el-input v-model="applicationForm.Address" placeholder="Address" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="City" prop="City">
+              <el-input v-model="applicationForm.City" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Province" prop="Province">
+              <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="PersonContact" prop="PersonContact">
+              <el-input v-model="applicationForm.PersonContact" placeholder="Policy Number" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="PhoneNumber" prop="PhoneNumber">
+              <el-input v-model="applicationForm.PhoneNumber" placeholder="Policy Number" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="Email" prop="Email">
+              <el-input v-model="applicationForm.Email" placeholder="Policy Number" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <div class="newMemo-submit">
+          <el-button icon="el-icon-check" type="primary" @click="saveApplication()" :loading="isLoading">Save</el-button>
+        </div>
+      </el-form>
+    </div>
+</template>
+
+<script>
+export default {
+  name: 'editApplicationBase',
+  data: function () {
+    return {
+      isLoading: false,
+      templateList: [],
+      appTypes: [],
+      insuranceCorpList: [],
+      questionnaires: [],
+      applicationForm: {
+        ApplicationID: null,
+        EffectiveDate: null,
+        TypeID: null,
+        LeadFromCorpID: 0,
+        ExpiryDate: null,
+        ClientCode: null,
+        PolicyNumber: null,
+        Premium: null,
+        QuestionnaireID: 0,
+        TemplateID: 0,
+        Address: null,
+        City: null,
+        Province: null,
+        PostCode: null,
+        PersonContact: null,
+        Email: null,
+        PhoneNumber: null,
+        BusCode: '',
+        Industry: '',
+        AgenDir: ''
+      },
+      applicationFormRules: {
+        PolicyNumber: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
+        ],
+        EffectiveDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        ExpiryDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        ClientCode: [
+          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+        ],
+        Premium: [
+          { required: true, message: 'Please Enter', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  props: {
+    application: {
+      type: Object
+    }
+  },
+  mounted: function () {
+    this.loadAppTypes()
+    this.loadTemplates()
+    this.loadInsuranceCorps()
+    this.loadQuestionnaires()
+    this.setForm(this.application)
+  },
+  methods: {
+    loadAppTypes: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
+        if (res) {
+          console.log('loadAppTypes', res)
+          this.appTypes = res.data
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadAppTypes出错', err)
+        this.isLoading = false
+      })
+    },
+    loadTemplates: function () {
+      this.isLoadingTemplates = true
+      this.axios.post('/api/Services/BaseService.asmx/GetTemplatesByBusinessType', {btypeid: 4}).then(res => {
+        if (res) {
+          console.log('Templates列表', res)
+          let notapplied = [{TemplateID: 0, Title: 'Not Applied'}]
+          this.templateList = notapplied.concat(res.data)
+        }
+        this.isLoadingTemplates = false
+      }).catch(err => {
+        console.log('Templates列表出错', err)
+        this.isLoadingTemplates = false
+      })
+    },
+    // 保险公司列表
+    loadInsuranceCorps: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
+        if (res) {
+          console.log('保险公司列表', res)
+          this.insuranceCorpList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    // Questionnaire
+    loadQuestionnaires: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetQuestionnaires', {}).then(res => {
+        if (res) {
+          console.log('Questionnaires', res)
+          let nocorp = [{BlockID: 0, Name: 'No Need'}]
+          this.questionnaires = nocorp.concat(res.data)
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    // Questionnaire
+    loadApplicationTemplate: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationTemplateSimple', {applicationid: this.application.ApplicationID}).then(res => {
+        if (res) {
+          console.log('loadApplicationTemplate', res)
+          if (res.data !== null) {
+            this.applicationForm.applicationTemplate = res.data
+            this.applicationForm.TemplateID = res.data.TemplateID
+          } else {
+            this.applicationForm.applicationTemplate = {
+              ApplicationID: this.application.ApplicationID,
+              TemplateID: 0,
+              Title: ''
+            }
+          }
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadApplicationTemplate', err)
+        this.isLoading = false
+      })
+    },
+
+    setForm: function (application) {
+      this.applicationForm.ApplicationID = application.ApplicationID
+      this.applicationForm.ClientCode = application.ClientCode
+      this.applicationForm.PolicyNumber = application.PolicyNumber
+      this.applicationForm.EffectiveDate = application.EffectiveDate
+      this.applicationForm.ExpiryDate = application.ExpiryDate
+      this.applicationForm.TypeID = application.TypeID
+      this.applicationForm.LeadFromCorpID = application.LeadFromCorpID
+      this.applicationForm.QuestionnaireID = application.QuestionnaireID
+      this.applicationForm.Premium = application.Premium
+      this.applicationForm.Address = application.Address
+      this.applicationForm.City = application.City
+      this.applicationForm.Province = application.Province
+      this.applicationForm.PostCode = application.PostCode
+      this.applicationForm.PersonContact = application.PersonContact
+      this.applicationForm.Email = application.Email
+      this.applicationForm.PhoneNumber = application.PhoneNumber
+      if (application.applicationTemplate !== null) this.applicationForm.TemplateID = application.applicationTemplate.TemplateID
+      else this.loadApplicationTemplate()
+    },
+    changeTemplate: function () {
+      let template = this.templateList.find(t => t.TemplateID === this.applicationForm.TemplateID)
+      this.applicationForm.applicationTemplate.TemplateID = template.TemplateID
+      if (template.TemplateID === 0) {
+        this.applicationForm.applicationTemplate.Title = ''
+        this.applicationForm.Title = ''
+      } else {
+        this.applicationForm.applicationTemplate.Title = template.Title
+        this.applicationForm.Title = template.Title
+      }
+    },
+    setApplication: function (app) {
+      // this.application.ApplicationID = this.applicationForm.ApplicationID
+      app.ClientCode = this.applicationForm.ClientCode
+      app.PolicyNumber = this.applicationForm.PolicyNumber
+      app.EffectiveDate = this.applicationForm.EffectiveDate
+      app.ExpiryDate = this.applicationForm.ExpiryDate
+      app.TypeID = this.applicationForm.TypeID
+      app.LeadFromCorpID = this.applicationForm.LeadFromCorpID
+      app.QuestionnaireID = this.applicationForm.QuestionnaireID
+      app.Premium = this.applicationForm.Premium
+      app.applicationTemplate = this.applicationForm.applicationTemplate
+    },
+
+    saveApplication: function () {
+      this.$confirm('Are you sure to bind it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isSavingApplication = true
+        let app = JSON.parse(JSON.stringify(this.application))
+        this.setApplication(app)
+        let value = JSON.stringify(app)
+        console.log('Application to save', app)
+        this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
+          if (res) {
+            console.log('saveApplication', res)
+            this.setApplication(this.application)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.$emit('hideEdition')
+          }
+          this.isSavingApplication = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.saveApplication = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    }
+
+  }
+
+}
+</script>
+
+<style scoped>
+
+</style>

@@ -15,7 +15,7 @@
     <el-row v-for="p in properties" :gutter="20" class="subtitle" :key="p.ParameterID">
       <el-col :span="4">&#12288;</el-col>
       <el-col :span="8">
-        {{p.parameter.DisplayName}}
+        {{p.parameter.DisplayName}}<br><i v-if="p.parameter.Remark!==''">{{p.parameter.Remark}}</i>
       </el-col>
       <el-col :span="11">
         <el-form-item>

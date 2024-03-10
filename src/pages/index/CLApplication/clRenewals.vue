@@ -7,22 +7,9 @@ Function: Show all commercial application list and do all operations on the list
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Application Processing</span>
+      <span class="inPageNav">Application Renewals</span>
     </div>
     <div class="inPageContent">
-      <div class="searchBox">
-        <el-form :model="searchForm" ref="searchForm" class="searchForm">
-          <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
-          </el-form-item>
-          <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
       <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
@@ -42,9 +29,14 @@ Function: Show all commercial application list and do all operations on the list
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="ExpiryDate" prop="ExpiryDate" min-width="90" sortable="custom">
+          <template v-slot="scope">
+            <span>{{dateFormat(scope.row.ExpiryDate)}}</span>
+          </template>
+        </el-table-column>
+        <!--el-table-column label="Title" prop="Title" min-width="200" sortable="custom"></el-table-column-->
         <el-table-column label="Applicant" prop="NameInsured" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
         <el-table-column label="Premium" prop="Premium" min-width="80" sortable="custom"></el-table-column>
         <el-table-column label="EffecDate" prop="EffectiveDate" min-width="90" sortable="custom">
@@ -61,7 +53,7 @@ Function: Show all commercial application list and do all operations on the list
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  :type="processType(scope.row)" @click="showQuotation(scope.row)"  size="small">Process</el-button>
               <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 6" type="danger" @click="voidApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Void</el-button>
-              <!--el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 6" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button-->
+              <el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 6" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -205,9 +197,9 @@ Function: Show all commercial application list and do all operations on the list
           </el-row>
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
-              <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
-                <el-select v-model="quotationBindForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
-                  <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+              <el-form-item label="Renewal Questionnaire" prop="Questionnaire">
+                <el-select v-model="quotationBindForm.Questionnaire" placeholder="Questionnaire" no-data-text="No Record" filterable >
+                  <el-option v-for="item in questionnaires" :key="item.ID" :label="item.Name" :value="item.Name"></el-option>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -286,10 +278,10 @@ export default {
       // isLoadingStaffs: false,
       isLoadingInsuranceCompany: false,
       templateList: [],
-      insuranceCorpList: [],
       producerList: [],
       statusList: [],
-      questionnaires: [{ID: 0, Name: 'No Need'}, {ID: 1, Name: 'Questionnaire1.pdf'}, {ID: 2, Name: 'Questionnaire2.pdf'}],
+      insuranceCorpList: [],
+      questionnaires: [],
       appTypes: [{ID: 1, Name: 'New Business'}, {ID: 2, Name: 'Remarket'}, {ID: 3, Name: 'LOA'}, {ID: 4, Name: 'Rewrite'}],
       quotationProcessings: [
         {StatusID: 2, Name: 'Quote', Status: 'Quoted'},
@@ -304,16 +296,16 @@ export default {
       searchName: null,
       // 列表
       tempList: [],
+      totalList: [],
       list: [],
       currentlist: [],
-      totalList: [],
       currentApplication: null,
       currentApplicationID: 0,
       currentApplicationTemplate: null,
       currentApplicationBlockID: 0,
       currentBlockName: null,
       currentApplicationBlock: null,
-      pageSize: 10,
+      pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
       total: 0,
@@ -350,7 +342,7 @@ export default {
         ClientCode: null,
         PolicyNumber: null,
         Premium: null,
-        QuestionnaireID: 0
+        Questionnaire: null
       },
       quotationBindFormRules: {
         PolicyNumber: [
@@ -429,12 +421,9 @@ export default {
     }
   },
   mounted: function () {
-    this.loadProducers()
+    // this.loadProducers()
     this.loadApplicationStatus()
     this.initInsuranceCompany()
-    this.initTemplates()
-    this.loadQuestionnaires()
-    // this.search(null, 0)
     this.loadApplications(0)
   },
   methods: {
@@ -523,10 +512,8 @@ export default {
       this.quotationBindForm.ExpiryDate = moment(this.quotationBindForm.EffectiveDate).add(1, 'year')
     },
     setApplicationStatus: function (app) {
-      // let astatus = this.applicationStatuses.find(s => s.StatusID === app.StatusID)
-      // app.Status = astatus.Name
-      let astatus = this.statusList.find(s => s.key === app.StatusID)
-      app.Status = astatus.value
+      let astatus = this.applicationStatuses.find(s => s.StatusID === app.StatusID)
+      app.Status = astatus.Name
     },
     quotationProcess: function () {
       this.$confirm('Are you sure to process it?', 'Confirm', {
@@ -698,8 +685,7 @@ export default {
       if (type === 'saveAndPrint') {
         this.showApplication(id)
       }
-      // this.search(this.searchForm.name, 0)
-      this.loadApplications(0)
+      this.search(this.searchForm.name, 0)
     },
     // 关闭修改
     closeEdit: function (done) {
@@ -1020,40 +1006,14 @@ export default {
         this.isLoadingTemplates = false
       })
     },
-    // Questionnaire
+    // 保险公司列表
     loadQuestionnaires: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetQuestionnaires', {}).then(res => {
+      this.axios.post('/api/Services/commerialservice.asmx/GetQuestionnaires', {}).then(res => {
         if (res) {
           console.log('Questionnaires', res)
-          let nocorp = [{BlockID: 0, Name: 'No Need'}]
+          let nocorp = [{ID: 0, Name: 'No Need'}]
           this.questionnaires = nocorp.concat(res.data)
-        }
-        this.isLoadingInsuranceCompany = false
-      }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
-      })
-    },
-    loadApplicationStatus: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
-        if (res) {
-          console.log('statusList', res)
-          this.statusList = res.data
-        }
-        this.isLoadingInsuranceCompany = false
-      }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
-      })
-    },
-    loadProducers: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetSelectableProducers', {}).then(res => {
-        if (res) {
-          console.log('statusList', res)
-          this.producerList = res.data
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
@@ -1147,12 +1107,46 @@ export default {
         })
       })
     },
+    loadApplicationStatus: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.statusList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadProducers: function (start) {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
+        if (res) {
+          console.log('producerList', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producerList = res.data
+          } else {
+            this.producerList = this.producerList.concat(res.data)
+          }
+          if (this.producerList.length < this.producerCount) {
+            this.loadProducers(this.producerList.length)
+            this.isLoadingInsuranceCompany = false
+          }
+        }
+      }).catch(err => {
+        console.log('producerList', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
     loadApplications: function (start) {
       this.isLoading = true
       if (start === 0) this.totalList = []
-      this.axios.post('/api/Services/CommerceService.asmx/GetProcessings', {start: start}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetRenewals', {start: start}).then(res => {
         if (res) {
-          console.log('Applications查询', res)
+          console.log('Application查询', res)
           if (start === 0) {
             this.total = res.count
             this.totalList = res.data
@@ -1161,16 +1155,23 @@ export default {
           }
           if (this.totalList.length === this.total) {
             this.totalList.forEach(a => {
+              a.EffectiveDate = moment(a.EffectiveDate)
+              a.ExpiryDate = moment(a.ExpiryDate)
+              a.RequestDate = moment(a.RequestDate)
+              a.DateOfBirth = moment(a.DateOfBirth)
               let status = this.statusList.find(s => s.key === a.StatusID)
               if (status !== undefined) a.Status = status.value
               else a.Status = ''
-              let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              if (producer !== undefined) a.Producer = producer.Name
-              else a.Producer = ''
+              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+              // if (producer !== undefined) a.Producer = producer.Name
+              // else a.Producer = ''
+              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
+              if (corp !== undefined) a.CorpName = corp.Name
+              else a.CorpName = ''
             })
             this.list = this.totalList
-            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
             this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
             this.isLoading = false
           } else this.loadApplications(this.totalList.length)
         }
@@ -1179,53 +1180,29 @@ export default {
         this.isLoading = false
       })
     },
+
     // 查询
-    search: function (name, start) {
-      this.isLoading = true
-      if (start === 0) this.list = []
-      // 后端不支持null查询，把null转换成''
-      if (name === null) {
-        this.searchName = ''
+    search: function () {
+      let query = this.searchForm.name
+      if (query === '') {
+        this.list = this.totalList
       } else {
-        this.searchName = name
+        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+          r.ApplicationID === Number(query) ||
+          r.Producer.indexOf(query) >= 0 ||
+          r.NameInsured.indexOf(query) >= 0 ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
+        )
       }
-      this.axios.post('/api/Services/CommerceService.asmx/GetProcessingApplications', {query: this.searchName, start: start}).then(res => {
-        if (res) {
-          console.log('查询', res)
-          if (res.data.length < this.pagerCount * this.pageSize) this.isAll = true
-          else this.isAll = false
-          res.data.forEach(a => {
-            if (a.InsuranceCorpID === 0) a.CorpName = ''
-            else {
-              let corp = this.insuranceCorpList.find(i => i.InsuranceCorpID === a.InsuranceCorpID)
-              if (corp !== undefined) a.CorpName = corp.Name
-              else a.CorpName = ''
-            }
-            let status = this.statusList.find(s => s.key === a.StatusID)
-            if (status !== undefined) a.Status = status.value
-            else a.Status = ''
-            let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-            if (producer !== undefined) a.Producer = producer.Name
-            else a.Producer = ''
-          })
-          this.list = this.list.concat(res.data)
-          this.total = this.list.length
-          this.pageCount = Math.ceil(this.total / this.pageSize)
-          this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-          // this.list = res.data
-          // this.total = this.list.length
-          // this.currentPage = 1
-        }
-        this.isLoading = false
-      }).catch(err => {
-        console.log('查询出错', err)
-        this.isLoading = false
-      })
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentPage = 1
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
-        // this.search(null, this.total)
       } else {
         this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
@@ -1234,7 +1211,7 @@ export default {
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      // this.search(null, 0)
+      this.search(null, 0)
     },
     // UW弹窗
     showUnderWriter: function (application) {

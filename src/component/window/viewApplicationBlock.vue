@@ -39,10 +39,13 @@
             <div>
               <div class="question fontNormal" v-if="item.OutputModeID === 1">{{item.QuestionDesc}}</div>
               <div class="answer">
-                        <span v-if="item.optionAnswer !== null && item.OutputModeID === 1">
-                          <span class="content">{{item.optionAnswer.Content}}</span>
-                          <i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>
-                        </span>
+                <span v-if="item.optionAnswer !== null && item.OutputModeID === 1">
+                  <span class="content">{{item.optionAnswer.Content}}</span>
+                  <i class="addition" v-if="item.optionAnswer.NeedAddition">
+                    <span>{{item.optionAnswer.Tips}}</span>
+                    <b>{{item.optionAnswer.Addition}}</b>
+                  </i>
+                </span>
                 <span v-else-if="item.optionAnswer !== null && item.OutputModeID === 2">
                           <span class="content">{{item.optionAnswer.Outputs}}</span>
                   <!--<i class="addition" v-if="item.optionAnswer.AdditionContent !== null && item.optionAnswer.AdditionContent !== ''"><b>{{item.optionAnswer.AdditionContent}}</b></i>-->

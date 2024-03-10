@@ -41,7 +41,7 @@
       </el-row>
       <el-row :gutter="20" style="margin-top:40px; margin-left:55px;">
         <el-col :span="22">
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span>Further to your request following is the insurance confirmation for the </span></div>
+          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span>Further to your request, the following is the insurance confirmation for the </span></div>
           <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="font-weight: bold;">{{coiForm.VehicleInfo}}</span></div>
         </el-col>
       </el-row>
@@ -61,11 +61,9 @@
       </el-row>
       <el-row :gutter="20" style="margin-top:25px; margin-left:55px; font-size:18px;">
         <el-col :span="20">
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCFs: </span><span style="display: inline-block; padding-left:30px">{{coiForm.OPCFs}}</span></div>
-          <!--
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCF# 23A Lienholder </span><span style="display: inline-block; padding-left:330px">{{coiForm.OPCF23}}</span></div>
-          <div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCF5- Permission to Rent or Lease Automobiles </span><span style="display: inline-block; padding-left:138px">{{coiForm.OPCF5}}</span></div>
-          <-->
+          <!--div class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCFs: </span><span style="display: inline-block; padding-left:30px">{{coiForm.OPCFs}}</span></div-->
+          <div v-if="coiForm.OPCF23 === 'Included'" class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCF 23A Lienholder </span><span style="display: inline-block; padding-left:330px">{{coiForm.OPCF23}}</span></div>
+          <div  v-if="coiForm.OPCF5 === 'Included'" class="viewMemo-subtitle head" style="margin-left:30px;"><span style="">OPCF5- Permission to Rent or Lease Automobiles </span><span style="display: inline-block; padding-left:138px">{{coiForm.OPCF5}}</span></div>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top:25px; margin-left:55px; font-size:18px;">
@@ -272,18 +270,20 @@ export default {
           if (answer !== undefined) {
             let opcfs = answer.AnswerDesc.replaceAll(/Limit:/g, '')
             opcfs = opcfs.replaceAll(/[0-9]+::/g, '')
-            opcfs = opcfs.replace('|Accident Waiver (if applicable)', '')
+            opcfs = opcfs.replace(/\|Accident Waiver \(.*\)/g, '')
             opcfs = opcfs.replace('|Anymore?', '')
             opcfs = opcfs.replaceAll(/\.|\s/g, '')
             opcfs = opcfs.replaceAll(/\$[0-9]*/g, '')
-            this.coiForm.OPCFs = opcfs.replaceAll('|', ', ')
+            this.coiForm.OPCFs = opcfs.replaceAll('|', ',  ')
           }
           answer = memo.answers.find(a => a.QuestionDesc.indexOf('Is this vehicle leased, financed or owned') >= 0)
           if (answer !== undefined) {
-            if (answer.AnswerDesc.indexOf('Financed')) this.coiForm.OPCF5 = 'Included'
-            else if (answer.AnswerDesc.indexOf('Leased')) this.coiForm.OPCF23 = 'Included'
+            if (answer.AnswerDesc.indexOf('Financed') >= 0) this.coiForm.OPCF23 = 'Included'
+            if (answer.AnswerDesc.indexOf('Leased') >= 0) this.coiForm.OPCF5 = 'Included'
+            console.log('coiForm', this.coiForm)
           }
         }
+        // console.log('coiForm', this.coiForm)
         this.isLoading = false
       }).catch(err => {
         console.log('查询单个出错', err)

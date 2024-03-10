@@ -214,6 +214,9 @@ export default {
           this.memoForm.Templates = []
           let effdate = moment(res.data.EffectiveDate)
           this.memoForm.EffectiveDate = effdate
+          let reqdate = moment(res.data.RequestDate)
+          this.memoForm.RequestDate = reqdate
+          this.memoForm.InsuranceCorp = this.insuranceCorps.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
           this.loadingCount = 0
           let startFlag = true
           this.memoForm.memoTemplates.forEach(ct => {
@@ -223,9 +226,9 @@ export default {
             startFlag = false
           })
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
-            this.memoForm.InsuranceCorp = this.insuranceCorps.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
+            // this.memoForm.InsuranceCorp = this.insuranceCorps.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             // this.memoForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
-            this.memoForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+            // this.memoForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
             // this.matchAnswerBlockQuestion()
             // this.memoForm.Templates = res.data.memoTemplates.map(item => { return item.TemplateID })
             // this.changeTemplates(this.memoForm.Templates, 'Answer')

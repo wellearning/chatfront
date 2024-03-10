@@ -27,25 +27,25 @@ Function: Show my cover letter list and do all operations on the list.
           </el-form-item>
         </el-form>
       </div>
-      <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="CoverLetterID" width="60" fixed="left"></el-table-column>
-        <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200"></el-table-column>
-        <el-table-column label="Line of Business" prop="Title" min-width="200"></el-table-column>
-        <el-table-column label="Company" prop="CorpName" min-width="150"></el-table-column>
-        <el-table-column label="EffectiveDate" min-width="150">
+      <el-table height="560" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="ID" prop="CoverLetterID" width="60" fixed="left" sortable="custom"></el-table-column>
+        <el-table-column label="ClieCode" prop="ClientCode" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Line of Business" prop="Title" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="RequestDate" min-width="150">
+        <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="300" fixed="right">
+        <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
+        <el-table-column label="Action" width="220" fixed="right">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
             <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
@@ -208,6 +208,16 @@ export default {
     }
   },
   methods: {
+    sorttable: function (column) {
+      if (column.order === 'descending') this.rankdesc(column.prop)
+      else this.rank(column.prop)
+    },
+    rank: function (name) {
+      this.list.sort(this.by(name))
+    },
+    rankdesc: function (name) {
+      this.list.sort(this.bydesc(name))
+    },
     showCoverLetter: function (coverLetter) {
       this.currentCoverLetter = coverLetter
       this.currentCoverLetterID = coverLetter.CoverLetterID
@@ -330,10 +340,10 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {

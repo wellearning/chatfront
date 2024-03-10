@@ -24,7 +24,7 @@ export default{
         if (leftHeight < pageHeight) {
           PDF.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight)
         } else {
-          while (leftHeight > 0) {
+          while (leftHeight > 30) {
             // 分解成一个个页面图片
             let height = pageHeight
             if (leftHeight < pageHeight) height = leftHeight
@@ -44,7 +44,7 @@ export default{
             // PDF.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight)
             leftHeight -= height
             // position -= 841.89
-            if (leftHeight > 0) {
+            if (leftHeight > 30) {
               PDF.addPage()
             }
           }
@@ -52,7 +52,7 @@ export default{
         PDF.save(title + '.pdf')
       })
     }
-    Vue.prototype.downloadData = function (itemtype, arg1, arg2, filename) {
+    Vue.prototype.downloadData = function (itemtype, arg1, arg2, filename, temp) {
       // const ServerAddress = 'http://134.175.142.102:8090'
       // var url = ServerAddress + '/api/services/DownloadHandle.ashx'
       let url = '/api/services/DownloadHandle.ashx'
@@ -74,6 +74,7 @@ export default{
         a.download = filename
         a.href = blobUrl
         a.click()
+        if (temp !== undefined) temp.isDownloading = false
       }
       req.send(fd)
     }
