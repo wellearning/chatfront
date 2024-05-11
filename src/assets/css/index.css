@@ -28,7 +28,7 @@ html {
 }
 table tr td {
   padding-left: 10px;
-  padding-right: 20px;
+  padding-right: 10px;
 }
 .el-container {
   height: 100vh;
@@ -470,7 +470,7 @@ table tr td {
   font-weight: bold;
 }
 .answer .propertyQuestion .additionContent {
-  width: 100px;
+  width: 300px;
   font-weight: normal;
   margin-left: 10px;
 }

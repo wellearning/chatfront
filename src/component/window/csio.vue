@@ -10,7 +10,7 @@
           <tr>
             <!--th style="width:10px"></th-->
             <th colspan="2" style="padding-left:10px;  text-align:left;font-size: 1.0rem;">CSIO ></th>
-            <th colspan="10" style="font-family: 'Roboto Thin'; text-align: center;font-size: 2.0rem;">CERTIFICATE OF LIABILITY INSURANCE</th>
+            <th colspan="10" style="font-family: 'Roboto Thin'; text-align: center;font-size: 1.9rem;">CERTIFICATE OF LIABILITY INSURANCE</th>
             <th style=""></th>
             <th style="width:100px"></th>
           </tr>

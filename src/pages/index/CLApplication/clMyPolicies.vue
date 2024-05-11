@@ -36,9 +36,9 @@ Function: Show my commercial application list and do all operations on the list.
                 <template slot-scope="scope">
                   <el-button-group>
                     <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                    <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                    <!--el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
                     <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                    <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                    <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button-->
                   </el-button-group>
                 </template>
               </el-table-column>
@@ -58,9 +58,10 @@ Function: Show my commercial application list and do all operations on the list.
           <template slot-scope="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <!--el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button-->
+              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading" size="small">Renew</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -68,7 +69,7 @@ Function: Show my commercial application list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationWindowVisible" width="1550px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1550px" center :before-close="closeEdit">
         <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templatesList" @close="closeEditApplication"></EditApplication>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
@@ -88,7 +89,7 @@ Function: Show my commercial application list and do all operations on the list.
       </el-dialog>
       <!----------------------------------------------查阅applicationBlock弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -102,6 +103,16 @@ Function: Show my commercial application list and do all operations on the list.
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Questionnaire 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="questionnaireFormVisible" width="1184.56px"  height="2184.56px" center >
+        <ViewQuestionnaire ref="vq" :applicationid="currentApplicationID" :insuranceCorps="insuranceCorpList"></ViewQuestionnaire>
+      </el-dialog>
+      <!----------------------------------------------Questionnaire 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BaseInfo Edition 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
+        <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
+      </el-dialog>
+      <!----------------------------------------------BaseInfo弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -111,6 +122,8 @@ Function: Show my commercial application list and do all operations on the list.
 import moment from 'moment'
 import ViewSheet from '@/component/window/sheet'
 import ViewApplication from '@/component/window/viewApplication'
+import EditApplicationBase from '@/component/parts/editApplicationBase'
+import ViewQuestionnaire from '@/component/window/questionnaire'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
@@ -121,7 +134,9 @@ export default {
     editApplicationBlock,
     ViewApplicationBlock,
     EditApplication,
-    ViewApplication
+    ViewApplication,
+    ViewQuestionnaire,
+    EditApplicationBase
   },
   data: function () {
     return {
@@ -146,6 +161,7 @@ export default {
         name: null
       },
       searchName: null,
+      questionnaireFormVisible: false,
       pinkSlipFormVisible: false,
       currentApplicationID: null,
       currentApplication: null,
@@ -563,6 +579,13 @@ export default {
       }
       this.search(this.searchForm.name)
     },
+    showQuestionnaire: function (applicationid) {
+      this.currentApplicationID = applicationid
+      this.questionnaireFormVisible = true
+      if (this.$refs.vq !== undefined) {
+        this.$refs.vq.loadApplication(applicationid)
+      }
+    },
     // 关闭修改
     closeEdit: function (done) {
       this.$confirm('Are you sure to close it?', 'Confirm', {
@@ -626,8 +649,8 @@ export default {
       if (val === this.pageCount && !this.isAll) {
         this.search(null, this.total)
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 查询
     search: function () {
@@ -751,6 +774,19 @@ export default {
       this.sheetFormVisible = true
       if (this.$refs.vs !== undefined) {
         this.$refs.vs.loadBusinessObj(applicationid)
+      }
+    },
+    showEdition: function (application) {
+      this.currentApplication = application
+      this.applicationFormVisible = true
+      if (this.$refs.eab !== undefined) {
+        this.$refs.eab.setForm(application)
+      }
+    },
+    hideEdition: function () {
+      this.applicationFormVisible = false
+      if (this.currentApplication.applicationTemplate !== null) {
+        this.loadApplication(this.currentApplication)
       }
     }
   }

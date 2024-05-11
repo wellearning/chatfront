@@ -36,9 +36,9 @@ Function: Show my commercial application list and do all operations on the list.
               <el-table-column label="Sub-Action" width="380">
                 <template slot-scope="scope">
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <!--el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  <el-button-- v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button-->
                 </template>
               </el-table-column>
             </el-table>
@@ -56,7 +56,7 @@ Function: Show my commercial application list and do all operations on the list.
         <el-table-column label="Action" width="300">
           <template slot-scope="scope">
             <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+            <!--el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button-->
             <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
           </template>
         </el-table-column>
@@ -64,7 +64,7 @@ Function: Show my commercial application list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationWindowVisible" width="1550px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1550px" center :before-close="closeEdit">
         <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templatesList" @close="closeEditApplication"></EditApplication>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
@@ -84,7 +84,7 @@ Function: Show my commercial application list and do all operations on the list.
       </el-dialog>
       <!----------------------------------------------查阅applicationBlock弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -204,9 +204,10 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    // this.search(null)
     this.initTemplates()
     this.initInsuranceCompany()
+    this.loadApplications(0)
     if (this.$store.state.ApplicationID !== undefined && this.$store.state.ApplicationID !== '') {
       this.view(this.$store.state.ApplicationID)
       this.$store.state.ApplicationID = ''
@@ -553,7 +554,7 @@ export default {
       if (type === 'saveAndPrint') {
         this.showApplication(id)
       }
-      this.search(this.searchForm.name)
+      // this.search(this.searchForm.name)
     },
     // 关闭修改
     closeEdit: function (done) {
@@ -573,14 +574,53 @@ export default {
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
+    loadApplications: function (start) {
+      this.isLoading = true
+      if (start === 0) this.totalList = []
+      this.axios.post('/api/Services/CommerceService.asmx/GetMyRenewals', {start: start}).then(res => {
+        if (res) {
+          console.log('Renewals', res)
+          if (start === 0) {
+            this.total = res.count
+            this.totalList = res.data
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length === this.total) {
+            this.totalList.forEach(a => {
+              a.EffectiveDate = moment(a.EffectiveDate)
+              a.ExpiryDate = moment(a.ExpiryDate)
+              a.RequestDate = moment(a.RequestDate)
+              a.DateOfBirth = moment(a.DateOfBirth)
+              let status = this.statusList.find(s => s.key === a.StatusID)
+              if (status !== undefined) a.Status = status.value
+              else a.Status = ''
+              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+              // if (producer !== undefined) a.Producer = producer.Name
+              // else a.Producer = ''
+              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
+              if (corp !== undefined) a.CorpName = corp.Name
+              else a.CorpName = ''
+            })
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoading = false
+          } else this.loadApplications(this.totalList.length)
+        }
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
 
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
-        this.search(null, this.total)
+        // this.search(null, this.total)
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 查询
     search: function (name) {

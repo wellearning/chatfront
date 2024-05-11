@@ -20,16 +20,16 @@
           <AnswerAttribute ref="editAttribute" :answer="answer"  @changeValue="changeVal(answer)"></AnswerAttribute>
         </div>
         <div class="answerMemo" v-else-if="answer.TypeID === 4 && answer.StatusID === 1">
-          <AnswerSimpleAnswer :answer="answer"  @changeValue="showNextQuestion(answer)"></AnswerSimpleAnswer>
+          <AnswerSimpleAnswer :answer="answer"  @changeValue="changeVal(answer)"></AnswerSimpleAnswer>
         </div>
         <div class="answerMemo" v-else-if="answer.TypeID === 5 && answer.StatusID === 1">
-          <AnswerFillInQuestion :answer="answer"  @changeValue="showNextQuestion(answer)"></AnswerFillInQuestion>
+          <AnswerFillInQuestion :answer="answer"  @changeValue="changeVal(answer)"></AnswerFillInQuestion>
         </div>
         <div class="answerMemo" v-else-if="answer.TypeID === 6 && answer.StatusID === 1">
-          <AnswerSingleChoiceQuestion :answer="answer" @changeValue="showNextQuestion(answer)"></AnswerSingleChoiceQuestion>
+          <AnswerSingleChoiceQuestion :answer="answer" @changeValue="changeVal(answer)"></AnswerSingleChoiceQuestion>
         </div>
         <div class="answerMemo" v-else-if="answer.TypeID === 7 && answer.StatusID === 1">
-          <AnswerMultipleChoiceQuestion :answer="answer"  @changeValue="showNextQuestion(answer)"></AnswerMultipleChoiceQuestion>
+          <AnswerMultipleChoiceQuestion :answer="answer"  @changeValue="changeVal(answer)"></AnswerMultipleChoiceQuestion>
         </div>
       </div>
     </div>
@@ -224,15 +224,22 @@ export default {
       return rate.Rate
     },
     getAttribute: function (name) {
-      for (let i = 0; i < this.application.applicationTemplates.length; i++) {
-        let appTemp = this.application.applicationTemplates[i]
-        for (let j = 0; j < appTemp.applicationBlocks.length; j++) {
-          let appBlock = appTemp.applicationBlocks[j]
-          let answer = appBlock.answers.find(a => a.DataSource === name)
-          if (answer !== undefined) return answer.AnswerDesc
-        }
+      let appTemp = this.applicationTemplate
+      for (let j = 0; j < appTemp.applicationBlocks.length; j++) {
+        let appBlock = appTemp.applicationBlocks[j]
+        let answer = appBlock.answers.find(a => a.DataSource === name)
+        if (answer !== undefined) return answer.AnswerDesc
       }
       return ''
+    },
+    getAttributeByName: function (name) {
+      let appTemp = this.applicationTemplate
+      for (let j = 0; j < appTemp.applicationBlocks.length; j++) {
+        let appBlock = appTemp.applicationBlocks[j]
+        let answer = appBlock.answers.find(a => a.QuestionDesc === name)
+        if (answer !== undefined) return answer
+      }
+      return undefined
     },
     showAttribute: function (answer) {
       if (this.$refs.editAttribute !== undefined) {
@@ -274,6 +281,7 @@ export default {
           if (isNaN(Operand)) { // true代表非数字，字符串比较
             if (routes[i].Operator === '=' && value === Operand) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else {
               skipNumber = 1
@@ -281,23 +289,28 @@ export default {
           } else { // false代表是有效数字，数字比较
             if (routes[i].Operator === '=' && parseFloat(value) === parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else if (routes[i].Operator === '>' && parseFloat(value) > parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else if (routes[i].Operator === '<' && parseFloat(value) < parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else if (routes[i].Operator === '>=' && parseFloat(value) >= parseFloat(Operand)) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else if (routes[i].Operator === '<=' && parseInt(value) <= parseInt(Operand)) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else {
               skipNumber = 1
             }
-            routeLevel = routes[i].RouteLevel
+            // routeLevel = routes[i].RouteLevel
           }
         }
       } else if (answer.IsRoute && question.RouteTypeID === 2 && answer.TypeID === 6) { // baseOnAnswer singleChoice
@@ -318,18 +331,7 @@ export default {
       if (sign === 'number') {
         let ed = new Date(this.EffectiveDate)
         exp = exp.replace('{EffectiveDate}.Year', ed.getFullYear())
-        let corpid = this.application.InsuranceCorpID
-        let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === corpid)
-        if (corp !== undefined) {
-          let starti = exp.indexOf('{')
-          let endi = exp.indexOf('}')
-          if (starti >= 0 && endi >= 0 && endi > starti + 1) {
-            let replaced = exp.substr(starti + 1, endi - starti - 1)
-            if (corp[replaced] !== undefined) {
-              exp = exp.replace('{' + replaced + '}', corp[replaced])
-            }
-          }
-        }
+        exp = exp.replace('{CurrentYear}', new Date().getFullYear())
         let operands = exp.split(/\+|-/g)
         let operators = exp.split(/\d+/)
         let result = 0
@@ -358,7 +360,16 @@ export default {
           ca.checkvalue = 0
         }
       }
-      this.$emit('resetLeftChildren')
+      this.$emit('resetLeft')
+    },
+    resetChildrenAnswer: function (answer) {
+      let cblock = this.applicationBlock
+      let child = cblock.answers.find(a => a.DataSource === answer.QuestionDesc && a.QuestionID !== answer.QuestionID)
+      if (child !== undefined) {
+        child.AnswerDesc = ''
+        child.StatusID = 0
+        if (child.IsRoute) this.resetLeftAnswer(child)
+      }
     },
     _checkOver: function () {
       let cb = this.applicationBlock
@@ -384,7 +395,7 @@ export default {
       cb.answers.forEach(ca => {
         if (ca.StatusID === 2) return
         if (ca.StatusID === 0) cb.Finished = false
-        if ((ca.TypeID === 3 || ca.TypeID === 4) && (ca.AnswerDesc === null || ca.AnswerDesc.length === 0)) cb.Finished = false
+        if ((ca.TypeID === 3 || ca.TypeID === 4) && (ca.AnswerDesc === null || ca.AnswerDesc === undefined || ca.AnswerDesc.length === 0)) cb.Finished = false
         if (ca.TypeID === 5) {
           ca.partAnswers.forEach(pa => {
             if (pa.IsFillin && pa.Part.length === 0) {
@@ -396,8 +407,8 @@ export default {
       })
       if (cb.Finished) {
         cb.StatusID = 1
+        this.$emit('checkOver')
       } else cb.StatusID = 3
-      this.$emit('checkOver')
     },
     skipBlockLeft: function (answer) {
       let cblock = this.applicationBlock
@@ -460,7 +471,7 @@ export default {
           this.skipLeft(answer)
         }
       }
-      this.checkOver()
+      // this.checkOver()
     },
     showNextBlock: function () {
       this.$emit('showNextBlock')
@@ -486,8 +497,10 @@ export default {
       */
     },
     changeVal: function (answer) {
-      if (answer.InputType !== 'computed') this.recomputeAttributes()
+      if (answer.InputType === 'list') this.resetChildrenAnswer(answer)
+      else if (answer.InputType !== 'computed') this.recomputeAttributes()
       this.showNextQuestion(answer)
+      this.checkOver()
     }
 
   }

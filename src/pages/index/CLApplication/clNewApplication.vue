@@ -27,54 +27,62 @@ Function: Create new commercial application.
           <el-col :span="6">
             <el-form-item label="Client Code" prop="ClientCode">
               <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
+              <!--el-autocomplete v-model="applicationForm.ClientCode" placeholder="Client Code" style="width:100%"
+                               :fetch-suggestions="querySearch" @select="handleSelect" :trigger-on-focus="false"
+                               value-key="ClientCode"
+              ></el-autocomplete-->
             </el-form-item>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-form-item label="Producer" prop="ProducerID">
               <el-select v-model="applicationForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable>
                 <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="7">
-            <el-form-item label="Application" prop="Templates">
-              <el-select v-model="currentTemplateID" placeholder="Application Type" no-data-text="No Record" filterable collapse-tags :disabled="applicationForm.NameInsured === null" @change="changeTemplates()">
+          <el-col :span="6">
+            <el-form-item label="ApplicationType" prop="TemplateID">
+              <el-select v-model="applicationForm.TemplateID" placeholder="Application Type" no-data-text="No Record" filterable @change="changeTemplates()">
                 <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="5">
+        <!--el-row :gutter="20" class="subtitle" v-if="showMore">
+          <el-col :span="7">
             <el-form-item label="Applicant" prop="NameInsured">
               <el-input v-model="applicationForm.NameInsured" placeholder="Last, First Name or Business Name" title="Last Name, First Name or Business Name"></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="5">
+          <el-col :span="6">
             <el-form-item label="Owner/Principal" prop="PersonContact">
               <el-input v-model="applicationForm.PersonContact" placeholder="Last name, First name" title=""></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="5">
-            <el-form-item label="DOB" prop="DateOfBirth">
-              <el-date-picker v-model="applicationForm.DateOfBirth" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-            </el-form-item>
-          </el-col>
-          <el-col :span="4">
             <el-form-item label="Phone" prop="PhoneNumber">
               <el-input v-model="applicationForm.PhoneNumber" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="5">
+          <el-col :span="6">
+            <el-form-item label="DOB" prop="DateOfBirth">
+              <el-date-picker v-model="applicationForm.DateOfBirth" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
             <el-form-item label="Email" prop="Email">
               <el-input v-model="applicationForm.Email" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20" class="subtitle">
+        <el-row :gutter="20" class="subtitle" v-if="showMore">
           <el-col :span="7">
             <el-form-item label="Mailing Address" prop="Address">
               <el-input v-model="applicationForm.Address" placeholder="Street No" title=""></el-input>
+              <el-autocomplete v-model="applicationForm.Address" placeholder="Mailling Address" style="width:100%"
+                               :fetch-suggestions="querySearchAddress" @select="handleSelectAddress" :trigger-on-focus="false"
+                               value-key="Address"
+              ></el-autocomplete>
             </el-form-item>
           </el-col>
           <el-col :span="6">
@@ -82,34 +90,37 @@ Function: Create new commercial application.
               <el-input v-model="applicationForm.City" placeholder="City" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-form-item label="Province" prop="Province">
               <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="7">
+          <el-col :span="6">
             <el-form-item label="PostCode" prop="PostCode">
-              <el-input v-model="applicationForm.MailingAddress" placeholder="" title=""></el-input>
+              <el-input v-model="applicationForm.PostCode" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row-->
       </el-form>
       <div class="newMemo-submit">
-        <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering" :disabled="currentTemplateID === null">Start</el-button>
+        <el-button icon="el-icon-check" type="primary" @click="beginToAnswer()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="!isAnswering" :disabled="applicationForm.TemplateID === null">Start</el-button>
+        <!--el-button icon="el-icon-view" type="primary" plain v-if="!showMore" @click="showMoreInfo()">Show More</el-button>
+        <el-button icon="el-icon-hide" type="primary" plain v-if="showMore" @click="hideMoreInfo()">Hide More</el-button-->
+        <el-button icon="el-icon-hide" type="primary" plain v-if="showMore" @click="reset()">Reset</el-button>
       </div>
       <EditApplicationBody v-if="isAnswering" :applicTemplate="applicationForm.applicationTemplate" @checkOver="checkOver()"></EditApplicationBody>
       <div class="newMemo-submit">
-        <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
+        <el-button tabindex="0" icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
         <el-button icon="el-icon-check" type="primary" @click="submit('finish')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && applicationForm.StatusID === 1">Finish</el-button>
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import EditDirectionBlock from '@/component/parts/editDirectionBlock'
 import EditApplicationBody from '@/component/parts/editApplicationTemplate'
 import moment from 'moment'
+import {isNumeric} from 'echarts/lib/util/number'
 
 export default {
   components: {
@@ -119,12 +130,14 @@ export default {
   data: function () {
     return {
       isDirecting: true,
+      showMore: false,
       EffectiveDate: null,
       isAnswering: false,
       isLoading: false,
       isLoadingTemplates: false,
       isLoadingInsuranceCompany: false,
       isLoadingProducer: false,
+      isLoadingClients: false,
       isLoadingBlockQuestions: false,
       applicationForm: {
         Title: null,
@@ -142,7 +155,7 @@ export default {
         ProducerID: JSON.parse(this.$store.getters.getAccount).StaffID,
         RequestDate: moment(new Date()),
         NameInsured: null,
-        TemplateType: null,
+        TemplateID: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         Author: JSON.parse(this.$store.getters.getAccount).Name,
         corp: null,
@@ -154,21 +167,24 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
-        RequestDate: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+        EffectiveDate: [
+          { required: false, message: 'Please Select', trigger: 'blur' }
         ],
         DateOfBirth: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: false, message: 'Please Select', trigger: 'blur' }
         ],
         ClientCode: [
           { required: false, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
-        TemplateType: [
+        ProducerID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        TemplateID: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         NameInsured: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
+          { required: false, message: 'Please Enter', trigger: 'blur' }
         ]
       },
       TemplateTypeID: 2,
@@ -178,12 +194,15 @@ export default {
       currentTemplates: [],
       insuranceCompanyList: [],
       producerList: [],
+      clients: [],
+      clientCount: 0,
       blockQuestions: [],
       properties: [],
       directionBlock: null
     }
   },
   mounted: function () {
+    this.loadClients(0)
     this.initTemplates()
     this.initInsuranceCompany()
     this.initProducers()
@@ -192,14 +211,89 @@ export default {
   watch: {
   },
   methods: {
+    querySearch: function (queryString, cb) {
+      let clients = this.clients
+      let results = queryString ? clients.filter(this.createFilter(queryString)) : clients
+      // 调用 callback 返回建议列表的数据
+      cb(results)
+    },
+    createFilter: function (queryString) {
+      return (client) => {
+        return (client.ClientCode.toLowerCase().indexOf(queryString.toLowerCase()) === 0)
+      }
+    },
+    handleSelect: function (item) {
+      console.log(item)
+      this.applicationForm.Address = item.Address
+      this.applicationForm.City = item.City
+      this.applicationForm.Province = item.Province
+      this.applicationForm.PersonContact = item.Contactor
+      this.applicationForm.NameInsured = item.NameAuto
+      this.applicationForm.PhoneNumber = item.PhoneNumber
+      this.applicationForm.PostCode = item.PostCode
+      this.applicationForm.Email = item.Email
+      let dob = moment(item.DateOfBirth)
+      this.applicationForm.DateOfBirth = dob.format('YYYY-MM-DD')
+    },
+    querySearchAddress: function (queryString, cb) {
+      let clients = this.clients.filter(c => c.Address !== null)
+      let results = queryString ? clients.filter(this.createFilterAdderss(queryString)) : clients
+      // 调用 callback 返回建议列表的数据
+      if (results.length > 0) this.setAddress(results[0])
+      else this.setAddress()
+      cb(results)
+    },
+    createFilterAdderss: function (queryString) {
+      let words = queryString.split(' ')
+      words = words.filter(w => !isNumeric(w) && w !== '')
+      return (client) => {
+        if (words.length === 0) return false
+        let result = true
+        let cwords = client.Address.split(' ')
+        cwords = cwords.filter(w => !isNumeric(w))
+        words.forEach(word => {
+          if (!result) return
+          let cword = cwords.find(cw => cw.toLowerCase().indexOf(word.toLowerCase()) === 0)
+          if (cword === undefined) result = false
+        })
+        return result
+      }
+    },
+    handleSelectAddress: function (item) {
+      this.setAddress(item)
+    },
+    setAddress: function (item) {
+      if (item !== undefined) {
+        this.applicationForm.City = item.City
+        this.applicationForm.Province = item.Province
+        this.applicationForm.PostCode = item.PostCode
+      } else {
+        this.applicationForm.City = ''
+        this.applicationForm.Province = ''
+        this.applicationForm.PostCode = ''
+      }
+    },
+    reset: function () {
+      this.applicationForm.ClientCode = ''
+      this.applicationForm.Address = ''
+      this.applicationForm.City = ''
+      this.applicationForm.Province = 'ON'
+      this.applicationForm.PostCode = ''
+      this.applicationForm.PersonContact = ''
+      this.applicationForm.DateOfBirth = null
+      this.applicationForm.PhoneNumber = ''
+      this.applicationForm.Email = ''
+    },
+    showMoreInfo: function () { this.showMore = true },
+    hideMoreInfo: function () { this.showMore = false },
     directReady: function (templateid) {
-      if (templateid !== undefined) this.currentTemplateID = templateid
+      if (templateid !== undefined) this.applicationForm.TemplateID = templateid
       this.changeTemplates()
       this.isDirecting = false
     },
     loadBlockQuestions: function () {
       this.isLoadingBlockQuestions = true
-      this.axios.post('/api/Services/BaseService.asmx/GetBlockQuestionsByTemplate', {templateid: this.currentTemplateID}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetBlockQuestionsByTemplate', {templateid: this.applicationForm.TemplateID}).then(res => {
         if (res) {
           console.log('BlockQuestions', res)
           this.blockQuestions = res.data
@@ -244,6 +338,29 @@ export default {
         this.isLoadingTemplates = false
       })
     },
+    loadClients: function (start) {
+      this.isLoadingProducers = true
+      this.axios.post('/api/Services/baseservice.asmx/GetBusinessLineClients', {businesslineid: 2, start: start}).then(res => {
+        if (res) {
+          console.log('clients', res)
+          if (start === 0) {
+            this.clientCount = res.count
+            this.clients = res.data
+          } else {
+            this.clients = this.clients.concat(res.data)
+          }
+          if (this.clients.length < this.clientCount) {
+            this.loadClients(this.clients.length)
+          } else {
+            this.isLoadingClients = false
+          }
+        }
+      }).catch(err => {
+        console.log('clients', err)
+        this.isLoadingClients = false
+      })
+    },
+
     // 初始化保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
@@ -292,14 +409,14 @@ export default {
     // 选择Templates
     changeTemplates: function () {
       if (this.isAnswering) this.clearApplication()
-      this.currentTemplate = this.templateList.find(item => item.TemplateID === this.currentTemplateID)
+      this.currentTemplate = this.templateList.find(item => item.TemplateID === this.applicationForm.TemplateID)
       if (this.currentTemplate !== undefined) this.applicationForm.Title = this.currentTemplate.Title
     },
     // 开始回答
     beginToAnswer: function () {
       this.isLoading = true
       // this.loadBlockQuestions()
-      this.loadApplicationTemplate(this.currentTemplateID)
+      this.loadApplicationTemplate(this.applicationForm.TemplateID)
     },
     checkOver: function () {
       if (this.applicationForm.applicationTemplate.StatusID === 1) this.applicationForm.StatusID = 1
@@ -311,6 +428,7 @@ export default {
         if (valid) {
           let application = JSON.parse(JSON.stringify(this.applicationForm))
           if (this.EffectiveDate !== null) application.EffectiveDate = this.EffectiveDate
+          if (application.DateOfBirth === null) application.DateOfBirth = new Date(2000, 1, 1)
           application.InsuranceTypeID = this.TemplateTypeID
           let sequenceno = 0
           let template = application.applicationTemplate

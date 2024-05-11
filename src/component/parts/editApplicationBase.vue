@@ -10,6 +10,13 @@
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
+            <el-form-item label="Applicant" prop="NameInsured">
+              <el-input v-model="applicationForm.NameInsured" placeholder="Applicant" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
             <el-form-item label="Effective Date" prop="EffectiveDate">
               <el-date-picker v-model="applicationForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
             </el-form-item>
@@ -73,16 +80,23 @@
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
             <el-form-item label="ApplicationType" prop="TemplateID">
-              <el-select v-model="applicationForm.TemplateID" placeholder="Template" no-data-text="No Record" @change="changeTemplate()" filterable >
+              <el-select v-model="applicationForm.TemplateID" placeholder="Template" no-data-text="No Record" filterable >
                 <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
+        <!--GmapAutocomplete style="width: 500px; height: 25px;"
+                          :options="{
+            componentRestrictions: { country: 'ca' },
+          }"
+                          :value="applicationForm.Address"
+                          @place_changed="setPlace">
+        </GmapAutocomplete-->
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
             <el-form-item label="Address" prop="Address">
-              <el-input v-model="applicationForm.Address" placeholder="Address" title=""></el-input>
+              <el-input id="pac-input" v-model="applicationForm.Address" placeholder="Address" title=""></el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -129,17 +143,25 @@
 </template>
 
 <script>
+import moment from 'moment'
+
 export default {
   name: 'editApplicationBase',
   data: function () {
     return {
       isLoading: false,
+      isLoadingInsuranceCorps: false,
+      isLoadingApplication: false,
+      isLoadingQuestionnaires: false,
+      isLoadingAppTypes: false,
+      isLoadingTemplates: false,
       templateList: [],
       appTypes: [],
       insuranceCorpList: [],
       questionnaires: [],
       applicationForm: {
         ApplicationID: null,
+        NameInsured: null,
         EffectiveDate: null,
         TypeID: null,
         LeadFromCorpID: 0,
@@ -194,20 +216,21 @@ export default {
     this.loadTemplates()
     this.loadInsuranceCorps()
     this.loadQuestionnaires()
-    this.setForm(this.application)
+    this.loadApplication(this.application.ApplicationID)
+    // this.setForm(this.application)
   },
   methods: {
     loadAppTypes: function () {
-      this.isLoading = true
+      this.isLoadingAppTypes = true
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
         if (res) {
           console.log('loadAppTypes', res)
           this.appTypes = res.data
         }
-        this.isLoading = false
+        this.isLoadingAppTypes = false
       }).catch(err => {
         console.log('loadAppTypes出错', err)
-        this.isLoading = false
+        this.isLoadingAppTypes = false
       })
     },
     loadTemplates: function () {
@@ -226,34 +249,52 @@ export default {
     },
     // 保险公司列表
     loadInsuranceCorps: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingInsuranceCorps = true
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
         if (res) {
-          console.log('保险公司列表', res)
+          console.log('InsuranceCorps', res)
           this.insuranceCorpList = res.data
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingInsuranceCorps = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('InsuranceCorps', err)
+        this.isLoadingInsuranceCorps = false
       })
     },
     // Questionnaire
     loadQuestionnaires: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingQuestionnaires = true
       this.axios.post('/api/Services/baseservice.asmx/GetQuestionnaires', {}).then(res => {
         if (res) {
           console.log('Questionnaires', res)
           let nocorp = [{BlockID: 0, Name: 'No Need'}]
           this.questionnaires = nocorp.concat(res.data)
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingQuestionnaires = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('Questionnaires', err)
+        this.isLoadingQuestionnaires = false
       })
     },
-    // Questionnaire
+    loadApplication: function (id) {
+      this.isLoadingApplication = true
+      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBase', {applicationid: id}).then(res => {
+        if (res) {
+          console.log('ApplicationBase', res)
+          this.applicationForm = res.data
+          this.applicationForm.RequestDate = moment(res.data.RequestDate)
+          this.applicationForm.EffectiveDate = moment(res.data.EffectiveDate)
+          this.applicationForm.ExpiryDate = moment(res.data.ExpiryDate)
+          this.applicationForm.DateOfBirth = moment(res.data.DateOfBirth)
+        }
+        this.isLoadingApplication = false
+      }).catch(err => {
+        console.log('ApplicationBase', err)
+        this.isLoadingApplication = false
+      })
+    },
+
+    // ApplictionTemplate
     loadApplicationTemplate: function () {
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationTemplateSimple', {applicationid: this.application.ApplicationID}).then(res => {
@@ -268,6 +309,7 @@ export default {
               TemplateID: 0,
               Title: ''
             }
+            this.applicationForm.TemplateID = 0
           }
         }
         this.isLoading = false
@@ -279,6 +321,7 @@ export default {
 
     setForm: function (application) {
       this.applicationForm.ApplicationID = application.ApplicationID
+      this.applicationForm.NameInsured = application.NameInsured
       this.applicationForm.ClientCode = application.ClientCode
       this.applicationForm.PolicyNumber = application.PolicyNumber
       this.applicationForm.EffectiveDate = application.EffectiveDate
@@ -294,8 +337,10 @@ export default {
       this.applicationForm.PersonContact = application.PersonContact
       this.applicationForm.Email = application.Email
       this.applicationForm.PhoneNumber = application.PhoneNumber
-      if (application.applicationTemplate !== null) this.applicationForm.TemplateID = application.applicationTemplate.TemplateID
-      else this.loadApplicationTemplate()
+      this.applicationForm.TemplateID = application.TemplateID
+      // this.loadApplicationTemplate()
+      // if (application.applicationTemplate !== null) this.applicationForm.TemplateID = application.applicationTemplate.TemplateID
+      // else this.loadApplicationTemplate()
     },
     changeTemplate: function () {
       let template = this.templateList.find(t => t.TemplateID === this.applicationForm.TemplateID)
@@ -309,7 +354,8 @@ export default {
       }
     },
     setApplication: function (app) {
-      // this.application.ApplicationID = this.applicationForm.ApplicationID
+      app.ApplicationID = this.applicationForm.ApplicationID
+      app.NameInsured = this.applicationForm.NameInsured
       app.ClientCode = this.applicationForm.ClientCode
       app.PolicyNumber = this.applicationForm.PolicyNumber
       app.EffectiveDate = this.applicationForm.EffectiveDate
@@ -319,20 +365,28 @@ export default {
       app.QuestionnaireID = this.applicationForm.QuestionnaireID
       app.Premium = this.applicationForm.Premium
       app.applicationTemplate = this.applicationForm.applicationTemplate
+      app.Address = this.applicationForm.Address
+      app.City = this.applicationForm.City
+      app.Province = this.applicationForm.Province
+      app.PostCode = this.applicationForm.PostCode
+      app.PersonContact = this.applicationForm.PersonContact
+      app.Email = this.applicationForm.Email
+      app.PhoneNumber = this.applicationForm.PhoneNumber
     },
 
     saveApplication: function () {
-      this.$confirm('Are you sure to bind it?', 'Confirm', {
+      this.$confirm('Are you sure to save it?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         this.isSavingApplication = true
-        let app = JSON.parse(JSON.stringify(this.application))
-        this.setApplication(app)
-        let value = JSON.stringify(app)
-        console.log('Application to save', app)
-        this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
+        // let app = JSON.parse(JSON.stringify(this.application))
+        // this.setApplication(app)
+        // let value = JSON.stringify(app)
+        let value = JSON.stringify(this.applicationForm)
+        console.log('Application to save', value)
+        this.axios.post('/api/Services/CommerceService.asmx/SaveApplicationBase', {application: value}).then(res => {
           if (res) {
             console.log('saveApplication', res)
             this.setApplication(this.application)
@@ -347,19 +401,22 @@ export default {
           console.log('删除出错', err)
           this.saveApplication = false
         })
-      }).catch(() => {
+      }).catch(err1 => {
+        console.log('save error:', err1)
         this.$message({
           type: 'info',
           message: 'Operation Cancelled'
         })
       })
+    },
+    setPlace (place) {
+      this.applicationForm.address = place.formatted_address
     }
 
   }
 
 }
 </script>
-
 <style scoped>
 
 </style>

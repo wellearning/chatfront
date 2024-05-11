@@ -39,7 +39,7 @@
           </div>
         </el-col>
       </el-row>
-      <el-row :gutter="20" style="margin-top:40px; margin-left:84px; font-size:18px; font-weight: bold;">
+      <el-row :gutter="20" style="height:600px; overflow:auto; margin-top:40px; margin-left:84px; font-size:18px; font-weight: bold;">
         <el-col :span="24">
           <div id="sheet" v-for="(t, i) in sheetContent.tables" v-bind:key="i">
             <div>

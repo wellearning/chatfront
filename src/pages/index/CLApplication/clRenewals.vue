@@ -8,9 +8,19 @@ Function: Show all commercial application list and do all operations on the list
   <div>
     <div class="inPageTitle">
       <span class="inPageNav">Application Renewals</span>
+      <div class="rightBtnBox">
+        <el-form :model="searchForm" ref="searchForm" class="searchForm">
+          <el-form-item label="" prop="name">
+            <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
     </div>
     <div class="inPageContent">
-      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="680" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
@@ -23,6 +33,8 @@ Function: Show all commercial application list and do all operations on the list
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-view" type="info" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
                   <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
               </el-table-column>
@@ -39,21 +51,20 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
         <el-table-column label="Premium" prop="Premium" min-width="80" sortable="custom"></el-table-column>
-        <el-table-column label="EffecDate" prop="EffectiveDate" min-width="90" sortable="custom">
+        <!--el-table-column label="EffecDate" prop="EffectiveDate" min-width="90" sortable="custom">
           <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="60" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column label="Action" width="360" >
+        </el-table-column-->
+        <el-table-column label="Questionnaire" prop="QuestionnaireStatus" min-width="60" :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column label="Status" prop="RenewalStatus" min-width="60" :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column label="Action" width="380" >
           <template slot-scope="scope">
             <el-button-group>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID === 6" type="info" plain @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6" type="primary" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  :type="processType(scope.row)" @click="showQuotation(scope.row)"  size="small">Process</el-button>
-              <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 6" type="danger" @click="voidApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Void</el-button>
-              <el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 6" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
+              <el-button icon="el-icon-view" :type="processType(scope.row)" @click="showRenewalProcessing(scope.row)"  size="small">Process</el-button>
+              <el-button icon="el-icon-view" type="info" plain @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.QuestionnaireID > 0" type="info" plain @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -75,13 +86,8 @@ Function: Show all commercial application list and do all operations on the list
         <ViewSheet ref="vs" :businessObjId="currentApplicationID" :businessTypeId="4"></ViewSheet>
       </el-dialog>
       <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
-      <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationWindowVisible" width="1550px" top="10px" center :before-close="closeEdit">
-        <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templateList" @close="closeEditApplication"></EditApplication>
-      </el-dialog>
-      <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -95,153 +101,85 @@ Function: Show all commercial application list and do all operations on the list
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
-      <!----------------------------------------------报价弹窗开始----------------------------------------------------->
-      <el-dialog v-if="currentApplication !== null" title="Request Quote" :visible.sync="quotationVisible" width="900px" center>
-        <el-form  class="newMemo">
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="18">
-              <el-form-item label="Insurance Company" prop="InsuranceCorpID">
-                <el-select v-model="multipleSelection" placeholder="Insurance Company" no-data-text="No Record" multiple filterable >
-                  <el-option v-for="item in currentApplication.unselectedCorps" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <div class="newMemo-submit">
-                <el-button icon="el-icon-check" type="primary" @click="saveQuotations()" :loading="isLoading">Request</el-button>
-              </div>
-            </el-col>
-          </el-row>
-        </el-form>
-
-        <el-table
-          :data="currentApplication.quotations"
-          tooltip-effect="dark"
-          style="width: 100%">
-          <el-table-column
-            prop="CorpName"
-            label="Insurance Corporation"
-            width="300">
-          </el-table-column>
-          <el-table-column
-            prop="Premium"
-            label="Premium"
-            width="100">
-          </el-table-column>
-          <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
-          <el-table-column label="Action" width="300">
-            <template v-slot="scope">
-              <el-button icon="el-icon-view" type="primary" @click="showQuotationBind(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Bind</el-button>
-              <el-button icon="el-icon-view" type="primary" @click="showQuotationProcessing(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Action</el-button>
-              <el-button icon="el-icon-delete" type="danger" @click="delQuotation(scope.row.InsuranceCorpQuotationID)" :loading="isLoadingInsuranceCompany" size="small">Del</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <!----------------------------------------------Questionnaire 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="questionnaireFormVisible" width="1184.56px"  height="2184.56px" center >
+        <ViewQuestionnaire ref="vq" :applicationid="currentApplicationID"
+                           :templateBlockID="TemplateBlockID"
+                           :repeatedID="RepeatedID"
+                           :objTypeID="ObjTypeID"
+                           :questionnaireID="QuestionnaireID"
+                           :insuranceCorps="insuranceCorpList"></ViewQuestionnaire>
       </el-dialog>
-      <!----------------------------------------------报价弹窗结束----------------------------------------------------->
-      <!----------------------------------------------InsuranceCorp Bind 弹窗开始----------------------------------------------------->
-      <el-dialog title="Insurance Corporation Quotation Binding" :visible.sync="quotationBindVisible" width="600px" center>
-        <el-form :model="quotationBindForm" ref="quotationBindForm" class="newMemo" :rules="quotationBindFormRules">
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Effective Date" prop="EffectiveDate">
-                <el-date-picker v-model="quotationBindForm.EffectiveDate" @change="effectiveDateChange" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Expiry Date" prop="ExpiryDate">
-                <el-date-picker v-model="quotationBindForm.ExpiryDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="AppType" prop="TypeID">
-                <el-select v-model="quotationBindForm.TypeID" placeholder="App Type" no-data-text="No Record" filterable >
-                  <el-option v-for="item in appTypes" :key="item.ID" :label="item.Name" :value="item.ID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" v-if="quotationBindForm.TypeID === 2" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Remarket From" prop="LeadFromCorpID">
-                <el-select v-model="quotationBindForm.LeadFromCorpID" placeholder="Lead From" no-data-text="No Record" filterable >
-                  <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Client Code" prop="ClientCode">
-                <el-input v-model="quotationBindForm.ClientCode" placeholder="Client Code" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Policy Number" prop="PolicyNumber">
-                <el-input v-model="quotationBindForm.PolicyNumber" placeholder="Policy Number" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Premium" prop="Premium">
-                <el-input v-model="quotationBindForm.Premium" type="number" placeholder="Premium" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Renewal Questionnaire" prop="Questionnaire">
-                <el-select v-model="quotationBindForm.Questionnaire" placeholder="Questionnaire" no-data-text="No Record" filterable >
-                  <el-option v-for="item in questionnaires" :key="item.ID" :label="item.Name" :value="item.Name"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <div class="newMemo-submit">
-            <el-button icon="el-icon-check" type="primary" @click="quotationBind()" :loading="isLoading">Bind</el-button>
-          </div>
-        </el-form>
+      <!----------------------------------------------Questionnaire 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BaseInfo Edition 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
+        <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
       </el-dialog>
       <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
-      <!----------------------------------------------InsuranceCorpQuotation Processing 弹窗开始----------------------------------------------------->
-      <el-dialog title="Insurance Corporation Quotation Processing" :visible.sync="quotationProcessingVisible" width="600px" center>
-        <el-form :model="quotationProcessingForm" ref="quotationBindForm" class="newMemo" :rules="quotationProcessingFormRules">
+      <!----------------------------------------------Renewal Processing 弹窗开始----------------------------------------------------->
+      <el-dialog title="Insurance Renewal Processing" :visible.sync="renewalProcessingVisible" width="600px" center>
+        <el-form :model="renewalProcessingForm" class="newMemo" :rules="renewalProcessingFormRules">
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Processing Type" prop="StatusID">
-                <el-select v-model="quotationProcessingForm.StatusID" placeholder="Processing Type" no-data-text="No Record" filterable >
-                  <el-option v-for="item in quotationProcessings" :key="item.StatusID" :label="item.Name" :value="item.StatusID"></el-option>
+                <el-select v-model="renewalProcessingForm.ProcessingTypeID" placeholder="Processing Type" no-data-text="No Record" filterable >
+                  <el-option v-for="item in renewalProcessings" :key="item.ID" :label="item.Name" :value="item.ID"></el-option>
                 </el-select>
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row :gutter="20" class="subtitle">
+          <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8"  class="subtitle">
             <el-col :span="24">
               <el-form-item label="Premium" prop="Premium">
-                <el-input v-model="quotationProcessingForm.Premium" type="number" placeholder="Premium" title=""></el-input>
+                <el-input v-model="renewalProcessingForm.Premium" type="number" placeholder="Premium" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Effective Date" prop="EffectiveDate">
+                <el-date-picker v-model="renewalProcessingForm.EffectiveDate" @change="effectiveDateChange" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Expiry Date" prop="ExpiryDate">
+                <el-date-picker v-model="renewalProcessingForm.ExpiryDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Description" prop="Brief">
-                <el-input v-model="quotationProcessingForm.Brief" type="textarea" :rows="3" placeholder="Description" title=""></el-input>
+                <el-input v-model="renewalProcessingForm.Brief" type="textarea" :rows="3" placeholder="Description" title=""></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <div class="newMemo-submit">
-            <el-button icon="el-icon-check" type="primary" @click="quotationProcess" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="renewalProcess" :loading="isLoading">Confirm</el-button>
           </div>
         </el-form>
       </el-dialog>
-      <!----------------------------------------------InsuranceCorpQuotation Processing弹窗结束----------------------------------------------------->
+      <!----------------------------------------------InsuranceCorpRenewal Processing弹窗结束----------------------------------------------------->
+      <!----------------------------------------------setBlockQuestionnaire弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="setBlockQuestionnaireVisible" width="984.56px" center>
+        <el-form :model="setQuestionnaireForm" ref="setQuestionnaireForm" class="newMemo">
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
+                <el-select v-model="setQuestionnaireForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
+                  <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div class="newMemo-submit">
+          <el-button icon="el-icon-check" type="primary" @click="setBlockQuestionnaire()" :loading="isLoading">Save</el-button>
+        </div>
+      </el-dialog>
+      <!----------------------------------------------setBlockQuestionnaire弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -251,15 +189,17 @@ import ViewSheet from '@/component/window/sheet'
 import ViewApplication from '@/component/window/viewApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
-import EditApplication from '@/component/parts/editApplication'
+import ViewQuestionnaire from '@/component/window/questionnaire'
+import EditApplicationBase from '@/component/parts/editApplicationBase'
 
 export default {
   components: {
     editApplicationBlock,
     ViewSheet,
-    EditApplication,
     ViewApplicationBlock,
-    ViewApplication
+    ViewQuestionnaire,
+    ViewApplication,
+    EditApplicationBase
   },
   data: function () {
     return {
@@ -275,20 +215,31 @@ export default {
       isLoadingTemplateBlockQuestions: false,
       isLoadingApplicationBlock: false,
       isLoadingApplicationQuotations: false,
-      // isLoadingStaffs: false,
+      isLoadingProducers: false,
+      isLoadingApplications: false,
       isLoadingInsuranceCompany: false,
+      isLoadingStatus: false,
+      applicationFormVisible: false,
+      questionnaireFormVisible: false,
       templateList: [],
       producerList: [],
-      statusList: [],
+      renewalStatusList: [],
+      emailStatusList: [],
       insuranceCorpList: [],
       questionnaires: [],
-      appTypes: [{ID: 1, Name: 'New Business'}, {ID: 2, Name: 'Remarket'}, {ID: 3, Name: 'LOA'}, {ID: 4, Name: 'Rewrite'}],
-      quotationProcessings: [
-        {StatusID: 2, Name: 'Quote', Status: 'Quoted'},
-        {StatusID: 3, Name: 'Decline', Status: 'Declined'}
+      renewalProcessings: [
+        {ID: 6, Name: 'Update'},
+        {ID: 7, Name: 'Pend'},
+        {ID: 8, Name: 'Renew'},
+        {ID: 9, Name: 'Cancel'}
       ],
       currentInsuranceCorpID: null,
       currentBlockItem: null,
+      setQuestionnaireForm: {
+        QuestionnaireID: 0,
+        ApplicationBlockID: 0,
+        blockItem: null
+      },
       // 搜索
       searchForm: {
         name: null
@@ -305,24 +256,26 @@ export default {
       currentApplicationBlockID: 0,
       currentBlockName: null,
       currentApplicationBlock: null,
+      TemplateBlockID: 0,
+      RepeatedID: 0,
+      ObjTypeID: 0,
+      QuestionnaireID: 0,
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
       total: 0,
       isAll: false,
-      quotationVisible: false,
-      quotationBindVisible: false,
-      quotationProcessingVisible: false,
-      quotationProcessingForm: {
-        InsuranceCorpQuotationID: null,
+      renewalProcessingVisible: false,
+      renewalProcessingForm: {
         ApplicationID: 0,
-        InsuranceCorpID: 0,
-        StatusID: null,
+        ProcessingTypeID: null,
         Brief: null,
+        EffectiveDate: null,
+        ExpiryDate: null,
         Premium: null
       },
-      quotationProcessingFormRules: {
-        StatusID: [
+      renewalProcessingFormRules: {
+        ProcessingTypeID: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         Brief: [
@@ -333,41 +286,10 @@ export default {
           { required: false, message: 'Please Enter', trigger: 'blur' }
         ]
       },
-      quotationBindForm: {
-        InsuranceCorpQuotationID: null,
-        EffectiveDate: null,
-        TypeID: null,
-        LeadFromCorpID: 0,
-        ExpiryDate: null,
-        ClientCode: null,
-        PolicyNumber: null,
-        Premium: null,
-        Questionnaire: null
-      },
-      quotationBindFormRules: {
-        PolicyNumber: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
-          { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
-        ],
-        EffectiveDate: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
-        ],
-        ExpiryDate: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
-        ],
-        TypeID: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
-        ],
-        ClientCode: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
-          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
-        ],
-        Premium: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
-        ]
-      },
       editApplicationWindowVisible: false,
       editApplicationBlockVisible: false,
+      setBlockQuestionnaireVisible: false,
+      viewBlockQuestionnaireVisible: false,
       multipleSelection: [],
       // 查阅
       viewApplicationBlockVisible: false,
@@ -402,29 +324,18 @@ export default {
       pinkSlipFormVisible: false,
       coiFormVisible: false,
       sheetFormVisible: false,
-      pinkSlipForm: {
-        InsuranceCorpName: null,
-        InsuranceCorpAddress: null,
-        InsuredName: null,
-        InsuredAddress: 'Not provide',
-        InsuredCity: 'Not provide',
-        VehicleInfo: 'Not provide',
-        EffectiveDate: null,
-        ExpiryDate: null,
-        PolicyNumber: null,
-        Broker: ''
-      },
       // processing
-      ProcessingTypeID: null,
       ProcessingTitle: '',
       processingVisible: false
     }
   },
   mounted: function () {
-    // this.loadProducers()
-    this.loadApplicationStatus()
+    this.loadProducers(0)
+    this.loadRenewalStatus()
+    this.loadEmailStatus()
     this.initInsuranceCompany()
     this.loadApplications(0)
+    this.loadQuestionnaires()
   },
   methods: {
     sorttable: function (column) {
@@ -439,199 +350,57 @@ export default {
       this.list.sort(this.bydesc(name))
     },
     processType: function (app) {
-      if (app.StatusID === 4) return 'success'
+      if (app.RenewalStatus === 3) return 'success'
       else return 'primary'
     },
-    showQuotationBind: function (quotation) {
-      this.quotationBindForm.InsuranceCorpQuotationID = quotation.InsuranceCorpQuotationID
-      let effdate = moment(this.currentApplication.EffectiveDate)
-      if (effdate.year() > 2020) this.quotationBindForm.EffectiveDate = effdate
-      else this.quotationBindForm.EffectiveDate = null
-      let expdate = moment(this.currentApplication.ExpiryDate)
-      if (expdate.year() > 2020) this.quotationBindForm.ExpiryDate = expdate
-      else this.quotationBindForm.ExpiryDate = null
-      this.quotationBindForm.ClientCode = this.currentApplication.ClientCode
-      this.quotationBindForm.PolicyNumber = this.currentApplication.PolicyNumber
-      if (this.currentApplication.TypeID > 0) this.quotationBindForm.TypeID = this.currentApplication.TypeID
-      else this.quotationBindForm.TypeID = null
-      this.quotationBindForm.LeadFromCorpID = this.currentApplication.LeadFromCorpID
-      this.quotationBindForm.Premium = quotation.Premium
-      this.quotationBindVisible = true
-    },
-    showQuotationProcessing: function (quotation) {
-      console.log('quotation', quotation)
-      this.quotationProcessingForm = quotation
-      this.quotationProcessingForm.StatusID = null
-      this.quotationProcessingVisible = true
-      /*
-      this.quotationBindForm.InsuranceCorpQuotationID = quotation.InsuranceCorpQuotationID
-      this.quotationBindForm.ApplicationID = quotation.ApplicationID
-      this.quotationBindForm.InsuranceCorpID = quotation.InsuranceCorpID
-      this.quotationBindForm.Premium = quotation.Premium
-      this.quotationProcessingForm.Brief = quotation.Brief
-      */
-    },
-    quotationBind: function () {
-      this.$confirm('Are you sure to bind it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        let id = this.quotationBindForm.InsuranceCorpQuotationID
-        this.isLoadingApplicationQuotations = true
-        let value = JSON.stringify(this.quotationBindForm)
-        this.axios.post('/api/Services/CommerceService.asmx/BindQuotation', {id: id, jsonvalue: value}).then(res => {
-          if (res) {
-            console.log('bind', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.currentApplication.StatusID = res.data
-            this.setApplicationStatus(this.currentApplication)
-            this.currentApplication.EffectiveDate = this.quotationBindForm.EffectiveDate
-            this.currentApplication.Premium = this.quotationBindForm.Premium
-            let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
-            quotation.StatusID = 4
-            quotation.StatusName = 'Bound'
-            quotation.Premium = this.quotationBindForm.Premium
-          }
-          this.isLoadingApplicationQuotations = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoadingApplicationQuotations = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
-      })
+    showRenewalProcessing: function (app) {
+      console.log('Application', app)
+      this.renewalProcessingForm.ApplicationID = app.ApplicationID
+      this.renewalProcessingForm.Premium = app.Premium
+      this.renewalProcessingForm.EffectiveDate = app.EffectiveDate.add(1, 'year')
+      this.renewalProcessingForm.ExpiryDate = app.ExpiryDate.add(1, 'year')
+      this.renewalProcessingVisible = true
     },
     effectiveDateChange: function () {
       this.quotationBindForm.ExpiryDate = moment(this.quotationBindForm.EffectiveDate).add(1, 'year')
     },
-    setApplicationStatus: function (app) {
-      let astatus = this.applicationStatuses.find(s => s.StatusID === app.StatusID)
-      app.Status = astatus.Name
+    setRenewalStatus: function (app) {
+      let astatus = this.renewalStatusList.find(s => s.StatusID === app.RenewalStatus)
+      app.RenewalStatus = astatus.Name
     },
-    quotationProcess: function () {
+    renewalProcess: function () {
       this.$confirm('Are you sure to process it?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = this.quotationProcessingForm.InsuranceCorpQuotationID
         this.isLoadingApplicationQuotations = true
-        let value = JSON.stringify(this.quotationProcessingForm)
-        console.log('quotationProcessingForm', value)
-        this.axios.post('/api/Services/CommerceService.asmx/QuotationProcess', {jsonvalue: value}).then(res => {
+        let id = this.renewalProcessingForm.ApplicationID
+        let typeid = this.renewalProcessingForm.ProcessingTypeID
+        let brief = this.renewalProcessingForm.Brief
+        if (typeid === 8) {
+          let value = {
+            EffectiveDate: this.renewalProcessingForm.EffectiveDate,
+            ExpiryDate: this.renewalProcessingForm.ExpiryDate,
+            Premium: this.renewalProcessingForm.Premium,
+            Brief: this.renewalProcessingForm.Brief
+          }
+          brief = JSON.stringify(value)
+        }
+        // let value = JSON.stringify(this.renewalProcessingForm)
+        // console.log('renewalProcessingForm', value)
+        this.axios.post('/api/Services/CommerceService.asmx/RenewalProcess', {id: id, processtypeid: typeid, brief: brief}).then(res => {
           if (res) {
-            console.log('quotationProcess', res)
+            console.log('renewalProcess', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
             let appStatusID = res.data
-            let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
-            quotation.StatusID = this.quotationProcessingForm.StatusID
-            let qstatus = this.quotationProcessings.find(s => s.StatusID === quotation.StatusID)
-            quotation.StatusName = qstatus.Status
-            this.currentApplication.StatusID = appStatusID
-            this.setApplicationStatus(this.currentApplication)
-          }
-          this.isLoadingApplicationQuotations = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoadingApplicationQuotations = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
-      })
-    },
-    resetQuotations: function (app) {
-      app.unselectedCorps = this.insuranceCorpList.filter(c => app.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
-      this.multipleSelection = []
-    },
-    showQuotation: function (application) {
-      this.setCurrent(application)
-      this.multipleSelection = []
-      this.loadApplicationQuotation(application)
-    },
-    loadApplicationQuotation: function (app) {
-      this.isLoadingApplicationQuotations = true
-      this.axios.post('/api/Services/CommerceService.asmx/GetQuotations', {applicationid: app.ApplicationID}).then(res => {
-        if (res) {
-          console.log('GetQuotations', res.data)
-          app.quotations = res.data
-          app.unselectedCorps = this.insuranceCorpList.filter(c => app.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
-          console.log('selectables', app.unselectedCorps)
-          this.isLoadingApplicationQuotations = false
-          this.quotationVisible = true
-        }
-      }).catch(err => {
-        console.log('GetQuotations列表出错', err)
-        this.isLoadingApplicationQuotations = false
-      })
-    },
-    saveQuotations: function () {
-      let ids = []
-      this.multipleSelection.forEach(id => {
-        ids.push(id)
-      })
-      if (ids.length === 0) return
-      let corpids = JSON.stringify(ids)
-      let appid = this.currentApplicationID
-      this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/ApplyQuotations', {applicationid: appid, corpids: corpids}).then(res => {
-        if (res) {
-          console.log('修改', res)
-          let app = this.currentApplication
-          if (app.quotations === undefined) app.quotations = []
-          app.quotations = app.quotations.concat(res.data)
-          this.resetQuotations(app)
-          if (app.StatusID === 1) {
-            app.StatusID = 2
-            this.setApplicationStatus(app)
-          }
-          this.$message({
-            type: 'success',
-            message: 'Operation Succeeded'
-          })
-        }
-        this.isLoading = false
-        // this.quotationBindForm = null
-      }).catch(err => {
-        console.log('修改出错', err)
-        this.$message({
-          type: 'error',
-          message: 'Operation failed'
-        })
-        this.isLoading = false
-      })
-    },
-    // 删除
-    delQuotation: function (id) {
-      this.$confirm('Are you sure to delete it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        this.isLoadingApplicationQuotations = true
-        this.axios.post('/api/Services/CommerceService.asmx/RemoveQuotation', {id: id}).then(res => {
-          if (res) {
-            console.log('删除', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            this.currentApplication.StatusID = res.data
-            this.setApplicationStatus(this.currentApplication)
-            this.currentApplication.quotations = this.currentApplication.quotations.filter(item => item.InsuranceCorpQuotationID !== id)
-            this.resetQuotations(this.currentApplication)
+            let status = this.renewalStatusList.find(s => s.StatusID === appStatusID)
+            if (status !== undefined) this.currentApplication.RenewalStatus = status.Name
+            else this.currentApplication.RenewalStatus = ''
+            // this.setRenewalStatus(this.currentApplication)
           }
           this.isLoadingApplicationQuotations = false
         }).catch(err => {
@@ -758,94 +527,110 @@ export default {
       this.loadApplicationBlock(aTemplate, aBlock)
     },
     loadApplication: function (app) {
-      if (app.applicationTemplate !== null) return
+      // if (app.applicationTemplate !== null && app.applicationTemplate.applicationBlocks !== null) return
       let id = app.ApplicationID
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
+          console.log('GetApplicationFrame', res.data)
           app.applicationTemplate = res.data.applicationTemplate
-          // build application tree
-          app.blocks = []
-          let id = 0
-          app.applicationTemplate.templateBlocks.forEach(tb => {
-            if (tb.ChildTypeID === 0) {
-              let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
-              tb.applicationBlock = appBlock
-              tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
-              // appBlock.BlockName = tb.BlockName
-              // appBlock.id = id++
-              // appBlock.TypeID = 0
-              let blockItem = {
-                id: id++,
-                TypeID: 0,
-                BlockID: tb.BlockID,
-                BlockName: tb.BlockName,
-                Status: appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering')),
-                applicationBlock: appBlock,
-                applicationTemplate: app.applicationTemplate
-              }
-              app.blocks.push(blockItem)
-              return
-            }
-            // tb.applicationBlocks = []
-            let appb = {
-              id: id++,
-              BlockID: tb.BlockID,
-              BlockName: tb.BlockName,
-              TypeID: 2,
-              ApplicationID: app.ApplicationID,
-              applicationTemplate: app.applicationTemplate,
-              templateBlock: tb,
-              children: []
-            }
-            app.blocks.push(appb)
-            tb.applicationTemplates = []
-            app.applicationTemplate.applicationBlocks.forEach(ab => {
-              let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
-              if (templateBlock === undefined) return
-              // tb.applicationBlocks.push(ab)
-              let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
-              if (subatemplate === undefined) {
-                subatemplate = {
-                  BlockName: tb.BlockName,
-                  RepeatedID: ab.RepeatedID,
-                  applicationBlocks: []
+          if (app.applicationTemplate !== null) {
+            app.applicationTemplate.applicationBlocks = app.applicationTemplate.applicationBlocks.filter(ab => ab !== null)
+            // build application tree
+            app.blocks = []
+            app.blockCount = 0
+            let id = 0
+            app.applicationTemplate.templateBlocks.forEach(tb => {
+              if (tb.ChildTypeID === 0) {
+                let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
+                if (appBlock !== undefined) {
+                  tb.applicationBlock = appBlock
+                  tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
                 }
-                tb.applicationTemplates.push(subatemplate)
-              }
-              subatemplate.applicationBlocks.push(ab)
-              ab.topTemplateBlockID = tb.TemplateBlockID
-              ab.BlockName = templateBlock.BlockName
-            })
-            tb.applicationTemplates.forEach(at => {
-              let childat = {
-                id: id++,
-                ApplicationID: app.ApplicationID,
-                BlockID: appb.BlockID,
-                RepeatedID: at.RepeatedID,
-                Parent: appb,
-                BlockName: at.BlockName + ':' + at.RepeatedID,
-                TypeID: 1,
-                applicationTemplate: app.applicationTemplate,
-                children: []
-              }
-              appb.children.push(childat)
-              at.applicationBlocks.forEach(ab => {
-                let childab = {
+                let blockItem = {
                   id: id++,
                   TypeID: 0,
-                  BlockID: ab.BlockID,
-                  BlockName: ab.BlockName + ':' + at.RepeatedID,
-                  Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
-                  applicationBlock: ab,
+                  templateBlock: tb,
+                  BlockID: tb.BlockID,
+                  BlockName: tb.BlockName,
+                  Status: appBlock === undefined ? 'Not Answer' : (appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))),
+                  applicationBlock: appBlock,
+                  app: app,
                   applicationTemplate: app.applicationTemplate
                 }
-                childat.children.push(childab)
+                app.blocks.push(blockItem)
+                app.blockCount = id
+                return
+              }
+              // tb.applicationBlocks = []
+              let appb = {
+                id: id++,
+                BlockID: tb.BlockID,
+                BlockName: tb.BlockName,
+                TypeID: 2,
+                ApplicationID: app.ApplicationID,
+                applicationTemplate: app.applicationTemplate,
+                templateBlock: tb,
+                app: app,
+                children: []
+              }
+              app.blocks.push(appb)
+              // fill in subApplicationTemplate
+              tb.applicationTemplates = app.applicationTemplate.children.filter(c => c.TemplateID === tb.BlockID)
+              app.applicationTemplate.applicationBlocks.forEach(ab => {
+                let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
+                if (templateBlock === undefined) return
+                // tb.applicationBlocks.push(ab)
+                let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
+                if (subatemplate === undefined) {
+                  subatemplate = {
+                    BlockName: tb.BlockName,
+                    RepeatedID: ab.RepeatedID,
+                    applicationBlocks: []
+                  }
+                  tb.applicationTemplates.push(subatemplate)
+                }
+                if (subatemplate.applicationBlocks === null) subatemplate.applicationBlocks = []
+                subatemplate.applicationBlocks.push(ab)
+                ab.topTemplateBlockID = tb.TemplateBlockID
+                ab.BlockName = templateBlock.BlockName
+              })
+              tb.applicationTemplates.forEach(at => {
+                let childat = {
+                  id: id++,
+                  ApplicationTemplateID: at.ApplicationTemplateID,
+                  ApplicationID: app.ApplicationID,
+                  BlockID: appb.BlockID,
+                  TemplateBlockID: tb.TemplateBlockID,
+                  RepeatedID: at.RepeatedID,
+                  Parent: appb,
+                  BlockName: tb.BlockName + ':' + (at.RepeatedID + 1),
+                  TypeID: 1,
+                  QuestionnaireID: at.QuestionnaireID,
+                  app: app,
+                  applicationTemplate: app.applicationTemplate,
+                  children: []
+                }
+                appb.children.push(childat)
+                at.applicationBlocks.forEach(ab => {
+                  let childab = {
+                    id: id++,
+                    TypeID: 0,
+                    BlockID: ab.BlockID,
+                    BlockName: ab.BlockName + ':' + (at.RepeatedID + 1),
+                    Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
+                    app: app,
+                    applicationBlock: ab,
+                    applicationTemplate: app.applicationTemplate
+                  }
+                  childat.children.push(childab)
+                })
               })
             })
-          })
-          this.loadTemplateBlockQuestions(app.applicationTemplate)
-          console.log('ApplicationFrame', app)
+            app.blockCount = id
+            this.loadTemplateBlockQuestions(app.applicationTemplate)
+          }
+          // console.log('ApplicationFrame', app)
         }
         this.isLoading = false
       }).catch(err => {
@@ -875,7 +660,14 @@ export default {
       })
     },
     loadTemplateBlockQuestions: function (atemplate) {
-      console.log('loadTemplateBlockQuestions start from', atemplate)
+      console.log('loadTemplateBlockQuestions', atemplate)
+      if (atemplate.TemplateID === 0) {
+        this.$message({
+          type: 'error',
+          message: 'Template is not exist'
+        })
+        return
+      }
       this.isLoadingTemplateBlockQuestions = true
       this.axios.post('/api/Services/BaseService.asmx/GetBlockQuestionsByTemplate_all', {templateid: atemplate.TemplateID}).then(res => {
         if (res) {
@@ -1006,19 +798,19 @@ export default {
         this.isLoadingTemplates = false
       })
     },
-    // 保险公司列表
+    // Questionnaire list
     loadQuestionnaires: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/commerialservice.asmx/GetQuestionnaires', {}).then(res => {
+      this.isLoadingQuestionnaires = true
+      this.axios.post('/api/Services/baseservice.asmx/GetQuestionnaires', {}).then(res => {
         if (res) {
           console.log('Questionnaires', res)
-          let nocorp = [{ID: 0, Name: 'No Need'}]
+          let nocorp = [{BlockID: 0, Name: 'No Need'}]
           this.questionnaires = nocorp.concat(res.data)
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingQuestionnaires = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('loadQuestionnaires出错', err)
+        this.isLoadingQuestionnaires = false
       })
     },
     // 保险公司列表
@@ -1036,92 +828,34 @@ export default {
         this.isLoadingInsuranceCompany = false
       })
     },
-    // 删除
-    voidApplication: function (id) {
-      this.$confirm('Are you sure to void it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/VoidApplication', {applicationid: id}).then(res => {
-          if (res) {
-            console.log('删除', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            console.log('void', this.list)
-            let app = this.list.find(item => item.ApplicationID === id)
-            app.StatusID = res.data
-            this.setApplicationStatus(app)
-            // this.list.splice(index, 1)
-            // this.list = this.list.filter(item => item.ApplicationID !== id)
-
-            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.total = this.list.length
-          }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoading = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
-      })
-    },
-    reinstateApplication: function (id) {
-      this.$confirm('Are you sure to reinstate it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/UnvoidApplication', {applicationid: id}).then(res => {
-          if (res) {
-            console.log('删除', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
-            })
-            console.log('Unvoid', this.list)
-            let app = this.list.find(item => item.ApplicationID === id)
-            app.StatusID = res.data
-            this.setApplicationStatus(app)
-
-            // this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            // this.total = this.list.length
-          }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoading = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
-      })
-    },
-    loadApplicationStatus: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
+    loadRenewalStatus: function () {
+      this.isLoadingStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationRenewalStatus'}).then(res => {
         if (res) {
           console.log('statusList', res)
-          this.statusList = res.data
+          this.renewalStatusList = res.data
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingStatus = false
       }).catch(err => {
         console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingStatus = false
+      })
+    },
+    loadEmailStatus: function () {
+      this.isLoadingStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'EmailStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.emailStatusList = res.data
+        }
+        this.isLoadingStatus = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingStatus = false
       })
     },
     loadProducers: function (start) {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingProducers = true
       this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
@@ -1133,16 +867,33 @@ export default {
           }
           if (this.producerList.length < this.producerCount) {
             this.loadProducers(this.producerList.length)
-            this.isLoadingInsuranceCompany = false
+          } else {
+            this.isLoadingProducers = false
+            this.attachProducers()
           }
         }
       }).catch(err => {
         console.log('producerList', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingProducers = false
       })
     },
+    attachProducers: function () {
+      if (!this.isLoadingApplications && !this.isLoadingProducers) {
+        this.totalList.forEach(a => {
+          let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+          if (producer !== undefined) a.Producer = producer.Name
+          else a.Producer = ''
+          if (a.StaffID === a.ProducerID) a.Author = a.Producer
+          else {
+            let author = this.producerList.find(p => p.StaffID === a.StaffID)
+            if (producer !== undefined) a.Author = author.Name
+            else a.Author = ''
+          }
+        })
+      }
+    },
     loadApplications: function (start) {
-      this.isLoading = true
+      this.isLoadingApplications = true
       if (start === 0) this.totalList = []
       this.axios.post('/api/Services/CommerceService.asmx/GetRenewals', {start: start}).then(res => {
         if (res) {
@@ -1155,30 +906,34 @@ export default {
           }
           if (this.totalList.length === this.total) {
             this.totalList.forEach(a => {
-              a.EffectiveDate = moment(a.EffectiveDate)
-              a.ExpiryDate = moment(a.ExpiryDate)
-              a.RequestDate = moment(a.RequestDate)
-              a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
-              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
-              if (corp !== undefined) a.CorpName = corp.Name
-              else a.CorpName = ''
+              this.attachInfo(a)
             })
             this.list = this.totalList
             this.pageCount = Math.ceil(this.total / this.pageSize)
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.isLoading = false
+            this.isLoadingApplications = false
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoading = false
+        this.isLoadingApplications = false
       })
+    },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      a.RequestDate = moment(a.RequestDate)
+      a.DateOfBirth = moment(a.DateOfBirth)
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.Name
+      else a.CorpName = ''
+      let status = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
+      if (status !== undefined) a.RenewalStatus = status.value
+      else a.RenewalStatus = ''
+      status = this.emailStatusList.find(s => s.key === a.QuestionnaireStatus)
+      if (status !== undefined) a.QuestionnaireStatus = status.value
+      else a.QuestionnaireStatus = ''
+      this.attachProducers()
     },
 
     // 查询
@@ -1204,8 +959,8 @@ export default {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 重置查询
     resetSearch: function () {
@@ -1288,6 +1043,44 @@ export default {
       }).catch(err => {
         console.log('导出Application PDF出错', err)
       })
+    },
+    showQuestionnaire: function (applicationid) {
+      this.currentApplicationID = applicationid
+      this.questionnaireFormVisible = true
+      if (this.$refs.vq !== undefined) {
+        this.$refs.vq.loadApplication(applicationid)
+      }
+    },
+    showBlockQuestionnaire: function (blockItem) {
+      if (blockItem.QuestionnaireID === 0) return
+      this.currentApplicationID = blockItem.ApplicationID
+      this.TemplateBlockID = blockItem.TemplateBlockID
+      this.RepeatedID = blockItem.RepeatedID
+      this.ObjTypeID = 1
+      this.QuestionnaireID = blockItem.QuestionnaireID
+      this.questionnaireFormVisible = true
+      if (this.$refs.vq !== undefined) {
+        this.$refs.vq.loadApplicationTemplate(blockItem.ApplicationID, blockItem.TemplateBlockID, blockItem.RepeatedID, blockItem.QuestionnaireID)
+      }
+    },
+    showSetBlockQuestionnaire: function (blockItem) {
+      this.setBlockQuestionnaireVisible = true
+      this.setQuestionnaireForm.blockItem = blockItem
+      this.setQuestionnaireForm.QuestionnaireID = blockItem.QuestionnaireID
+      this.setQuestionnaireForm.ApplicationTemplateID = blockItem.ApplicationTemplateID
+    },
+    showEdition: function (application) {
+      this.currentApplication = application
+      this.applicationFormVisible = true
+      if (this.$refs.eab !== undefined) {
+        this.$refs.eab.loadApplication(application.ApplicationID)
+      }
+    },
+    hideEdition: function () {
+      this.applicationFormVisible = false
+      if (this.currentApplication.applicationTemplate !== null) {
+        this.loadApplication(this.currentApplication)
+      }
     },
     showSheet: function (applicationid) {
       this.currentApplicationID = applicationid

@@ -19,7 +19,7 @@ Function: Show my commercial application list and do all operations on the list.
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Reset</el-button>
@@ -53,10 +53,11 @@ Function: Show my commercial application list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Action" width="400">
+        <el-table-column label="Action" width="480">
           <template slot-scope="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
@@ -67,7 +68,7 @@ Function: Show my commercial application list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationWindowVisible" width="1550px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1650px" center :before-close="closeEdit">
         <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templatesList" @close="closeEditApplication"></EditApplication>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
@@ -87,7 +88,7 @@ Function: Show my commercial application list and do all operations on the list.
       </el-dialog>
       <!----------------------------------------------查阅applicationBlock弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -97,7 +98,8 @@ Function: Show my commercial application list and do all operations on the list.
         >
         </editApplicationBlock>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="saveApplicationBlock()" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID !== 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(false)" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID === 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(true)" :loading="isLoading">Finish</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
@@ -106,6 +108,11 @@ Function: Show my commercial application list and do all operations on the list.
         <ViewCSIO ref="vc" :businessObjId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
       </el-dialog>
       <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BaseInfo Edition 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
+        <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
+      </el-dialog>
+      <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -115,6 +122,7 @@ Function: Show my commercial application list and do all operations on the list.
 import moment from 'moment'
 import ViewSheet from '@/component/window/sheet'
 import ViewApplication from '@/component/window/viewApplication'
+import EditApplicationBase from '@/component/parts/editApplicationBase'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
@@ -122,6 +130,7 @@ import ViewCSIO from '@/component/window/csio'
 export default {
   components: {
     ViewSheet,
+    EditApplicationBase,
     editApplicationBlock,
     ViewApplicationBlock,
     EditApplication,
@@ -257,8 +266,24 @@ export default {
     showSkipBlock: function () {},
     resetLeftChildren: function () {},
     skipLeftChildren: function () {},
-    checkOver: function () {},
-    saveApplicationBlock: function () {
+    checkOver: function () {
+    },
+    setApplicationStatus: function () {
+      if (this.currentApplication.StatusID > 1) return
+      let atemplate = this.currentApplication.applicationTemplate
+      atemplate.StatusID = 1
+      let children = atemplate.applicationBlocks
+      console.log('applicationBlocks', children)
+      children.forEach(cb => {
+        if (cb.StatusID === 0) atemplate.StatusID = 0
+      })
+      this.currentApplication.StatusID = atemplate.StatusID
+      let status = this.statusList.find(s => s.key === this.currentApplication.StatusID)
+      if (status !== undefined) this.currentApplication.Status = status.value
+      else this.currentApplication.Status = ''
+    },
+    saveApplicationBlock: function (close) {
+      let blockitem = this.currentBlockItem
       let ablock = JSON.parse(JSON.stringify(this.currentApplicationBlock))
       ablock.answers.forEach(answer => {
         answer.blockQuestion = null
@@ -278,8 +303,13 @@ export default {
             type: 'success',
             message: 'Operation Succeeded'
           })
+          let appBlock = res.data
+          blockitem.applicationBlock = res.data
+          blockitem.Status = appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))
+          this.setApplicationStatus()
         }
         this.isLoading = false
+        if (close) this.editApplicationBlockVisible = false
       }).catch(err => {
         console.log('修改出错', err)
         this.$message({
@@ -299,6 +329,8 @@ export default {
       }
     },
     showEditBlock: function (blockItem) {
+      this.setCurrent(blockItem.application)
+      this.currentBlockItem = blockItem
       let aTemplate = blockItem.applicationTemplate
       let aBlock = blockItem.applicationBlock
       this.loadApplicationBlock(aTemplate, aBlock)
@@ -328,6 +360,7 @@ export default {
                 BlockName: tb.BlockName,
                 Status: appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering')),
                 applicationBlock: appBlock,
+                application: app,
                 applicationTemplate: app.applicationTemplate
               }
               app.blocks.push(blockItem)
@@ -340,6 +373,7 @@ export default {
               BlockName: tb.BlockName,
               TypeID: 2,
               ApplicationID: app.ApplicationID,
+              application: app,
               applicationTemplate: app.applicationTemplate,
               templateBlock: tb,
               children: []
@@ -372,6 +406,7 @@ export default {
                 Parent: appb,
                 BlockName: at.BlockName + ':' + at.RepeatedID,
                 TypeID: 1,
+                application: app,
                 applicationTemplate: app.applicationTemplate,
                 children: []
               }
@@ -384,6 +419,7 @@ export default {
                   BlockName: ab.BlockName + ':' + at.RepeatedID,
                   Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
                   applicationBlock: ab,
+                  application: app,
                   applicationTemplate: app.applicationTemplate
                 }
                 childat.children.push(childab)
@@ -486,6 +522,7 @@ export default {
                 ApplicationBlockID: ab.ApplicationBlockID,
                 applicationBlock: ab,
                 applicationTemplate: blockItem.applicationTemplate,
+                application: blockItem.application,
                 RepeatedID: repeatedid,
                 BlockID: ab.BlockID,
                 BlockName: blockname + ':' + ab.RepeatedID,
@@ -562,12 +599,22 @@ export default {
         this.$refs.eacl.loadApplication(id)
       }
     },
+    showEdition: function (application) {
+      this.currentApplication = application
+      this.applicationFormVisible = true
+      if (this.$refs.eab !== undefined) {
+        this.$refs.eab.loadApplication(application.ApplicationID)
+      }
+    },
+    hideEdition: function () {
+      this.applicationFormVisible = false
+    },
     closeEditApplication: function (id, type) {
       this.editApplicationWindowVisible = false
       if (type === 'saveAndPrint') {
         this.showApplication(id)
       }
-      this.search(this.searchForm.name)
+      // this.search(this.searchForm.name)
     },
     // 关闭修改
     closeEdit: function (done) {
@@ -605,16 +652,11 @@ export default {
               a.ExpiryDate = moment(a.ExpiryDate)
               a.RequestDate = moment(a.RequestDate)
               a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
               let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
               if (corp !== undefined) a.CorpName = corp.Name
               else a.CorpName = ''
             })
+            if (!this.isLoadingApplicationStatus) this.matchApplicationStatuses()
             this.list = this.totalList
             this.pageCount = Math.ceil(this.total / this.pageSize)
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
@@ -626,14 +668,21 @@ export default {
         this.isLoading = false
       })
     },
-
+    matchApplicationStatuses: function () {
+      this.totalList.forEach(a => {
+        let status = this.statusList.find(s => s.key === a.StatusID)
+        if (status !== undefined) a.Status = status.value
+        else a.Status = ''
+      })
+    },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
-        this.search(null, this.total)
+        // this.search(null, this.total)
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+        // this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 查询
     search: function () {
@@ -706,16 +755,19 @@ export default {
       })
     },
     loadApplicationStatus: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingApplicationStatus = true
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
         if (res) {
           console.log('statusList', res)
           this.statusList = res.data
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingApplicationStatus = false
+        if (!this.isLoading) {
+          this.matchApplicationStatuses()
+        }
       }).catch(err => {
         console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingApplicationStatus = false
       })
     },
     // 保险公司列表

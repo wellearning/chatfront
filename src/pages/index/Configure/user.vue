@@ -29,20 +29,20 @@ Function: Show all user list and do all operations on the list.
           <div class="organization-editBox">
             <div class="searchBox">
               <el-form :model="searchForm" ref="searchForm" class="searchForm">
-                <el-form-item prop="status" label="Status" v-show="false">
+                <el-form-item prop="status" label="Status" v-show="true">
                   <el-select v-model="searchForm.status" placeholder="Status" filterable size="small" style="width: 100px;">
                     <el-option v-for="item in searchStatusOptions" :key="item.id" :label="item.name" :value="item.id"></el-option>
                   </el-select>
                 </el-form-item>
                 <el-form-item label="" prop="name">
-                  <el-input v-model="searchForm.name" placeholder="Name" size="small"></el-input>
+                  <el-input v-model="searchForm.name" placeholder="Name" size="small" clearable></el-input>
                 </el-form-item>
                 <el-form-item>
-                  <el-button icon="el-icon-search" type="primary" @click="search(searchForm.status, searchForm.name)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>
+                  <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Go</el-button>
                 </el-form-item>
-                <el-form-item>
+                <!--el-form-item>
                   <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small">Reset</el-button>
-                </el-form-item>
+                </el-form-item-->
               </el-form>
             </div>
             <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading || isLoadingOrganization || isLoadingRole" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
@@ -74,7 +74,7 @@ Function: Show all user list and do all operations on the list.
                     <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                   </el-tooltip>
                   <el-tooltip class="item" effect="dark" content="Producer" placement="top-end" v-if="scope.row.StatusID === 1" >
-                    <el-button icon="el-icon-edit" type="primary" @click="showEditProducer(scope.row.StaffID, scope.row.Name)" :loading="isLoading || isLoadingProducer" size="small"></el-button>
+                    <el-button icon="el-icon-edit" type="primary" @click="showEditProducer(scope.row)" :loading="isLoading || isLoadingProducer" size="small"></el-button>
                   </el-tooltip>
                 </template>
               </el-table-column>
@@ -136,8 +136,8 @@ Function: Show all user list and do all operations on the list.
           <el-form-item label="Id" prop="StaffID" v-show="false">
             <el-input v-model="editForm.StaffID" disabled></el-input>
           </el-form-item>
-          <el-form-item label="Institution" prop="institution">
-            <SelectTree :value="editForm.institution" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit"></SelectTree>
+          <el-form-item label="Institution" prop="InstitutionID">
+            <SelectTree :value="editForm.InstitutionID" :props="organizationProps" :options="organizationIdOptions" :clearable="true" @getValue="getValueEdit"></SelectTree>
           </el-form-item>
           <el-form-item label="Role" prop="role">
             <el-select v-model="editForm.role" placeholder="Please Select" filterable clearable>
@@ -210,7 +210,7 @@ Function: Show all user list and do all operations on the list.
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" @click="addChoice('producerForm')" :loading="isLoading || isLoadingProducer" plain size="small" class="questionRightBtnSingle">Producer</el-button>
             <el-select v-model="producerForm.ProducerID" placeholder="Producer" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
-              <el-option class="questionOption" v-for="item in producerList" :key="item.StaffID" :label="item.StaffID + '. ' + item.Name" :value="item.StaffID"></el-option>
+              <el-option class="questionOption" v-for="item in producerForm.selectableProducers" :key="item.StaffID" :label="item.StaffID + '. ' + item.Name" :value="item.StaffID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
@@ -260,6 +260,7 @@ export default {
       },
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
+      producerCount: 0,
       producerList: [],
       producerLevels: [{id: 1, name: 'Level 1'}, {id: 2, name: 'Level 2'}],
       addFormRules: {
@@ -293,6 +294,7 @@ export default {
       editForm: {
         StaffID: null,
         Name: null,
+        InstitutionID: null,
         institution: null,
         role: null,
         Mobile: null,
@@ -326,13 +328,14 @@ export default {
       // 搜索
       searchForm: {
         status: 0,
-        name: null
+        name: ''
       },
       searchStatusOptions: [{id: 0, name: 'All'}, {id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
       searchOrganization: null,
       searchStatus: null,
       searchName: null,
       // 列表
+      totalList: [],
       list: [],
       pageSize: 20,
       pagerCount: 5,
@@ -356,6 +359,7 @@ export default {
         StaffID: null,
         Name: null,
         ProducerID: null,
+        selectableProducers: [],
         producers: [],
         csrproducerlist: []
       },
@@ -367,7 +371,7 @@ export default {
     this.initOrganization()
     this.initRole()
     this.search(null, null)
-    this.initProducer()
+    this.loadProducers(0)
   },
   methods: {
     exportExcel: function () {
@@ -389,7 +393,7 @@ export default {
       this.addForm.institution = value
     },
     getValueEdit (value) {
-      this.editForm.institution = value
+      this.editForm.InstitutionID = Number(value)
     },
     // 组织列表
     initOrganization: function () {
@@ -424,9 +428,34 @@ export default {
       this.searchOrganization = data.InstitutionID
       this.addForm.institution = data.InstitutionID
       this.$refs.organizationTree.setCurrentKey(data.InstitutionID) // 设置节点高亮
-      this.search(this.searchStatus, this.searchName)
+      this.list = this.producerList.filter(p => p.InstitutionID === data.InstitutionID)
+      // this.search(this.searchStatus, this.searchName)
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
     },
     // 查询
+    search: function () {
+      let query = this.searchForm.name
+      let selectable = this.producerList
+      if (this.searchForm.status > 0) {
+        selectable = this.producerList.filter(p => p.StatusID === this.searchForm.status)
+      }
+      if (query === '') {
+        this.list = selectable
+      } else {
+        this.list = selectable.filter(p => p.Name.indexOf(query) >= 0 ||
+          p.StaffID === Number(query) ||
+          (p.Email !== null && p.Email.indexOf(query) >= 0) ||
+          (p.Mobile !== null && p.Mobile.indexOf(query) >= 0) ||
+          (p.ProducerCode !== null && p.ProducerCode.indexOf(query) >= 0)
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+    },
+
+    // 查询
+    /*
     search: function (status, name, page) {
       this.isLoading = true
       this.searchStatus = status
@@ -436,23 +465,6 @@ export default {
         goPage = page
       }
       if (this.searchOrganization === null) {
-        /*
-        this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {}).then(res => {
-          if (res) {
-            console.log('查询树', res)
-            this.list = res.data
-            if (this.searchName !== null) {
-              this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-            }
-            this.total = this.list.length
-            this.currentPage = goPage
-          }
-          this.isLoading = false
-        }).catch(err => {
-          console.log('查询树出错', err)
-          this.isLoading = false
-        })
-        */
         this.isLoading = false
       } else {
         this.axios.post('/api/Services/baseservice.asmx/GetStaffs_s', {institutionid: this.searchOrganization}).then(res => {
@@ -472,6 +484,7 @@ export default {
         })
       }
     },
+    */
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
@@ -503,18 +516,23 @@ export default {
         if (valid) {
           this.isLoading = true
           let form = JSON.parse(JSON.stringify(this.addForm))
+          form.InstitutionID = Number(form.institution)
           form.institution = {InstitutionID: form.institution}
           form.role = {RoleID: form.role}
           this.axios.post('/api/Services/baseservice.asmx/SaveStaff', {staff: JSON.stringify(form)}).then(res => {
             if (res) {
               console.log('新增', res)
+              this.producerList.splice(0, 0, res.data)
+              this.list.splice(0, 0, res.data)
+              this.total = this.list.length
+              this.pageCount = Math.ceil(this.total / this.pageSize)
               this.$message({
                 type: 'success',
                 message: 'Operation Succeeded'
               })
               this.$refs['addForm'].resetFields()
               this.addFormVisible = false
-              this.search(this.searchStatus, this.searchName, this.currentPage)
+              // this.search(this.searchStatus, this.searchName, this.currentPage)
             }
             this.isLoading = false
           }).catch(err => {
@@ -539,7 +557,8 @@ export default {
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             let form = JSON.parse(JSON.stringify(res.data))
             if (form.institution !== null) {
-              form.institution = form.institution.InstitutionID
+              // form.institution = form.institution.InstitutionID
+              form.InstitutionID = form.institution.InstitutionID
             }
             if (form.role !== null) {
               form.role = form.role.RoleID
@@ -570,7 +589,7 @@ export default {
         if (valid) {
           this.isLoading = true
           let form = JSON.parse(JSON.stringify(this.editForm))
-          form.institution = {InstitutionID: form.institution}
+          form.institution = {InstitutionID: form.InstitutionID}
           form.role = {RoleID: form.role}
           this.axios.post('/api/Services/baseservice.asmx/SaveStaff', {staff: JSON.stringify(form)}).then(res => {
             if (res) {
@@ -579,9 +598,15 @@ export default {
                 type: 'success',
                 message: 'Operation Succeeded'
               })
+              let index = this.producerList.findIndex(s => s.StaffID === res.data.StaffID)
+              if (index < 0) this.producerList.splice(0, 0, res.data)
+              else this.producerList.splice(index, 1, res.data)
+              index = this.list.findIndex(s => s.StaffID === res.data.StaffID)
+              if (index < 0) this.list.splice(0, 0, res.data)
+              else this.list.splice(index, 1, res.data)
               this.$refs['editForm'].resetFields()
               this.editFormVisible = false
-              this.search(this.searchStatus, this.searchName, this.currentPage)
+              // this.search()
             }
             this.isLoading = false
           }).catch(err => {
@@ -701,6 +726,28 @@ export default {
       })
     },
     // producer form
+    loadProducers: function (start) {
+      this.isLoadingProducer = true
+      this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
+        if (res) {
+          console.log('producerList', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producerList = res.data
+          } else {
+            this.producerList = this.producerList.concat(res.data)
+          }
+          if (this.producerList.length >= this.producerCount) {
+            this.isLoadingProducer = false
+          } else {
+            this.loadProducers(this.producerList.length)
+          }
+        }
+      }).catch(err => {
+        console.log('producerList', err)
+        this.isLoadingProducer = false
+      })
+    },
     // blocks列表
     initProducer: function () {
       this.isLoadingProducer = true
@@ -725,14 +772,16 @@ export default {
       this.producerForm.producers.splice(index, 1)
     },
     // 修改弹窗
-    showEditProducer: function (id, name) {
-      this.producerForm.StaffID = id
-      this.producerForm.Name = name
+    showEditProducer: function (staff) {
+      this.producerForm.StaffID = staff.StaffID
+      this.producerForm.Name = staff.Name
+      this.producerForm.selectableProducers = this.producerList.filter(s => s.InstitutionID === staff.InstitutionID && s.StatusID === 1)
       this.isLoadingProducer = true
       this.axios.post('/api/Services/baseservice.asmx/GetCSRProducers', {csrid: this.producerForm.StaffID}).then(res => {
         if (res) {
           console.log('Producer列表', res)
           this.producerForm.producers = res.data
+          this.producerForm.selectableProducers = this.producerForm.selectableProducers.filter(sp => res.data.findIndex(p => p.StaffID === sp.StaffID) < 0)
         }
         this.isLoadingProducer = false
       }).catch(err => {

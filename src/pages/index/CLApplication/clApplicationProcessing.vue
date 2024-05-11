@@ -16,14 +16,14 @@ Function: Show all commercial application list and do all operations on the list
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
@@ -42,11 +42,11 @@ Function: Show all commercial application list and do all operations on the list
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Title" prop="Title" min-width="150" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Applicant" prop="NameInsured" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
-        <el-table-column label="Premium" prop="Premium" min-width="80" sortable="custom"></el-table-column>
+        <el-table-column label="Applicant" prop="NameInsured" min-width="180" sortable="custom"></el-table-column>
+        <el-table-column label="Company" prop="CorpName" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="Prem" prop="Premium" min-width="80" sortable="custom"></el-table-column>
         <el-table-column label="EffecDate" prop="EffectiveDate" min-width="90" sortable="custom">
           <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
@@ -84,12 +84,12 @@ Function: Show all commercial application list and do all operations on the list
       </el-dialog>
       <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationWindowVisible" width="1550px" top="10px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1550px" top="10px" center :before-close="closeEdit">
         <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templateList" @close="closeEditApplication"></EditApplication>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -280,10 +280,11 @@ export default {
       },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
+      isLoadingApplications: false,
       isLoadingTemplateBlockQuestions: false,
       isLoadingApplicationBlock: false,
       isLoadingApplicationQuotations: false,
-      // isLoadingStaffs: false,
+      isLoadingProducers: false,
       isLoadingInsuranceCompany: false,
       templateList: [],
       insuranceCorpList: [],
@@ -796,7 +797,8 @@ export default {
                 BlockName: tb.BlockName,
                 Status: appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering')),
                 applicationBlock: appBlock,
-                applicationTemplate: app.applicationTemplate
+                applicationTemplate: app.applicationTemplate,
+                application: app
               }
               app.blocks.push(blockItem)
               return
@@ -809,6 +811,7 @@ export default {
               TypeID: 2,
               ApplicationID: app.ApplicationID,
               applicationTemplate: app.applicationTemplate,
+              application: app,
               templateBlock: tb,
               children: []
             }
@@ -841,6 +844,7 @@ export default {
                 BlockName: at.BlockName + ':' + at.RepeatedID,
                 TypeID: 1,
                 applicationTemplate: app.applicationTemplate,
+                application: app,
                 children: []
               }
               appb.children.push(childat)
@@ -852,7 +856,8 @@ export default {
                   BlockName: ab.BlockName + ':' + at.RepeatedID,
                   Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
                   applicationBlock: ab,
-                  applicationTemplate: app.applicationTemplate
+                  applicationTemplate: app.applicationTemplate,
+                  application: app
                 }
                 childat.children.push(childab)
               })
@@ -954,6 +959,7 @@ export default {
                 ApplicationBlockID: ab.ApplicationBlockID,
                 applicationBlock: ab,
                 applicationTemplate: blockItem.applicationTemplate,
+                application: blockItem.application,
                 RepeatedID: repeatedid,
                 BlockID: ab.BlockID,
                 BlockName: blockname + ':' + ab.RepeatedID,
@@ -1049,16 +1055,29 @@ export default {
       })
     },
     loadProducers: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingProducers = true
       this.axios.post('/api/Services/baseservice.asmx/GetSelectableProducers', {}).then(res => {
         if (res) {
-          console.log('statusList', res)
+          console.log('loadProducers', res)
           this.producerList = res.data
+          if (!this.isLoadingApplications) {
+            this.totalList.forEach(a => {
+              let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+              if (producer !== undefined) a.Producer = producer.Name
+              else a.Producer = ''
+              if (a.StaffID === a.ProducerID) a.Author = a.Producer
+              else {
+                let author = this.producerList.find(p => p.StaffID === a.StaffID)
+                if (producer !== undefined) a.Author = author.Name
+                else a.Author = ''
+              }
+            })
+          }
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingProducers = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('loadProducers', err)
+        this.isLoadingProducers = false
       })
     },
     // 保险公司列表
@@ -1148,7 +1167,7 @@ export default {
       })
     },
     loadApplications: function (start) {
-      this.isLoading = true
+      this.isLoadingApplications = true
       if (start === 0) this.totalList = []
       this.axios.post('/api/Services/CommerceService.asmx/GetProcessings', {start: start}).then(res => {
         if (res) {
@@ -1160,26 +1179,73 @@ export default {
             this.totalList = this.totalList.concat(res.data)
           }
           if (this.totalList.length === this.total) {
+            this.totalList.sort(this.bydesc('ApplicationID'))
             this.totalList.forEach(a => {
+              this.attachInfo(a)
+              /*
               let status = this.statusList.find(s => s.key === a.StatusID)
               if (status !== undefined) a.Status = status.value
               else a.Status = ''
-              let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              if (producer !== undefined) a.Producer = producer.Name
-              else a.Producer = ''
+              if (!this.isLoadingProducers) {
+                let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+                if (producer !== undefined) a.Producer = producer.Name
+                else a.Producer = ''
+              }
+               */
             })
             this.list = this.totalList
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
             this.pageCount = Math.ceil(this.total / this.pageSize)
-            this.isLoading = false
+            this.isLoadingApplications = false
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoading = false
+        this.isLoadingApplications = false
       })
     },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      // let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      // if (corp !== undefined) a.CorpName = corp.Name
+      // else a.CorpName = ''
+      let status = this.statusList.find(s => s.key === a.Status)
+      if (status !== undefined) a.Status = status.value
+      else a.Status = ''
+      if (!this.isLoadingProducers) {
+        let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+        if (producer !== undefined) a.Producer = producer.Name
+        else a.Producer = ''
+        if (a.StaffID === a.ProducerID) a.Author = a.Producer
+        else {
+          let author = this.producerList.find(p => p.StaffID === a.StaffID)
+          if (producer !== undefined) a.Author = author.Name
+          else a.Author = ''
+        }
+      }
+    },
     // 查询
+    search: function () {
+      let query = this.searchForm.name
+      if (query === '') {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+          r.ApplicationID === Number(query) ||
+          r.Producer.indexOf(query) >= 0 ||
+          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
+    /*
     search: function (name, start) {
       this.isLoading = true
       if (start === 0) this.list = []
@@ -1211,6 +1277,7 @@ export default {
           this.list = this.list.concat(res.data)
           this.total = this.list.length
           this.pageCount = Math.ceil(this.total / this.pageSize)
+          console.log('pageCount', this.pageCount)
           this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
           // this.list = res.data
           // this.total = this.list.length
@@ -1222,13 +1289,14 @@ export default {
         this.isLoading = false
       })
     },
+     */
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
         // this.search(null, this.total)
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 重置查询
     resetSearch: function () {

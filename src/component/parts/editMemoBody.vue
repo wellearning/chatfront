@@ -207,6 +207,7 @@ export default {
         return result
       } else if (sign === 'date') {
         exp = exp.replace('{EffectiveDate}', this.memo.EffectiveDate)
+        exp = exp.replace('{RequestDate}', this.memo.RequestDate)
         return exp
       } else {
         return exp

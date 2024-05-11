@@ -10,14 +10,14 @@ Function: Show all commercial application list and do all operations on the list
       <span class="inPageNav">C/L Policies</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
-          <el-form-item>
+          <!--el-form-item>
             <el-date-picker @change="search()"
                             v-model="searchForm.periodDates" class="middleWidth"
                             type="daterange"
                             unlink-panels
                             placeholder="StartDate - EndDate">
             </el-date-picker>
-          </el-form-item>
+          </el-form-item-->
           <el-form-item label="Frequently Used" prop="Year">
             <el-select v-model="searchForm.period" placeholder="" class="middleWidth" no-data-text="No Record" filterable @change="changePeriod()">
               <el-option v-for="item in periods" :key="item.value" :label="item.name" :value="item.value"></el-option>
@@ -27,32 +27,34 @@ Function: Show all commercial application list and do all operations on the list
             <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoadingAll" size="small">Go</el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
     <div class="inPageContent">
-      <el-table height="640" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoading || isLoadingInsuranceCompany" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="640" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom"></el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
           <template slot-scope="props">
             <el-table :data="props.row.blocks" row-key="id" default-expand-all :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
-              <el-table-column prop="BlockName" label="Block Name" min-width="300"/>
+              <el-table-column prop="BlockName" label="Block Name" min-width="200"/>
               <el-table-column prop="Status" label="Status" min-width="100"/>
-              <el-table-column label="Sub-Action" width="380">
+              <el-table-column label="Sub-Action" width="480">
                 <template slot-scope="scope">
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  <el-button v-if="scope.row.TypeID === 0 && scope.row.Status !== 'Not Answer'" icon="el-icon-view" type="primary" plain @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
+                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" plain @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" plain @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-view" type="info" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" plain @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
               </el-table-column>
             </el-table>
           </template>
         </el-table-column>
         <!--el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column-->
-        <!--el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column-->
+        <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="InsuCorp" prop="CorpName" min-width="200" sortable="custom"></el-table-column>
@@ -72,9 +74,9 @@ Function: Show all commercial application list and do all operations on the list
           <template slot-scope="scope">
             <el-button-group>
               <!--el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button-->
+              <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Form</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 6" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
             </el-button-group>
           </template>
@@ -94,92 +96,21 @@ Function: Show all commercial application list and do all operations on the list
       <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
       <!----------------------------------------------Questionnaire 弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="questionnaireFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewQuestionnaire ref="vq" :applicationid="currentApplicationID" :insuranceCorps="insuranceCorpList"></ViewQuestionnaire>
+        <ViewQuestionnaire ref="vq" :applicationid="currentApplicationID"
+                           :templateBlockID="TemplateBlockID"
+                           :repeatedID="RepeatedID"
+                           :objTypeID="ObjTypeID"
+                           :questionnaireID="QuestionnaireID"
+                           :insuranceCorps="insuranceCorpList"></ViewQuestionnaire>
       </el-dialog>
       <!----------------------------------------------Questionnaire 弹窗结束----------------------------------------------------->
       <!----------------------------------------------BaseInfo Edition 弹窗开始----------------------------------------------------->
-      <el-dialog title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
+      <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
         <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
-        <!--el-form :model="applicationForm" ref="applicationForm" class="newMemo" :rules="applicationFormRules">
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Effective Date" prop="EffectiveDate">
-                <el-date-picker v-model="applicationForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Expiry Date" prop="ExpiryDate">
-                <el-date-picker v-model="applicationForm.ExpiryDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="AppType" prop="TypeID">
-                <el-select v-model="applicationForm.TypeID" placeholder="App Type" no-data-text="No Record" filterable >
-                  <el-option v-for="item in appTypes" :key="item.ID" :label="item.Name" :value="item.ID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" v-if="applicationForm.TypeID === 2" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Remarket From" prop="LeadFromCorpID">
-                <el-select v-model="applicationForm.LeadFromCorpID" placeholder="Lead From" no-data-text="No Record" filterable >
-                  <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Client Code" prop="ClientCode">
-                <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Policy Number" prop="PolicyNumber">
-                <el-input v-model="applicationForm.PolicyNumber" placeholder="Policy Number" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Premium" prop="Premium">
-                <el-input v-model="applicationForm.Premium" type="number" placeholder="Premium" title=""></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
-                <el-select v-model="applicationForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
-                  <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
-            <el-col :span="24">
-              <el-form-item label="ApplicationType" prop="TemplateID">
-                <el-select v-model="applicationForm.TemplateID" placeholder="Questionnaire" no-data-text="No Record" filterable >
-                  <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <div class="newMemo-submit">
-            <el-button icon="el-icon-check" type="primary" @click="saveApplication()" :loading="isLoading">Save</el-button>
-          </div>
-        </el-form-->
       </el-dialog>
-      <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
+      <!----------------------------------------------BaseInfo弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改ApplicationBlock弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationBlockVisible" width="984.56px" center :before-close="closeEdit">
         <editApplicationBlock :applicationBlock="currentApplicationBlock" :applicationTemplate="currentApplicationTemplate"
                               @showNextBlock="showNextBlock"
                               @showSkipBlock="showSkipBlock"
@@ -189,7 +120,8 @@ Function: Show all commercial application list and do all operations on the list
         >
         </editApplicationBlock>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="saveApplicationBlock()" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID !== 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(false)" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID === 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(true)" :loading="isLoading">Finish</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
@@ -198,6 +130,24 @@ Function: Show all commercial application list and do all operations on the list
         <ViewApplicationBlock ref="vab" :applicationBlockId="currentApplicationBlockID" :blockName="currentBlockName"></ViewApplicationBlock>
       </el-dialog>
       <!----------------------------------------------查阅applicationBlock弹窗结束----------------------------------------------------->
+      <!----------------------------------------------setBlockQuestionnaire弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="setBlockQuestionnaireVisible" width="984.56px" center>
+        <el-form :model="setQuestionnaireForm" ref="setQuestionnaireForm" class="newMemo">
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
+                <el-select v-model="setQuestionnaireForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
+                  <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div class="newMemo-submit">
+          <el-button icon="el-icon-check" type="primary" @click="setBlockQuestionnaire()" :loading="isLoading">Save</el-button>
+        </div>
+      </el-dialog>
+      <!----------------------------------------------setBlockQuestionnaire弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -230,7 +180,9 @@ export default {
       },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
-      // isLoadingStaffs: false,
+      isLoadingAll: false,
+      isLoadingApplications: false,
+      isLoadingProducers: false,
       isLoadingInsuranceCompany: false,
       isLoadingApplicationBlock: false,
       // staffsList: [],
@@ -239,6 +191,7 @@ export default {
       insuranceCorpList: [],
       questionnaires: [],
       periods: [
+        {name: 'All', value: 0},
         {name: 'Month to Date', value: 1},
         {name: 'Year to Date', value: 2},
         {name: 'Last 30 Days', value: 30},
@@ -246,11 +199,16 @@ export default {
         {name: 'Last 182 Days', value: 182},
         {name: 'Last 365 Days', value: 365}],
       // appTypes: [{ID: 1, Name: 'New Business'}, {ID: 2, Name: 'Remarket'}, {ID: 3, Name: 'LOA'}, {ID: 4, Name: 'Rewrite'}],
+      setQuestionnaireForm: {
+        QuestionnaireID: 0,
+        ApplicationBlockID: 0,
+        blockItem: null
+      },
       // 搜索
       searchForm: {
         name: null,
         periodDates: '',
-        period: 1
+        period: 0
       },
       searchName: null,
       // 列表
@@ -264,6 +222,10 @@ export default {
       currentBlockName: null,
       currentApplicationBlock: null,
       currentApplicationTemplate: null,
+      TemplateBlockID: 0,
+      RepeatedID: 0,
+      ObjTypeID: 0,
+      QuestionnaireID: 0,
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -274,6 +236,8 @@ export default {
       editApplicationBlockVisible: false,
       viewApplicationBlockVisible: false,
       viewFormVisible: false,
+      setBlockQuestionnaireVisible: false,
+      viewBlockQuestionnaireVisible: false,
       viewForm: {
         Title: null,
         EffectiveDate: null,
@@ -359,12 +323,13 @@ export default {
     }
   },
   mounted: function () {
-    // this.loadProducers()
+    this.loadProducers(0)
     this.loadApplicationStatus()
     this.initInsuranceCompany()
     // this.initTemplates()
-    this.searchForm.period = 1
+    this.searchForm.period = 0
     this.changePeriod()
+    this.loadQuestionnaires()
   },
   methods: {
     sorttable: function (column) {
@@ -379,7 +344,13 @@ export default {
       this.list.sort(this.bydesc(name))
     },
     changePeriod: function () {
-      if (this.searchForm.period === 1) {
+      if (this.searchForm.period === 0) {
+        let year = new Date().getFullYear()
+        let month = new Date().getMonth()
+        let startDate = new Date(2020, 0, 1)
+        let endDate = new Date(year + 1, month, 1)
+        this.searchForm.periodDates = [startDate, endDate]
+      } else if (this.searchForm.period === 1) {
         let year = new Date().getFullYear()
         let month = new Date().getMonth()
         let startDate = new Date(year, month, 1)
@@ -434,11 +405,12 @@ export default {
       this.showApplication(this.currentApplication.ApplicationID)
     },
     showEditApplication: function (application) {
+      if (application !== undefined) this.setCurrent(application)
       let id = application.ApplicationID
       this.currentApplicationID = id
       this.editApplicationWindowVisible = true
       if (this.$refs.eacl !== undefined) {
-        this.$refs.eacl.loadApplication(id)
+        this.$refs.eacl.loadApplication()
       }
     },
     showEditBlock: function (blockItem) {
@@ -451,97 +423,135 @@ export default {
         this.loadNewApplicationBlock(aTemplate, blockItem.templateBlock)
       }
     },
+    showSetBlockQuestionnaire: function (blockItem) {
+      this.setBlockQuestionnaireVisible = true
+      this.setQuestionnaireForm.blockItem = blockItem
+      this.setQuestionnaireForm.QuestionnaireID = blockItem.QuestionnaireID
+      this.setQuestionnaireForm.ApplicationTemplateID = blockItem.ApplicationTemplateID
+    },
+    setBlockQuestionnaire: function () {
+      this.axios.post('/api/Services/CommerceService.asmx/SetApplicationTemplateQuestionnaire', {applicationtemplateid: this.setQuestionnaireForm.ApplicationTemplateID, questionnaireid: this.setQuestionnaireForm.QuestionnaireID}).then(res => {
+        if (res) {
+          console.log('setBlockQuestionnaire', res.data)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.setQuestionnaireForm.blockItem.QuestionnaireID = this.setQuestionnaireForm.QuestionnaireID
+          this.setBlockQuestionnaireVisible = false
+          this.setQuestionnaireForm.blockItem = null
+          this.setQuestionnaireForm.QuestionnaireID = 0
+          this.setQuestionnaireForm.ApplicationTemplateID = 0
+        }
+      }).catch(err => {
+        console.log('setBlockQuestionnaire出错', err)
+      })
+    },
     loadApplication: function (app) {
-      if (app.applicationTemplate !== null) return
+      // if (app.applicationTemplate !== null && app.applicationTemplate.applicationBlocks !== null) return
       let id = app.ApplicationID
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
+          console.log('GetApplicationFrame', res.data)
           app.applicationTemplate = res.data.applicationTemplate
-          app.applicationTemplate.applicationBlocks = app.applicationTemplate.applicationBlocks.filter(ab => ab !== null)
-          // build application tree
-          app.blocks = []
-          let id = 0
-          app.applicationTemplate.templateBlocks.forEach(tb => {
-            if (tb.ChildTypeID === 0) {
-              let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
-              if (appBlock !== undefined) {
-                tb.applicationBlock = appBlock
-                tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
-              }
-              let blockItem = {
-                id: id++,
-                TypeID: 0,
-                templateBlock: tb,
-                BlockID: tb.BlockID,
-                BlockName: tb.BlockName,
-                Status: appBlock === undefined ? 'Not Answer' : (appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))),
-                applicationBlock: appBlock,
-                applicationTemplate: app.applicationTemplate
-              }
-              app.blocks.push(blockItem)
-              return
-            }
-            // tb.applicationBlocks = []
-            let appb = {
-              id: id++,
-              BlockID: tb.BlockID,
-              BlockName: tb.BlockName,
-              TypeID: 2,
-              ApplicationID: app.ApplicationID,
-              applicationTemplate: app.applicationTemplate,
-              templateBlock: tb,
-              children: []
-            }
-            app.blocks.push(appb)
-            // fill in subApplicationTemplate
-            tb.applicationTemplates = []
-            app.applicationTemplate.applicationBlocks.forEach(ab => {
-              let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
-              if (templateBlock === undefined) return
-              // tb.applicationBlocks.push(ab)
-              let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
-              if (subatemplate === undefined) {
-                subatemplate = {
-                  BlockName: tb.BlockName,
-                  RepeatedID: ab.RepeatedID,
-                  applicationBlocks: []
+          if (app.applicationTemplate !== null) {
+            app.applicationTemplate.applicationBlocks = app.applicationTemplate.applicationBlocks.filter(ab => ab !== null)
+            // build application tree
+            app.blocks = []
+            app.blockCount = 0
+            let id = 0
+            app.applicationTemplate.templateBlocks.forEach(tb => {
+              if (tb.ChildTypeID === 0) {
+                let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
+                if (appBlock !== undefined) {
+                  tb.applicationBlock = appBlock
+                  tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
                 }
-                tb.applicationTemplates.push(subatemplate)
-              }
-              subatemplate.applicationBlocks.push(ab)
-              ab.topTemplateBlockID = tb.TemplateBlockID
-              ab.BlockName = templateBlock.BlockName
-            })
-            tb.applicationTemplates.forEach(at => {
-              let childat = {
-                id: id++,
-                ApplicationID: app.ApplicationID,
-                BlockID: appb.BlockID,
-                RepeatedID: at.RepeatedID,
-                Parent: appb,
-                BlockName: at.BlockName + ':' + at.RepeatedID,
-                TypeID: 1,
-                applicationTemplate: app.applicationTemplate,
-                children: []
-              }
-              appb.children.push(childat)
-              at.applicationBlocks.forEach(ab => {
-                let childab = {
+                let blockItem = {
                   id: id++,
                   TypeID: 0,
-                  BlockID: ab.BlockID,
-                  BlockName: ab.BlockName + ':' + at.RepeatedID,
-                  Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
-                  applicationBlock: ab,
+                  templateBlock: tb,
+                  BlockID: tb.BlockID,
+                  BlockName: tb.BlockName,
+                  Status: appBlock === undefined ? 'Not Answer' : (appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))),
+                  applicationBlock: appBlock,
+                  app: app,
                   applicationTemplate: app.applicationTemplate
                 }
-                childat.children.push(childab)
+                app.blocks.push(blockItem)
+                app.blockCount = id
+                return
+              }
+              // tb.applicationBlocks = []
+              let appb = {
+                id: id++,
+                BlockID: tb.BlockID,
+                BlockName: tb.BlockName,
+                TypeID: 2,
+                ApplicationID: app.ApplicationID,
+                applicationTemplate: app.applicationTemplate,
+                templateBlock: tb,
+                app: app,
+                children: []
+              }
+              app.blocks.push(appb)
+              // fill in subApplicationTemplate
+              tb.applicationTemplates = app.applicationTemplate.children.filter(c => c.TemplateID === tb.BlockID)
+              app.applicationTemplate.applicationBlocks.forEach(ab => {
+                let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
+                if (templateBlock === undefined) return
+                // tb.applicationBlocks.push(ab)
+                let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
+                if (subatemplate === undefined) {
+                  subatemplate = {
+                    BlockName: tb.BlockName,
+                    RepeatedID: ab.RepeatedID,
+                    applicationBlocks: []
+                  }
+                  tb.applicationTemplates.push(subatemplate)
+                }
+                if (subatemplate.applicationBlocks === null) subatemplate.applicationBlocks = []
+                subatemplate.applicationBlocks.push(ab)
+                ab.topTemplateBlockID = tb.TemplateBlockID
+                ab.BlockName = templateBlock.BlockName
+              })
+              tb.applicationTemplates.forEach(at => {
+                let childat = {
+                  id: id++,
+                  ApplicationTemplateID: at.ApplicationTemplateID,
+                  ApplicationID: app.ApplicationID,
+                  BlockID: appb.BlockID,
+                  TemplateBlockID: tb.TemplateBlockID,
+                  RepeatedID: at.RepeatedID,
+                  Parent: appb,
+                  BlockName: tb.BlockName + ':' + (at.RepeatedID + 1),
+                  TypeID: 1,
+                  QuestionnaireID: at.QuestionnaireID,
+                  app: app,
+                  applicationTemplate: app.applicationTemplate,
+                  children: []
+                }
+                appb.children.push(childat)
+                at.applicationBlocks.forEach(ab => {
+                  let childab = {
+                    id: id++,
+                    TypeID: 0,
+                    BlockID: ab.BlockID,
+                    BlockName: ab.BlockName + ':' + (at.RepeatedID + 1),
+                    Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
+                    app: app,
+                    applicationBlock: ab,
+                    applicationTemplate: app.applicationTemplate
+                  }
+                  childat.children.push(childab)
+                })
               })
             })
-          })
-          this.loadTemplateBlockQuestions(app.applicationTemplate)
-          console.log('ApplicationFrame', app)
+            app.blockCount = id
+            this.loadTemplateBlockQuestions(app.applicationTemplate)
+          }
+          // console.log('ApplicationFrame', app)
         }
         this.isLoading = false
       }).catch(err => {
@@ -597,6 +607,13 @@ export default {
     },
     loadTemplateBlockQuestions: function (atemplate) {
       console.log('loadTemplateBlockQuestions start from', atemplate)
+      if (atemplate.TemplateID === 0) {
+        this.$message({
+          type: 'error',
+          message: 'Template is not exist'
+        })
+        return
+      }
       this.isLoadingTemplateBlockQuestions = true
       this.axios.post('/api/Services/BaseService.asmx/GetBlockQuestionsByTemplate_all', {templateid: atemplate.TemplateID}).then(res => {
         if (res) {
@@ -631,16 +648,16 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = blockItem.ApplicationID
+        let appid = blockItem.ApplicationID
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: id, templateid: blockItem.BlockID}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: appid, templateid: blockItem.BlockID}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('AddSubApplicationTemplate', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            let id = blockItem.children.length * 100
+            let id = blockItem.app.blockCount
             let atBlockItem = {
               id: id++,
               BlockID: blockItem.BlockID,
@@ -669,6 +686,7 @@ export default {
               atBlockItem.children.push(child)
             })
             atBlockItem.BlockName += repeatedid
+            blockItem.app.blockCount = id
           }
           this.isLoading = false
         }).catch(err => {
@@ -713,7 +731,7 @@ export default {
         })
       })
     },
-    saveApplicationBlock: function () {
+    saveApplicationBlock: function (close) {
       let blockitem = this.currentBlockItem
       let ablock = JSON.parse(JSON.stringify(this.currentApplicationBlock))
       ablock.answers.forEach(answer => {
@@ -739,6 +757,7 @@ export default {
           blockitem.Status = appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))
         }
         this.isLoading = false
+        if (close) this.editApplicationBlockVisible = false
       }).catch(err => {
         console.log('修改出错', err)
         this.$message({
@@ -778,17 +797,17 @@ export default {
     },
     // Questionnaire
     loadQuestionnaires: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingQuestionnaires = true
       this.axios.post('/api/Services/baseservice.asmx/GetQuestionnaires', {}).then(res => {
         if (res) {
           console.log('Questionnaires', res)
           let nocorp = [{BlockID: 0, Name: 'No Need'}]
           this.questionnaires = nocorp.concat(res.data)
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingQuestionnaires = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('loadQuestionnaires出错', err)
+        this.isLoadingQuestionnaires = false
       })
     },
     // 删除
@@ -865,8 +884,10 @@ export default {
       } else {
         this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
+          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
           r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
+          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
@@ -889,7 +910,7 @@ export default {
       })
     },
     loadProducers: function (start) {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingProducers = true
       this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
@@ -901,61 +922,90 @@ export default {
           }
           if (this.producerList.length < this.producerCount) {
             this.loadProducers(this.producerList.length)
-            this.isLoadingInsuranceCompany = false
+          } else {
+            this.isLoadingProducers = false
+            this.attachProducers()
           }
         }
       }).catch(err => {
         console.log('producerList', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingProducers = false
       })
     },
+    attachProducers: function () {
+      if (!this.isLoadingApplications && !this.isLoadingProducers) {
+        this.totalList.forEach(a => {
+          let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+          if (producer !== undefined) a.Producer = producer.Name
+          else a.Producer = ''
+          if (a.StaffID === a.ProducerID) a.Author = a.Producer
+          else {
+            let author = this.producerList.find(p => p.StaffID === a.StaffID)
+            if (producer !== undefined) a.Author = author.Name
+            else a.Author = ''
+          }
+        })
+      }
+    },
     loadApplications: function (start) {
-      this.isLoading = true
-      if (start === 0) this.totalList = []
+      if (start === 0) {
+        this.totalList = []
+        this.isLoadingApplications = true
+        this.isLoadingAll = true
+      }
       let startDate = this.dateFormat(this.searchForm.periodDates[0])
       let endDate = this.dateFormat(this.searchForm.periodDates[1])
       this.axios.post('/api/Services/CommerceService.asmx/GetPolicies', {startdate: startDate, enddate: endDate, start: start}).then(res => {
         if (res) {
           console.log('Application查询', res)
+          this.attachApplications((res.data))
           if (start === 0) {
             this.total = res.count
             this.totalList = res.data
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoadingApplications = false
           } else {
             this.totalList = this.totalList.concat(res.data)
           }
           if (this.totalList.length === this.total) {
-            this.totalList.forEach(a => {
-              a.EffectiveDate = moment(a.EffectiveDate)
-              a.ExpiryDate = moment(a.ExpiryDate)
-              a.RequestDate = moment(a.RequestDate)
-              a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
-              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
-              if (corp !== undefined) a.CorpName = corp.Name
-              else a.CorpName = ''
-            })
+            this.totalList.sort(this.bydesc('ApplicationID'))
             this.list = this.totalList
             this.pageCount = Math.ceil(this.total / this.pageSize)
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.isLoading = false
+            this.isLoadingAll = false
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoading = false
+        this.isLoadingApplications = false
+        this.isLoadingAll = false
+      })
+    },
+    attachApplications: function (applications) {
+      applications.forEach(a => {
+        a.EffectiveDate = moment(a.EffectiveDate)
+        a.ExpiryDate = moment(a.ExpiryDate)
+        a.RequestDate = moment(a.RequestDate)
+        a.DateOfBirth = moment(a.DateOfBirth)
+        let status = this.statusList.find(s => s.key === a.StatusID)
+        if (status !== undefined) a.Status = status.value
+        else a.Status = ''
+        let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+        if (producer !== undefined) a.Producer = producer.Name
+        else a.Producer = ''
+        let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
+        if (corp !== undefined) a.CorpName = corp.Name
+        else a.CorpName = ''
       })
     },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
       } else {
-        this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
       }
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 重置查询
     resetSearch: function () {
@@ -1063,21 +1113,37 @@ export default {
       }
     },
     showQuestionnaire: function (applicationid) {
+      this.ObjTypeID = 0
       this.currentApplicationID = applicationid
       this.questionnaireFormVisible = true
       if (this.$refs.vq !== undefined) {
         this.$refs.vq.loadApplication(applicationid)
       }
     },
+    showBlockQuestionnaire: function (blockItem) {
+      if (blockItem.QuestionnaireID === 0) return
+      this.currentApplicationID = blockItem.ApplicationID
+      this.TemplateBlockID = blockItem.TemplateBlockID
+      this.RepeatedID = blockItem.RepeatedID
+      this.ObjTypeID = 1
+      this.QuestionnaireID = blockItem.QuestionnaireID
+      this.questionnaireFormVisible = true
+      if (this.$refs.vq !== undefined) {
+        this.$refs.vq.loadApplicationTemplate(blockItem.ApplicationID, blockItem.TemplateBlockID, blockItem.RepeatedID, blockItem.QuestionnaireID)
+      }
+    },
     showEdition: function (application) {
       this.currentApplication = application
       this.applicationFormVisible = true
       if (this.$refs.eab !== undefined) {
-        this.$refs.eab.setForm(application)
+        this.$refs.eab.loadApplication(application.ApplicationID)
       }
     },
     hideEdition: function () {
       this.applicationFormVisible = false
+      if (this.currentApplication.applicationTemplate !== null) {
+        this.loadApplication(this.currentApplication)
+      }
     }
   }
 }

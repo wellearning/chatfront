@@ -139,7 +139,7 @@ export default {
       sheetSelectedVisible: false,
       currentSheet: null,
       sheets: {},
-      repeatedCount: 10,
+      repeatedCount: 0,
       loadArrayCount: 0 // Array table 需要异步加载，这个是控制其完全加载的参数
     }
   },
@@ -222,10 +222,13 @@ export default {
         if (p.indexOf('.') > 0) {
           let qid = Number(p.substring(0, p.indexOf('.')))
           let outputway = p.substring(p.indexOf('.') + 1)
-          let answer = this.businessObj.answers.find(a => a.QuestionID === qid)
+          if (qid === 850) {
+            console.log(qid)
+          }
+          let answer = this.businessObj.answers.find(a => a.QuestionID === qid && (a.AnswerDesc !== null && a.AnswerDesc !== ''))
           if (index !== undefined) {
-            answer = this.businessObj.answers.filter(a => a.QuestionID === qid)[index]
-            if (answer === undefined) return null
+            answer = this.businessObj.answers.find(a => a.RepeatedID === index && a.QuestionID === qid && (a.AnswerDesc !== null && a.AnswerDesc !== ''))
+            // if (answer === undefined) return null
           }
           if (answer === undefined) {
             text = text.replace(ma, '')
@@ -234,7 +237,9 @@ export default {
           if (answer.InputType === 'array') {
             continue
           }
-          value = answer.AnswerDesc
+          if (answer.InputType === 'money') {
+            value = Number(answer.AnswerDesc).toLocaleString()
+          } else value = answer.AnswerDesc
           if (outputway === 'Out') value = answer.Outputs
           else if (outputway === 'Addi') value = answer.Addition
           if (answer.TypeID === 6) {
@@ -290,38 +295,43 @@ export default {
     },
     parseSheet: function (sheet) {
       if (this.businessObj === null) return sheet
+      let sequenceTables = []
       let tableslist = []
       let tables = []
       tableslist.push(tables)
       for (let i = 0; i < sheet.tables.length; i++) {
         let table = sheet.tables[i]
-        if (table.repeatable) {
-          // sheet.tables.splice(i, 1)
-          for (let index = 0; index < this.repeatedCount; index++) {
-            let t = this.parseTable(table, index)
-            if (t !== null) {
-              let tables = tableslist[index]
-              if (tables === undefined) {
-                tables = []
-                tableslist.push(tables)
-              }
-              tables.push(t)
-              // sheet.tables.splice(i, 0, t)
-            } else {
-              if (this.repeatedCount === 10 || index > this.repeatedCount) this.repeatedCount = index
-              break
-            }
-          }
-        } else {
-          let tables = tableslist[0]
+        if (!table.repeatable) {
+          tableslist.forEach(tables => {
+            sequenceTables = sequenceTables.concat(tables)
+          })
+          tableslist = []
           let parsetable = this.parseTable(table)
-          if (parsetable !== null) tables.push(table)
+          sequenceTables.push(parsetable)
+          continue
+        }
+        // reorganize repeatable tables as a group
+        for (let index = 0; index < this.repeatedCount; index++) {
+          let t = this.parseTable(table, index)
+          if (t !== null) {
+            let tables = tableslist[index]
+            if (tables === undefined) {
+              tables = []
+              tableslist.push(tables)
+            }
+            tables.push(t)
+            // sheet.tables.splice(i, 0, t)
+          } else {
+            if (this.repeatedCount === 10 || index + 1 > this.repeatedCount) this.repeatedCount = index + 1
+            break
+          }
         }
       }
-      sheet.tables = []
+      // add the last tableslist to sequenceTables
       tableslist.forEach(tables => {
-        tables.forEach(table => sheet.tables.push(table))
+        sequenceTables = sequenceTables.concat(tables)
       })
+      sheet.tables = sequenceTables
       return sheet
     },
     parseTable: function (table, index) {
@@ -361,12 +371,12 @@ export default {
         // the table is added by an array property
         let answer = this.getArrayAnswer(title, index)
         // 如果answer没有回答或跳过，则不显示该table
-        if (answer === undefined) return null
-        if (answer.StatusID !== 1) return null
+        // if (answer === undefined) return null
+        // if (answer.StatusID !== 1) return null
         title = title.replace(/{{\d+}}/, '')
         table.title = title
         if (table.trs === undefined) table.trs = []
-        if (answer !== undefined) {
+        if (answer !== undefined && answer.StatusID === 1) {
           let count = this.loadArrayCount
           count++
           this.loadArrayCount = count
@@ -568,7 +578,10 @@ export default {
           // if (effdate.year() > 2020) this.businessObj.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
           // else this.businessObj.EffectiveDate = ''
           this.businessObj.applicationTemplate.applicationBlocks.forEach(ablock => {
-            this.loadApplicationBlock(ablock, id)
+            if (ablock !== null) {
+              this.loadApplicationBlock(ablock, id)
+              if (this.repeatedCount <= ablock.RepeatedID) this.repeatedCount = ablock.RepeatedID + 1
+            } else this.loadCount++
           })
           this.loadProducer()
           this.isLoading = false

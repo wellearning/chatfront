@@ -20,7 +20,7 @@ Function: Show attribute list and do all operations on the list.
             <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
@@ -102,6 +102,9 @@ Function: Show attribute list and do all operations on the list.
                 <span>{{item.name}}</span>
               </el-radio>
             </el-radio-group>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'text'" label="Data Source" prop="DataSource" >
+            <el-input v-model="editForm.DataSource" clearable></el-input>
           </el-form-item>
           <el-form-item v-if="editForm.InputType === 'list'" label="Data Source" prop="DataSource" >
             <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
@@ -199,10 +202,13 @@ export default {
         {id: 3, name: 'number', value: 'number'},
         {id: 4, name: 'list', value: 'list'},
         {id: 5, name: 'children', value: 'children'},
-        {id: 6, name: 'computed', value: 'computed'},
+        {id: 6, name: 'bit', value: 'bit'},
         {id: 7, name: 'array', value: 'array'},
         {id: 8, name: 'money', value: 'money'},
-        {id: 9, name: 'checklist', value: 'checklist'}
+        {id: 9, name: 'checklist', value: 'checklist'},
+        {id: 10, name: 'percent', value: 'percent'},
+        {id: 11, name: 'computed', value: 'computed'},
+        {id: 12, name: 'address', value: 'address'}
       ],
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
@@ -249,7 +255,7 @@ export default {
       },
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       dataSourceVisible: false,
@@ -272,7 +278,7 @@ export default {
       console.log(to.params.id)
       this.btypeId = parseInt(this.$route.params.id)
       this.typeName = this.businessTypes[this.btypeId] + this.typeName
-      this.search(null)
+      this.search()
     }
   },
   mounted: function () {
@@ -281,7 +287,7 @@ export default {
     this.loadRateTypes()
     this.loadAttributes()
     this.loadDataTypes()
-    this.search(null)
+    this.load(null)
   },
   methods: {
     addRate: function () {
@@ -359,17 +365,28 @@ export default {
         this.isLoadingDataTypes = false
       })
     },
+    search: function () {
+      let query = this.searchForm.name.toLowerCase()
+      if (query === '') {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r => r.Description.toLowerCase().indexOf(query) >= 0 ||
+          r.QuestionID === Number(query) ||
+          r.InputType.toLowerCase().indexOf(query) >= 0 ||
+          (r.DataSource !== null && r.DataSource.toLowerCase().indexOf(query) >= 0)
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+    },
     // 查询
-    search: function (name) {
+    load: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 3, query: name, btypeid: this.btypeId}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 3, query: null, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.list = res.data
-          if (name !== null) {
-            this.searchName = name
-            // this.list = this.list.filter(item => item.Description.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-          }
+          this.totalList = res.data
+          this.list = this.totalList
           this.total = this.list.length
           this.currentPage = 1
         }
@@ -382,8 +399,8 @@ export default {
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null)
+      this.searchName = ''
+      this.search()
     },
     // 显示新增弹窗
     showAdd: function () {

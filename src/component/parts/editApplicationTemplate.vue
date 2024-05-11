@@ -556,7 +556,7 @@ export default {
     resetLeftChildren: function (ablock) {
       let atemplate = this.applicationTemplate
       let index = atemplate.applicationBlocks.indexOf(ablock)
-      for (let i = index; i < atemplate.applicationBlocks.length; i++) {
+      for (let i = index + 1; i < atemplate.applicationBlocks.length; i++) {
         let ab = atemplate.applicationBlocks[i]
         this.resetBlock(ab)
       }
@@ -599,7 +599,7 @@ export default {
       let atemplate = this.applicationTemplate
       atemplate.StatusID = 1
       // let children = this.applicationTemplate.templateBlocks
-      let children = this.applicationTemplate.applicationBlocks
+      let children = atemplate.applicationBlocks
       console.log('applicationBlocks', children)
       children.forEach(cb => {
         if (cb.StatusID === 0 || cb.StatusID === 3) atemplate.StatusID = 0

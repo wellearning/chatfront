@@ -11,7 +11,7 @@ Function: Show all cover letter list and do all operations on the list.
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-date-picker @change="search()"
+            <el-date-picker @change="loadCoverLetters()"
                             v-model="searchForm.periodDates" class="middleWidth"
                             type="daterange"
                             unlink-panels
@@ -128,6 +128,7 @@ export default {
       isLoading: false,
       isLoadingCoverLetters: false,
       isLoadingInsuranceCompany: false,
+      isLoadingProducers: false,
       producerList: [],
       producerCount: 0,
       statusList: [],
@@ -241,7 +242,7 @@ export default {
       })
     },
     loadProducers: function (start) {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingProducers = true
       this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
@@ -252,7 +253,7 @@ export default {
             this.producerList = this.producerList.concat(res.data)
           }
           if (this.producerList.length >= this.producerCount) {
-            this.isLoadingInsuranceCompany = false
+            this.isLoadingProducers = false
             if (!this.isLoadingCoverLetters) {
               this.totalList.forEach(a => {
                 let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
@@ -272,7 +273,7 @@ export default {
         }
       }).catch(err => {
         console.log('producerList', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingProducers = false
       })
     },
     showUpload: function (coverletter) {
@@ -441,7 +442,7 @@ export default {
       // let status = this.statusList.find(s => s.key === a.StatusID)
       // if (status !== undefined) a.Status = status.value
       // else a.Status = ''
-      if (!this.isLoadingInsuranceCompany) {
+      if (!this.isLoadingProducers) {
         let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
         if (producer !== undefined) a.Producer = producer.Name
         else a.Producer = ''

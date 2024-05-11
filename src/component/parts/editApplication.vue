@@ -9,7 +9,11 @@
               <el-input v-model="applicationForm.Title" placeholder="Title"></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="6">&#12288;</el-col>
+          <!--el-col :span="6">&#12288;
+            <el-button icon="el-icon-view" type="primary" plain v-if="!showMore" @click="showMoreInfo()">Show More</el-button>
+            <el-button icon="el-icon-hide" type="primary" plain v-if="showMore" @click="hideMoreInfo()">Hide More</el-button>
+            <el-button-- icon="el-icon-hide" type="primary" plain v-if="showMore" @click="reset()">Reset</el-button>
+          </el-col-->
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="7">
@@ -22,22 +26,22 @@
               <el-input v-model="applicationForm.ClientCode" placeholder="Client Code" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-form-item label="Producer" prop="ProducerID">
               <el-select v-model="applicationForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable>
                 <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="7">
+          <el-col :span="6">
             <el-form-item label="Application" prop="Templates">
-              <el-select v-model="currentTemplateID" placeholder="Application Type" no-data-text="No Record" filterable collapse-tags :disabled="applicationForm.NameInsured === null" @change="changeTemplates()">
+              <el-select v-model="currentTemplateID" placeholder="Application Type" no-data-text="No Record" filterable collapse-tags @change="changeTemplates()">
                 <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20" class="subtitle">
+        <!--el-row :gutter="20" v-if="showMore" class="subtitle">
           <el-col :span="7">
             <el-form-item label="Applicant" prop="NameInsured">
               <el-input v-model="applicationForm.NameInsured" placeholder="last, first or business name" title="Last Name, First Name or Business Name"></el-input>
@@ -48,9 +52,14 @@
               <el-input v-model="applicationForm.PersonContact" placeholder="last name, first name" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-form-item label="Phone" prop="PhoneNumber">
               <el-input v-model="applicationForm.PhoneNumber" placeholder="" title=""></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="DOB" prop="DateOfBirth">
+              <el-date-picker v-model="applicationForm.DateOfBirth" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="7">
@@ -58,13 +67,8 @@
               <el-input v-model="applicationForm.Email" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="7">
-            <el-form-item label="DOB" prop="DateOfBirth">
-              <el-date-picker v-model="applicationForm.DateOfBirth" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
-            </el-form-item>
-          </el-col>
         </el-row>
-        <el-row :gutter="20" class="subtitle">
+        <el-row :gutter="20" v-if="showMore" class="subtitle">
           <el-col :span="7">
             <el-form-item label="Mailing Address" prop="Address">
               <el-input v-model="applicationForm.Address" placeholder="Street No" title=""></el-input>
@@ -75,17 +79,17 @@
               <el-input v-model="applicationForm.City" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="4">
+          <el-col :span="5">
             <el-form-item label="Province" prop="Province">
               <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="7">
+          <el-col :span="6">
             <el-form-item label="PostCode" prop="PostCode">
               <el-input v-model="applicationForm.PostCode" placeholder="" title=""></el-input>
             </el-form-item>
           </el-col>
-        </el-row>
+        </el-row-->
       </el-form>
       <EditApplicationBody v-if="isAnswering" ref="eat"  :applicTemplate="applicationForm.applicationTemplate" @checkOver="checkOver()" :disabled="false"></EditApplicationBody>
     </div>
@@ -109,9 +113,11 @@ export default {
     return {
       EffectiveDate: null,
       printDate: null,
+      showMore: false,
       isLoading: false,
       loadingCount: 0,
       isLoadingProducer: false,
+      application: null,
       insuranceCompanyList: [],
       // templatesList: [],
       currentTemplates: [],
@@ -143,8 +149,8 @@ export default {
           { required: true, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
-        DateOfBirth: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
+        ProducerID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         ClientCode: [
           { required: false, message: 'Please Enter', trigger: 'blur' },
@@ -152,9 +158,6 @@ export default {
         ],
         TemplateType: [
           { required: true, message: 'Please Select', trigger: 'blur' }
-        ],
-        NameInsured: [
-          { required: true, message: 'Please Enter', trigger: 'blur' }
         ]
       }
     }
@@ -177,12 +180,25 @@ export default {
     console.log('TemplateList', this.templateList)
   },
   methods: {
+    reset: function () {
+      this.applicationForm.ClientCode = this.application.ClientCode
+      this.applicationForm.Address = this.application.Address
+      this.applicationForm.City = this.application.City
+      this.applicationForm.Province = this.application.Province
+      this.applicationForm.PostCode = this.application.PostCode
+      this.applicationForm.PersonContact = this.application.PersonContact
+      this.applicationForm.DateOfBirth = this.application.DateOfBirth
+      this.applicationForm.PhoneNumber = this.application.PhoneNumber
+      this.applicationForm.Email = this.application.Email
+    },
+    showMoreInfo: function () { this.showMore = true },
+    hideMoreInfo: function () { this.showMore = false },
     // 重置Memo
     clearApplication: function () {
-      // this.isAnswering = false
+      this.isAnswering = false
       this.applicationForm.StatusID = 0
       this.applicationForm.applicationTemplate = null
-      // this.currentTemplates = []
+      this.currentTemplates = []
       this.totalQuestionNum = 1
     },
     // 选择Templates
@@ -229,16 +245,19 @@ export default {
       // this.initInsuranceCompany()
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
-          console.log('ApplicationFrame', res)
-          this.applicationForm = res.data
-          // this.currentTemplateID = this.applicationForm.applicationTemplate.TemplateID
+          console.log('loadApplication', res)
+          this.application = res.data
+          this.applicationForm = JSON.parse(JSON.stringify(res.data))
+          this.currentTemplateID = this.applicationForm.applicationTemplate.TemplateID
           // this.applicationForm.Templates = []
           let effdate = moment(res.data.EffectiveDate)
           if (effdate.year() > 2020) this.EffectiveDate = effdate.format()
           this.applicationForm.EffectiveDate = effdate
+          this.application.EffectiveDate = effdate
           let dob = moment(res.data.DateOfBirth)
           if (dob.year() < 1920) this.applicationForm.DateOfBirth = moment(new Date())
           else this.applicationForm.DateOfBirth = dob.format()
+          this.application.DateOfBirth = dob
           let expdate = moment(res.data.ExpiryDate)
           this.applicationForm.ExpiryDate = expdate
           if (this.applicationForm.applicationTemplate !== null) this.isAnswering = true

@@ -18,6 +18,9 @@ export default {
       type: Boolean
     }
   },
+  mounted: function () {
+    if (this.$refs.name !== undefined) this.$refs.name.focus()
+  },
   methods: {
     changeVal: function () {
       this.$emit('changeValue')

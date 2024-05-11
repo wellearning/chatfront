@@ -185,6 +185,7 @@ export default {
         return result
       } else if (sign === 'date') {
         exp = exp.replace('{EffectiveDate}', this.EffectiveDate)
+        exp = exp.replace('{RequestDate}', this.RequestDate)
         return exp
       } else {
         return exp

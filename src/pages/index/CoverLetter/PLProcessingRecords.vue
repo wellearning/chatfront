@@ -142,7 +142,9 @@ export default {
           {name: 'September', value: 9},
           {name: 'October', value: 10},
           {name: 'November', value: 11},
-          {name: 'December', value: 12}]
+          {name: 'December', value: 12},
+          {name: 'All Year', value: 0}
+        ]
       },
       searchName: null,
       // 列表

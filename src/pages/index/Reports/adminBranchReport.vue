@@ -1,7 +1,7 @@
 <!--
 FileName: Reports/adminBranchReport.vue
 Author: Ge Chen
-Update Date: 2023/9/20
+Create Date: 2023/9/20
 Function: Show branch report as administrator role.
 -->
 <template>
@@ -13,6 +13,11 @@ Function: Show branch report as administrator role.
       <span v-if="coverLetterVisible" class="inPageNav"> - {{currentCoverLetter.ClientCode}}</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
+          <el-form-item label="BusinessLine" prop="BusinessLineID">
+            <el-select v-model="searchForm.businessLineID" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
+              <el-option v-for="item in businessLines" :key="item.key" :label="item.value" :value="item.key"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <!--el-checkbox v-if="branchVisible" v-model="showAll" label="Show All" size="large" border @change="switchRecords()"/-->
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
@@ -163,14 +168,18 @@ Function: Show branch report as administrator role.
         </el-main>
       </div>
       <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="csorttable">
-        <el-table-column label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
+        <el-table-column v-if="searchForm.businessLineID===1" label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
+        </el-table-column>
+        <el-table-column v-if="searchForm.businessLineID===2" label="ID" prop="ApplicationID" width="80" fixed="left" sortable="custom">
         </el-table-column>
         <!--el-table-column label="" prop="ClientCode" min-width="1"></el-table-column-->
         <el-table-column label="Client Code" prop="ClientCode" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="App Type" prop="LeadsFrom" min-width="100" sortable="custom">
+        <el-table-column v-if="searchForm.businessLineID===1" label="App Type" prop="LeadsFrom" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column v-if="searchForm.businessLineID===2" label="App Type" prop="TypeName" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom">
         </el-table-column>
@@ -178,15 +187,15 @@ Function: Show branch report as administrator role.
         <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120" sortable="custom">
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column label="APP Premium" prop="PremiumOnApp" min-width="120" sortable="custom">
+        <el-table-column v-if="searchForm.businessLineID===1" label="APP Premium" prop="PremiumOnApp" min-width="120" sortable="custom">
         </el-table-column>
         <el-table-column label="Submit Premium" prop="Premium" min-width="120" sortable="custom">
         </el-table-column>
-        <el-table-column label="UW Score" prop="Score" min-width="80" sortable="custom">
+        <el-table-column v-if="searchForm.businessLineID===1" label="UW Score" prop="Score" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
+        <el-table-column v-if="searchForm.businessLineID===1" label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column label="Detail" prop="" min-width="80">
+        <el-table-column v-if="searchForm.businessLineID===1" label="Detail" prop="" min-width="80">
           <template v-slot="scope" >
             <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
@@ -248,9 +257,9 @@ export default {
       totalNum: 0,
       finishNum: 0,
       totalQuestionNum: 1,
-      // AnsweredArr: [],
-      // printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-      // htmlTitle: 'null', // pdf文件名
+      appStatusList: [],
+      appTypeList: [],
+      insuranceCorList: [],
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
@@ -259,6 +268,7 @@ export default {
       isLoadingCoverLetter: false,
       // 搜索
       searchForm: {
+        businessLineID: 1,
         name: null,
         Year: 2022,
         Month: 1,
@@ -297,6 +307,7 @@ export default {
 
       currentBranch: null,
       // currentBranchID: 0,
+      businessLines: [{key: 1, value: 'Personal'}, {key: 2, value: 'Commercial'}],
       branches: [],
       branch: {
         InstitutionID: 0,
@@ -333,9 +344,12 @@ export default {
     }
   },
   mounted: function () {
+    this.loadAppTypes()
+    this.loadApplicationStatus()
+    this.loadInsuranceCorps()
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
-    for (var i = 2020; i <= this.searchForm.Year; i++) {
+    for (let i = 2020; i <= this.searchForm.Year; i++) {
       this.searchForm.years.push(i)
     }
     this.search()
@@ -398,6 +412,46 @@ export default {
     },
     crankdesc: function (name) {
       this.coverletters.sort(this.bydesc(name))
+    },
+    // 保险公司列表
+    loadInsuranceCorps: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
+        if (res) {
+          console.log('保险公司列表', res)
+          this.insuranceCorpList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadApplicationStatus: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.appStatusList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadAppTypes: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.appTypeList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
     },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {
@@ -467,7 +521,9 @@ export default {
     },
     loadYearToDate: function () {
       this.isLoadingYearToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetInstitutionRecords_yearsummary', {year: this.searchForm.Year}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_yearsummary'
+      if (this.searchForm.businessLineID === 2) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_yearsummary'
+      this.axios.post(service, {year: this.searchForm.Year}).then(res => {
         if (res) {
           console.log('查询', res)
           this.yearSummary = res.data
@@ -480,7 +536,9 @@ export default {
     },
     loadMonthToDate: function () {
       this.isLoadingMonthToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetInstitutionRecords_monthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_monthsummary'
+      if (this.searchForm.businessLineID === 2) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_monthsummary'
+      this.axios.post(service, {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('查询', res)
           this.monthSummary = res.data
@@ -504,10 +562,19 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_year'
         param = {year: this.searchForm.Year}
       }
+      if (this.searchForm.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
+          if (this.searchForm.businessLineID === 2) {
+            this.list.forEach(r => {
+              this.appTypeList.forEach(t => {
+                r[t.value + 'Count'] = r.CountList[t.key - 1]
+                r[t.value + 'Premium'] = r.PremiumList[t.key - 1]
+              })
+            })
+          }
           /*
           let sumofnb = 0
           let nbcounts = 0
@@ -550,6 +617,7 @@ export default {
         service = service.replace('branch', 'all')
         param = {year: this.searchForm.Year, month: this.searchForm.Month}
       }
+      if (this.searchForm.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
@@ -571,6 +639,7 @@ export default {
     },
     loadProducer: function () {
       let producerid = this.currentProducer.ProducerID
+      let businessLineID = this.searchForm.businessLineID
       this.isLoadingProducer = true
       let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer'
       let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}
@@ -578,14 +647,29 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year'
         param = {producerid: producerid, year: this.searchForm.Year}
       }
+      if (businessLineID === 2) {
+        service = service.replace('NewBusinessService', 'CommerceService')
+        service = service.replace('CoverLetter', 'Application')
+      }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.coverletters = res.data
-          this.coverletters.forEach(function (c) {
-            c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
+          this.coverletters.forEach(c => {
+            if (c.appPremium !== undefined) c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
             c.submitPremium = '$' + c.Premium.toLocaleString()
             c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
+            if (businessLineID === 2) {
+              let corp = this.insuranceCorpList.find(co => co.InsuranceCorpID === c.InsuranceCorpID)
+              if (corp !== undefined) c.CorpName = corp.Name
+              else c.CorpName = ''
+              let status = this.appStatusList.find(co => co.key === c.Status)
+              if (status !== undefined) c.StatusName = status.value
+              else c.StatusName = ''
+              let type = this.appTypeList.find(co => co.key === c.TypeID)
+              if (type !== undefined) c.TypeName = type.value
+              else c.TypeName = ''
+            }
           })
           this.producertotal = this.coverletters.length
           this.producercurrentPage = 1

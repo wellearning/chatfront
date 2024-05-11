@@ -145,28 +145,126 @@ export default {
     applicationid: {
       type: Number
     },
+    templateBlockID: {type: Number},
+    repeatedID: {type: Number},
+    objTypeID: {type: Number},
+    questionnaireID: {type: Number},
     insuranceCorps: {
       type: Array
     }
   },
   mounted: function () {
-    this.loadApplication(this.applicationid)
+    if (this.objTypeID === 0) this.loadApplication(this.applicationid)
+    else this.loadApplicationTemplate(this.applicationid, this.templateBlockID, this.repeatedID, this.questionnaireID)
   },
   methods: {
+    replaceAttribute: function (text) {
+      let patt = /{{(\d+\.)?\w+}}/g
+      let maList = text.match(patt)
+      if (maList === null) return text
+      for (let i = 0; i < maList.length; i++) {
+        let ma = maList[i]
+        let p = ma.replace(/{{|}}/g, '')
+        let value = ''
+        let qid = 0
+        if (p.indexOf('.') < 0) qid = Number(p)
+        else qid = Number(p.substring(0, p.indexOf(/\.|\[/)))
+        if (qid === 0) {
+          if (this.businessObj[p] !== undefined) {
+            let prop = this.businessObj[p]
+            if (prop === null) prop = ''
+            if (p.indexOf('Date') >= 0) {
+              prop = moment(prop).format('YYYY-MM-DD')
+              let date = moment(prop)
+              if (date.year() < 2001) prop = ''
+            }
+            value = prop
+            text = text.replace(ma, value)
+          } else text = text.replace(ma, '')
+          continue
+        }
+        let answer = this.businessObj.answers.find(a => a.QuestionID === qid)
+        if (answer === undefined) {
+          text = text.replace(ma, '')
+          continue
+        }
+        if (answer.TypeID === 3) { // type of attribute
+          let value = answer.AnswerDesc
+          if (answer.InputType === 'array') {
+            let index = 0
+            let subpatt = /\[\d+\]/g
+            let submaList = p.match(subpatt)
+            if (submaList !== null) {
+              index = Number(submaList[0].replace(/\[|\]/, ''))
+            }
+            let property = p.substring(p.indexOf('.') + 1)
+            let objectList = JSON.parse(answer.AnswerDesc)
+            let object = objectList[index]
+            value = object[property]
+          }
+          if (value !== undefined) text = text.replace(ma, value)
+          else text = text.replace(ma, '')
+          continue
+        } else {
+          let outputway = p.substring(p.indexOf('.') + 1)
+          value = answer.AnswerDesc
+          if (answer.TypeID === 6) {
+            let optionAnswer = answer.optionAnswers.find(oa => oa.IsChecked)
+            if (optionAnswer === undefined) optionAnswer = {Content: '', Outputs: '', Addition: ''}
+            if (outputway === 'Ans') value = optionAnswer.Content
+            else if (outputway === 'Out') {
+              value = optionAnswer.Outputs
+            } else if (outputway === 'Addi') {
+              if (optionAnswer.Addition === null || optionAnswer.Addition === '') value = optionAnswer.Content
+              else value = optionAnswer.Addition
+            } else if (outputway === 'Orig') {
+              value = ''
+              answer.optionAnswers.forEach(function (oa) {
+                if (oa.IsChecked) value += ' &nbsp&nbsp&nbsp ☑ '
+                else value += ' &nbsp&nbsp&nbsp ☐ '
+                value += oa.Content
+              })
+            }
+          } else if (answer.TypeID === 7) {
+            value = ''
+            answer.optionAnswers.forEach(function (oa) {
+              if (oa.IsChecked) {
+                value += ' &nbsp&nbsp ☑ ' + oa.Content
+                if (oa.NeedAddition) value += oa.Addition
+              } else value += ' &nbsp&nbsp ☐ ' + oa.Content
+            })
+          }
+        }
+        if (value === null) value = ''
+        // value = '<span style = "font-weight: bold;">' + value + '</span>'
+        text = text.replace(ma, value)
+      }
+      return text
+    },
     createQuestionnaire: function () {
       let $root = $('#questionnaire')
+      $root.children().remove()
       let index = 0
       this.questions.forEach(q => {
-        index++
-        let $question = $('<div style="margin-left:30px;"></div>')
+        let label = q.Label
+        let $question = $('<div style="margin-left:40px;"></div>')
+        if (q.Label === null || q.Label === '') {
+          index++
+          $question = $('<div style="margin-left:30px;"></div>')
+          label = index
+        }
+        q.Description = this.replaceAttribute(q.Description)
         $root.append($question)
-        let $label = $('<span class="question">' + index + '. </span>')
+        let $label = $('<span class="question">' + label + '. </span>')
         $question.append($label)
-        if (q.TypeID === 3) {
+        if (q.TypeID === 2) {
+          let $des = $(q.Description)
+          $question.append($des)
+        } else if (q.TypeID === 3) {
           let $des = $('<span class="question">' + q.Description + ' </span>')
           $question.append($des)
           if (q.InputType === 'checklist') {
-            let $table = $('<table></table>')
+            let $table = $('<table border="1"></table>')
             $question.append($table)
             let $tbody = $('<tbody></tbody>')
             $table.append($tbody)
@@ -175,13 +273,27 @@ export default {
             let $input = $('<input type="text" style="border:none; border-bottom:1px solid #000000; width: 120px;" />')
             $question.append($input)
           }
-        } else if (q.TypeID === 5) {
+        } else if (q.TypeID === 4) {
           let $des = $('<span class="question">' + q.Description + ' </span>')
+          $question.append($des)
+          let $input = $('<br><input type="text" style="border:none; border-bottom:1px solid #000000; width: 100%;" />')
+          $question.append($input)
+        } else if (q.TypeID === 5) {
+          let description = ''
+          q.fillinParts.forEach(part => {
+            if (part.IsFillin) {
+              description += '<input type="text" style="border:none; border-bottom:1px solid #000000; width: 120px;" />'
+            } else {
+              description += part.Part
+            }
+          })
+          let $des = $('<span class="question">' + description + ' </span>')
           $question.append($des)
         } else if (q.TypeID === 6) {
           let $des = $('<span class="question">' + q.Description + ' </span>')
           $question.append($des)
           q.options.forEach(item => {
+            item.Content = this.replaceAttribute(item.Content)
             let $cb = $('<input type="checkbox"/> <label>' + item.Content + ' </label>')
             $question.append($cb)
             if (item.Tips !== null) {
@@ -208,7 +320,18 @@ export default {
           console.log('loadDataSource', res)
           let checklist = res.data
           let tdindex = 0
-          let $tr = null
+          let $tr = $('<tr></tr>')
+          $tbody.append($tr)
+          let $td01 = $('<td></td>')
+          let $td02 = $('<td style="word-break: keep-all">Yes</td>')
+          let $td03 = $('<td style="word-break: keep-all">No</td>')
+          let $td04 = $('<td></td>')
+          let $td05 = $('<td style="word-break: keep-all">Yes</td>')
+          let $td06 = $('<td style="word-break: keep-all">No</td>')
+          let $td07 = $('<td></td>')
+          let $td08 = $('<td style="word-break: keep-all">Yes</td>')
+          let $td09 = $('<td style="word-break: keep-all">No</td>')
+          $tr.append($td01).append($td02).append($td03).append($td04).append($td05).append($td06).append($td07).append($td08).append($td09)
           checklist.forEach(item => {
             if (tdindex === 0) {
               let $tr0 = $('<tr></tr>')
@@ -217,8 +340,9 @@ export default {
             }
             let $td1 = $('<td></td>')
             $td1.text(item.Name)
-            let $td2 = $('<td><input type="checkbox"></input> Yes <input type="checkbox"></input> No</td>')
-            $tr.append($td1).append($td2)
+            let $td2 = $('<td><input type="checkbox"></input></td>')
+            let $td3 = $('<td><input type="checkbox"></input></td>')
+            $tr.append($td1).append($td2).append($td3)
             if (tdindex === 2) {
               tdindex = 0
             } else {
@@ -262,6 +386,7 @@ export default {
           console.log('questionnaire', res)
           this.questions = []
           res.data.blockQuestions.forEach(bq => {
+            bq.question.Label = bq.Label
             this.questions.push(bq.question)
           })
           this.createQuestionnaire()
@@ -283,14 +408,90 @@ export default {
           let corp = this.insuranceCorps.find(c => c.InsuranceCorpID === this.businessObj.InsuranceCorpID)
           if (corp !== undefined) this.businessObj.CorpName = corp.Name
           this.businessObj.ExpiryDate = moment(this.businessObj.ExpiryDate)
+          if (this.businessObj.applicationTemplate.applicationBlocks.length === 0) {
+            this.businessObj.answers = []
+            this.loadQuestionnaire()
+          } else {
+            this.loadCount = 0
+            this.totalBlocks = 0
+            this.businessObj.applicationTemplate.applicationBlocks.forEach(ablock => {
+              this.loadApplicationBlock(ablock, id)
+            })
+          }
           this.loadProducer()
-          this.loadQuestionnaire()
           this.isLoading = false
         }
       }).catch(err => {
         console.log('loadApplication出错', err)
         this.isLoading = false
       })
+    },
+    loadApplicationTemplate: function (applicationid, templateblockid, repeatedid, questionnaireid) {
+      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      this.isLoading = true
+      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: applicationid}).then(res => {
+        if (res) {
+          console.log('loadApplication', res)
+          this.businessObj = res.data
+          this.businessObj.QuestionnaireID = questionnaireid
+          let corp = this.insuranceCorps.find(c => c.InsuranceCorpID === this.businessObj.InsuranceCorpID)
+          if (corp !== undefined) this.businessObj.CorpName = corp.Name
+          this.businessObj.ExpiryDate = moment(this.businessObj.ExpiryDate)
+          this.loadQuestionnaire()
+          if (this.businessObj.applicationTemplate.applicationBlocks.length === 0) {
+            this.businessObj.answers = []
+          } else {
+            this.loadCount = 0
+            this.totalBlocks = 0
+            this.businessObj.applicationTemplate.applicationBlocks.forEach(ablock => {
+              if (ablock.TopTemplateBlockID === templateblockid) {
+                if (ablock.RepeatedID === repeatedid) {
+                  this.loadApplicationBlock(ablock, applicationid)
+                } else {
+                  this.loadCount++
+                }
+              } else this.loadApplicationBlock(ablock, applicationid)
+            })
+          }
+          this.loadProducer()
+          this.isLoading = false
+        }
+      }).catch(err => {
+        console.log('loadApplication出错', err)
+        this.isLoading = false
+      })
+    },
+    loadApplicationBlock: function (aBlock, id) {
+      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBlock', {id: aBlock.ApplicationBlockID}).then(res => {
+        if (res) {
+          console.log('GetApplicationBlock', res)
+          aBlock.answers = res.data.answers
+          this.loadCount++
+          aBlock.answers.forEach(function (answer) {
+            answer.RepeatedID = aBlock.RepeatedID
+            if (answer.TypeID === 6) {
+              answer.optionAnswer = answer.optionAnswers.find(oa => oa.IsChecked)
+            }
+          })
+          if (this.loadCount === this.businessObj.applicationTemplate.applicationBlocks.length) {
+            this.resetAnswers()
+            this.loadQuestionnaire()
+          }
+        }
+      }).catch(err => {
+        console.log('GetApplicationBlock列表出错', err)
+        this.loadCount++
+        // if (this.loadCount === this.applicationTemplate.templateBlocks.length) this.loadBlockQuestions(atemplate)
+      })
+    },
+    resetAnswers: function () {
+      let list = []
+      this.businessObj.applicationTemplate.applicationBlocks.forEach(ablock => {
+        let list1 = list.concat(ablock.answers)
+        list = list1
+      })
+      this.businessObj.answers = list
+      console.log('answers', list)
     },
     // 关闭Pink Slip
     close: function (done) {
