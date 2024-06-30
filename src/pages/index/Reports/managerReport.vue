@@ -129,7 +129,7 @@ Function: Show manager report.
           </el-row>
         </el-main>
       </div>
-      <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)">
+      <el-table :data="coverletterlist.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="ID" prop="CoverLetterID" width="60" fixed="left">
           <template slot="header" >
             <span @click = "crank('CoverLetterID')" @dblclick="crankdesc('CoverLetterID')" title="Click to rank, double click to rank desc">ID</span>
@@ -301,7 +301,7 @@ export default {
           ScoreAverage: 0
         }
       },
-      coverletters: [],
+      coverletterlist: [],
       currentProducer: null,
       producerSummary: {
         NBCounts: 0,
@@ -353,7 +353,7 @@ export default {
   methods: {
     switchRecords: function () {
       if (this.managerVisible) this.search()
-      else this.loadProducerCoverLetters(0)
+      else this.loadProducer()
     },
     rank: function (name) {
       // console.log('rank')
@@ -364,10 +364,10 @@ export default {
       this.list.sort(this.bydesc(name))
     },
     crank: function (name) {
-      this.coverletters.sort(this.by(name))
+      this.coverletterlist.sort(this.by(name))
     },
     crankdesc: function (name) {
-      this.coverletters.sort(this.bydesc(name))
+      this.coverletterlist.sort(this.bydesc(name))
     },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {
@@ -409,7 +409,7 @@ export default {
       this.coverLetterVisible = false
       if (producer !== undefined) {
         this.currentProducer = producer
-        this.loadProducerCoverLetters(0)
+        this.loadProducer()
       }
     },
     showCoverLetter: function (letter) {
@@ -508,56 +508,17 @@ export default {
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
-          this.coverletters = res.data
-          this.coverletters.forEach(function (c) {
+          this.coverletterlist = res.data
+          this.coverletterlist.forEach(function (c) {
             c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
             c.submitPremium = '$' + c.Premium.toLocaleString()
           })
-          this.producertotal = this.coverletters.length
+          this.producertotal = this.coverletterlist.length
           this.producercurrentPage = 1
         }
         this.isLoadingProducer = false
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoadingProducer = false
-      })
-    },
-    loadProducerCoverLetters: function (start) {
-      let producerid = this.currentProducer.ProducerID
-      this.isLoadingProducer = true
-      let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_start'
-      let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month, start: start}
-      if (this.viewMonthly === 'Year to Date') {
-        service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year_start'
-        param = {producerid: producerid, year: this.searchForm.Year, start: start}
-      }
-      this.axios.post(service, param).then(res => {
-        if (res) {
-          console.log('loadProducerCoverLetters:' + start, res)
-          if (start === 0) {
-            this.coverletters = res.data
-            this.producertotal = res.count
-            this.producercurrentPage = 1
-          } else {
-            this.coverletters = this.coverletters.concat(res.data)
-          }
-          if (this.coverletters.length < this.producertotal) {
-            this.loadProducerCoverLetters(this.coverletters.length)
-          } else {
-            this.coverletters.forEach(c => {
-              if (c.appPremium !== undefined) c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
-              c.submitPremium = '$' + c.Premium.toLocaleString()
-              c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
-              let corp = this.insuranceCorList.find(ic => ic.InsuranceCorpID === c.InsuranceCorpID)
-              if (corp === undefined) c.CorpName = ''
-              else c.CorpName = corp.ShortName
-            })
-            this.isLoading = false
-          }
-        }
-        this.isLoadingProducer = false
-      }).catch(err => {
-        console.log('loadProducerCoverLetters', err)
         this.isLoadingProducer = false
       })
     },

@@ -140,6 +140,7 @@ export default {
       isLoadingClients: false,
       isLoadingBlockQuestions: false,
       applicationForm: {
+        BusinessTypeID: 4,
         Title: null,
         // EffectiveDate: null,
         ClientCode: '',
@@ -202,7 +203,7 @@ export default {
     }
   },
   mounted: function () {
-    this.loadClients(0)
+    // this.loadClients(0)
     this.initTemplates()
     this.initInsuranceCompany()
     this.initProducers()
@@ -430,6 +431,7 @@ export default {
           if (this.EffectiveDate !== null) application.EffectiveDate = this.EffectiveDate
           if (application.DateOfBirth === null) application.DateOfBirth = new Date(2000, 1, 1)
           application.InsuranceTypeID = this.TemplateTypeID
+          application.BusinessTypeID = 4
           let sequenceno = 0
           let template = application.applicationTemplate
           template.blockQuestions = null

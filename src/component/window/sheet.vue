@@ -1,36 +1,37 @@
 <template>
   <div>
-    <el-row :gutter="20" v-if="sheets.length === 0" style="margin-top:0px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
-      <div>No Form available</div>
-    </el-row>
-    <el-row :gutter="20" v-if="sheetSelectedVisible" style="margin-top:0px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
-      <el-col :span="24">
+    <el-row :gutter="20"  style="margin-top:0px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
+      <el-col :span="21" v-if="sheets.length === 0"><div>No Form available</div></el-col>
+      <el-col :span="21" v-else-if="sheetSelectedVisible">
         <el-radio-group v-model="currentSheet" @change="changeSheet()">
           <el-radio v-for="(item, index) in sheets" v-bind:key="index" :label="index">
             <span>{{item.Title}}</span>
           </el-radio>
         </el-radio-group>
       </el-col>
+      <el-col :span="21" v-else><div>&nbsp;</div></el-col>
+      <el-col :span="3"><span style="font-size:16px; font-weight:normal; text-align: right"></span></el-col>
     </el-row>
     <div class="printDiv" v-if="sheetVisible">
       <el-button icon="el-icon-document" type="primary" @click="toPDF()" size="small">Print</el-button>
-      <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
+      <el-button v-if="businessTypeId === 4" icon="el-icon-document" type="primary" @click="downloadPDF()" size="small">toPdf</el-button>
+      <el-button icon="el-icon-printer" type="primary" v-print="printObj" size="small">print</el-button>
     </div>
     <div class="viewSheet" id="sheetDom" v-if="sheetVisible">
       <img class="coiLogo" :src="logo" crossorigin="anonymous">
-      <el-row :gutter="20" style="margin-top:10px; margin-left:402px; color: steelblue; text-align: center; font-size:14px;">
+      <el-row :gutter="20" style="border-bottom:solid #0000ff 2px; margin-top:20px;  margin-left:10px; margin-right:20px; color: steelblue; text-align: right; font-size:14px;">
         <el-col :span="24">
+          <!--div class="viewMemo-subtitle head">ID: {{businessObjId}}</div-->
           <div class="viewMemo-subtitle head">{{sheetForm.BranchStreet}}{{sheetForm.BranchCity}}{{sheetForm.BranchPostcode}}</div>
+          <div class="viewMemo-subtitle head">Bus: {{sheetForm.BranchTel}} Email: {{sheetForm.BranchEmail}} Website: {{sheetForm.Website}}</div>
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top:8px; margin-left:402px; color: steelblue; text-align: center; font-size:14px;">
         <el-col :span="24">
-          <div class="viewMemo-subtitle head">Bus: {{sheetForm.BranchTel}} Email: {{sheetForm.BranchEmail}} Website: {{sheetForm.Website}}</div>
-          <div class="viewMemo-subtitle head"></div>
           <div class="viewMemo-subtitle head"></div>
         </el-col>
       </el-row>
-      <el-row :gutter="20" style="margin-top:65px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
+      <el-row :gutter="20" style="margin:65px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
         <el-col :span="22">
           <div class="viewMemo-subtitle head" style="margin-left:30px;"><span>{{sheet.title}}</span></div>
         </el-col>
@@ -43,6 +44,7 @@
       </el-row>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col>
+          <span>{{producer.Name}} {{businessObjId}}</span><br />
           <b>Printed by {{Author}} on {{printDate}}</b>
         </el-col>
       </el-row>
@@ -58,11 +60,16 @@ export default {
   data: function () {
     return {
       printDate: null,
+      printObj: {
+        id: 'sheetDom',
+        popTitle: ''
+      },
       currentDate: moment(new Date()).format('MMMM DD, YYYY'),
       Author: JSON.parse(this.$store.getters.getAccount).Name,
       logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       businessObj: null,
-      producer: null,
+      currentSheetId: null,
+      producer: {StaffID: 0, Name: ''},
       templateId: 0,
       sheet: {
         title: '',
@@ -157,6 +164,7 @@ export default {
   mounted: function () {
     this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
     if (this.sheetId !== undefined) {
+      this.currentSheetId = this.sheetId
       this.loadSheet(this.sheetId)
     }
     if (this.businessObjId !== undefined) {
@@ -180,6 +188,8 @@ export default {
     changeSheet: function () {
       let index = this.currentSheet
       let sheet = this.sheets[index]
+      // this.sheetId = sheet.SheetID
+      this.currentSheetId = sheet.SheetID
       let sheetContent = JSON.parse(sheet.Content)
       let s = this.parseSheet(sheetContent)
       this.sheet = s
@@ -222,12 +232,12 @@ export default {
         if (p.indexOf('.') > 0) {
           let qid = Number(p.substring(0, p.indexOf('.')))
           let outputway = p.substring(p.indexOf('.') + 1)
-          if (qid === 850) {
+          if (qid === 756) {
             console.log(qid)
           }
-          let answer = this.businessObj.answers.find(a => a.QuestionID === qid && (a.AnswerDesc !== null && a.AnswerDesc !== ''))
+          let answer = this.businessObj.answers.find(a => a.QuestionID === qid && a.StatusID === 1)
           if (index !== undefined) {
-            answer = this.businessObj.answers.find(a => a.RepeatedID === index && a.QuestionID === qid && (a.AnswerDesc !== null && a.AnswerDesc !== ''))
+            answer = this.businessObj.answers.find(a => a.RepeatedID === index && a.QuestionID === qid && a.StatusID === 1)
             // if (answer === undefined) return null
           }
           if (answer === undefined) {
@@ -237,17 +247,24 @@ export default {
           if (answer.InputType === 'array') {
             continue
           }
-          if (answer.InputType === 'money') {
-            value = Number(answer.AnswerDesc).toLocaleString()
-          } else value = answer.AnswerDesc
-          if (outputway === 'Out') value = answer.Outputs
-          else if (outputway === 'Addi') value = answer.Addition
-          if (answer.TypeID === 6) {
+          if (answer.TypeID === 3) {
+            if (answer.InputType === 'money') {
+              value = '$' + Number(answer.AnswerDesc).toLocaleString()
+            } else if (answer.InputType === 'date') {
+              value = this.dateFormat(answer.AnswerDesc)
+            } else value = answer.AnswerDesc
+          } else if (answer.TypeID === 5) {
+            let partAnswer = answer.partAnswers.find(p => p.IsFillin)
+            if (partAnswer !== undefined) {
+              if (partAnswer.InputType === 'money') value = '$' + Number(partAnswer.Part).toLocaleString()
+              else value = partAnswer.Part
+            } else value = ''
+          } else if (answer.TypeID === 6) {
             let optionAnswer = answer.optionAnswers.find(oa => oa.IsChecked)
             if (optionAnswer === undefined) optionAnswer = {Content: '', Outputs: '', Addition: ''}
             if (outputway === 'Ans') value = optionAnswer.Content
             else if (outputway === 'Out') {
-              value = optionAnswer.Outputs
+              value = optionAnswer.Outputs.replace('{addition}', optionAnswer.Addition)
             } else if (outputway === 'Addi') {
               if (optionAnswer.Addition === null || optionAnswer.Addition === '') value = optionAnswer.Content
               else value = optionAnswer.Addition
@@ -267,10 +284,12 @@ export default {
                 if (oa.NeedAddition) value += oa.Addition
               } else value += ' &nbsp&nbsp ☐ ' + oa.Content
             })
+          } else {
+            value = answer.AnswerDesc
           }
-          if (answer.InputType === 'date') {
-            value = this.dateFormat(value)
-          }
+          // if (answer.InputType === 'date') {
+          //  value = this.dateFormat(value)
+          // }
           if (this.IsDate(value)) {
             // value = this.dateFormat(value)
             // let time = new Date(value)
@@ -388,13 +407,17 @@ export default {
     addArrayTable: function (answer, table) {
       if (answer.DataSource === null || answer.DataSource === '') return
       this.isLoading = true
-      this.axios.post('/api/Services/BaseService.asmx/GetDataItems', {datatype: answer.DataSource}).then(res => {
+      // service = '/api/Services/baseservice.asmx/GetObjectProperties'
+      // param = { parenttype: answer.DataSource }
+      this.axios.post('/api/Services/BaseService.asmx/GetObjectProperties', {parenttype: answer.DataSource}).then(res => {
         if (res) {
           console.log('ArrayItems', res)
           let columns = res.data
           let tr = {tds: []}
           table.trs.push(tr)
           for (let i = 0; i < columns.length; i++) {
+            if (columns[i].children.length > 0) columns[i].InputType = columns[i].children[0].Name
+            else columns[i].InputType = 'text'
             let td = {text: columns[i].Name, colspan: 1}
             tr.tds.push(td)
           }
@@ -402,6 +425,22 @@ export default {
           items.forEach(function (item) {
             let tr = {tds: []}
             table.trs.push(tr)
+            columns.forEach(c => {
+              let value = item[c.Name]
+              if (value === undefined) value = item[c.ItemValue]
+              if (c.InputType === 'date' && value !== '') {
+                value = moment(value).format('YYYY-MM-DD')
+                let date = moment(value)
+                if (date.year() < 2001) value = ''
+              } else if (c.InputType === 'money' && value !== '') {
+                value = '$' + Number(value).toLocaleString()
+              } else if (c.InputType === 'moneyplus' && !isNaN(value)) {
+                value = '$' + Number(value).toLocaleString()
+              }
+              let td = {text: '<b>' + value + '</b>', colspan: 1}
+              tr.tds.push(td)
+            })
+            /*
             for (let name in item) {
               let value = item[name]
               if (name.indexOf('Date') >= 0) {
@@ -413,6 +452,7 @@ export default {
               let td = {text: '<b>' + value + '</b>', colspan: 1}
               tr.tds.push(td)
             }
+             */
           })
         }
         this.isLoading = false
@@ -550,6 +590,8 @@ export default {
           console.log('查询Sheets', res)
           this.sheets = res.data
           if (this.sheets.length === 1) {
+            // this.sheetId = this.sheets[0].SheetID
+            this.currentSheetId = this.sheets[0].SheetID
             let s = JSON.parse(this.sheets[0].Content)
             this.sheet = this.parseSheet(s)
             this.sheetVisible = true
@@ -623,7 +665,13 @@ export default {
       this.businessObj.answers = list
       console.log('answers', list)
     },
-
+    downloadPDF: function () {
+      let effdate = moment(this.businessObj.EffectiveDate)
+      let title = this.sheet.title.replaceAll(' ', '_')
+      let filename = title + effdate.format('YYYYMMDD') + '.pdf'
+      let arg2 = this.businessTypeId + '|' + this.currentSheetId
+      this.downloadData('sheet', this.businessObjId, arg2, filename)
+    },
     // 转pdf
     toPDF: function () {
       this.htmlTitle = this.sheet.title + this.printDate

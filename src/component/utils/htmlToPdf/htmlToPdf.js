@@ -63,7 +63,7 @@ export default{
       const req = new XMLHttpRequest()
       req.open('POST', url, true)
       req.responseType = 'blob'
-      // req.setRequestHeader('Authorization', globe_user.Tokenstring)
+      req.setRequestHeader('Authorization', JSON.parse(this.$store.getters.getAccount).Token)
 
       req.onload = function () {
         const data = req.response

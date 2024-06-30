@@ -20,8 +20,13 @@ Function: Log in page of the system.
                 <el-form-item label prop="password">
                   <el-input v-model.trim="loginForm.password" placeholder="Password" type="password" clearable></el-input>
                 </el-form-item>
+                <el-form-item  v-if="verifyCodeUsed" label prop="verifyCode">
+                  <el-input v-model.trim="loginForm.code" placeholder="Verify Code" clearable></el-input>
+                  <el-button class="" @click="sendVerifyCode()" >Send Verify Code</el-button>
+                </el-form-item>
                 <el-form-item>
-                  <el-button class="loginBtn" type="primary" @click="login()" :loading="isLoading">Enter</el-button>
+                  <el-button v-if="!verifyCodeUsed" class="loginBtn" type="primary" @click="login()" :loading="isLoading">Enter</el-button>
+                  <el-button v-else class="loginBtn" type="primary" @click="login_v()" :loading="isLoading">Log in</el-button>
                 </el-form-item>
               </el-form>
             </div>
@@ -45,10 +50,12 @@ export default {
     //   }
     // }
     return {
+      verifyCodeUsed: false,
       isLoading: false,
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        code: ''
       },
       loginFormRules: {
         username: [
@@ -244,6 +251,56 @@ export default {
             this.isLoading = false
           })
         }
+      })
+    },
+    login_v: function () {
+      this.$refs['loginForm'].validate(valid => {
+        if (valid) {
+          this.isLoading = true
+          let para = JSON.parse(JSON.stringify(this.loginForm))
+          this.axios.post('/api/Services/baseservice.asmx/Login_v', para).then(res => {
+            console.log('登录', res)
+            if (res) {
+              this.$store.dispatch('asynSetAccount', JSON.stringify(res.data))
+              this.$message({
+                type: 'success',
+                message: 'Login Successful',
+                duration: 1000
+              })
+              // this.initPermissionList()
+              let arr = res.data.role.routetree
+              let strdata = JSON.stringify(arr)
+              console.log('route tree', strdata)
+              this.$store.dispatch('asynSetPermissionList', JSON.stringify(this.translateTreeForStore(arr)))
+              let arr1 = this.translateTree(arr)
+              console.log('routes', arr1)
+              this.$router.addRoutes(arr1)
+              this.$router.push({ path: '/' })
+            }
+            this.isLoading = false
+          }).catch(err => {
+            console.log('登录出错', err)
+            this.isLoading = false
+          })
+        }
+      })
+    },
+    sendVerifyCode: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/SendVerifyCode', {username: this.loginForm.username}).then(res => {
+        console.log('登录', res)
+        if (res) {
+          this.$store.dispatch('asynSetAccount', JSON.stringify(res.data))
+          this.$message({
+            type: 'success',
+            message: 'Verify code has sent to your email. Please get the verify code and enter is to the field.',
+            duration: 3000
+          })
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('登录出错', err)
+        this.isLoading = false
       })
     },
     // // 初始化菜单

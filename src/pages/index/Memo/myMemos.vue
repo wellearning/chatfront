@@ -58,7 +58,7 @@ Function: Show my personal line memo list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editMemoWindowVisible" width="1184.56px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editMemoWindowVisible" width="1184.56px" center :before-close="closeEdit">
         <EditMemo ref="eacl" :memoid="currentMemoID" :templateList="templateList" :insuranceCorps="insuranceCompanyList" @close="closeEditMemo"></EditMemo>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->

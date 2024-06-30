@@ -111,6 +111,7 @@ export default {
   name: 'editApplication',
   data: function () {
     return {
+      RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
       EffectiveDate: null,
       printDate: null,
       showMore: false,
@@ -227,7 +228,11 @@ export default {
     // 初始化Producer列表
     initProducers: function () {
       this.isLoadingProducer = true
-      this.axios.post('/api/Services/baseservice.asmx/GetProducers', {}).then(res => {
+      let service = '/api/Services/baseservice.asmx/GetProducers'
+      if (this.RoleName.indexOf('processing') > -1 || this.RoleName.indexOf('Developer') >= 0) {
+        service = '/api/Services/baseservice.asmx/GetSelectableProducers'
+      }
+      this.axios.post(service, {}).then(res => {
         if (res) {
           console.log('Producer列表', res)
           this.producerList = res.data
@@ -248,7 +253,7 @@ export default {
           console.log('loadApplication', res)
           this.application = res.data
           this.applicationForm = JSON.parse(JSON.stringify(res.data))
-          this.currentTemplateID = this.applicationForm.applicationTemplate.TemplateID
+          if (res.data.applicationTemplate !== null) this.currentTemplateID = this.applicationForm.applicationTemplate.TemplateID
           // this.applicationForm.Templates = []
           let effdate = moment(res.data.EffectiveDate)
           if (effdate.year() > 2020) this.EffectiveDate = effdate.format()
@@ -396,7 +401,7 @@ export default {
             let value = JSON.stringify(application)
             this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
               if (res) {
-                console.log('修改', res)
+                console.log('SaveApplication', res)
                 ablocks.forEach(aBlock => {
                   aBlock.ApplicationTemplateID = res.data.applicationTemplate.ApplicationTemplateID
                   this.saveApplicationBlock(aBlock)

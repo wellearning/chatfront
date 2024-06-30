@@ -43,6 +43,7 @@ Function: Show all commercial application list and do all operations on the list
           </template>
         </el-table-column>
         <el-table-column label="Title" prop="Title" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Applicant" prop="NameInsured" min-width="180" sortable="custom"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="120" sortable="custom"></el-table-column>
@@ -99,7 +100,8 @@ Function: Show all commercial application list and do all operations on the list
         >
         </editApplicationBlock>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="saveApplicationBlock()" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID !== 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(false)" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID === 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(true)" :loading="isLoading">Finish</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
@@ -152,6 +154,15 @@ Function: Show all commercial application list and do all operations on the list
         <el-form :model="quotationBindForm" ref="quotationBindForm" class="newMemo" :rules="quotationBindFormRules">
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
+              <el-form-item label="Producer" prop="ProducerID">
+                <el-select v-model="quotationBindForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable >
+                  <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
               <el-form-item label="Effective Date" prop="EffectiveDate">
                 <el-date-picker v-model="quotationBindForm.EffectiveDate" @change="effectiveDateChange" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
               </el-form-item>
@@ -200,6 +211,22 @@ Function: Show all commercial application list and do all operations on the list
             <el-col :span="24">
               <el-form-item label="Premium" prop="Premium">
                 <el-input v-model="quotationBindForm.Premium" type="number" placeholder="Premium" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Agency/Director Bill" prop="BillWayID">
+                <el-select v-model="quotationBindForm.BillWayID" placeholder="Agency/Director" no-data-text="No Record" filterable >
+                  <el-option v-for="item in billWays" :key="item.ID" :label="item.Name" :value="item.ID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Outstanding Balance" prop="OutstandingBalance">
+                <el-input v-model="quotationBindForm.OutstandingBalance" type="number" placeholder="Outstanding Balance" title=""></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -290,6 +317,7 @@ export default {
       insuranceCorpList: [],
       producerList: [],
       statusList: [],
+      billWays: [{ID: 1, Name: 'Agency Bill'}, {ID: 2, Name: 'Direct Bill'}],
       questionnaires: [{ID: 0, Name: 'No Need'}, {ID: 1, Name: 'Questionnaire1.pdf'}, {ID: 2, Name: 'Questionnaire2.pdf'}],
       appTypes: [{ID: 1, Name: 'New Business'}, {ID: 2, Name: 'Remarket'}, {ID: 3, Name: 'LOA'}, {ID: 4, Name: 'Rewrite'}],
       quotationProcessings: [
@@ -344,13 +372,16 @@ export default {
       },
       quotationBindForm: {
         InsuranceCorpQuotationID: null,
+        ProducerID: null,
         EffectiveDate: null,
-        TypeID: null,
+        TypeID: 1,
         LeadFromCorpID: 0,
         ExpiryDate: null,
         ClientCode: null,
         PolicyNumber: null,
         Premium: null,
+        BillWayID: null,
+        OutstandingBalance: null,
         QuestionnaireID: 0
       },
       quotationBindFormRules: {
@@ -359,12 +390,15 @@ export default {
           { max: 50, message: 'Within 50 Characters', trigger: 'blur' }
         ],
         EffectiveDate: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' }
         ],
         ExpiryDate: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' }
         ],
         TypeID: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        BillWayID: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         ClientCode: [
@@ -462,12 +496,14 @@ export default {
       let expdate = moment(this.currentApplication.ExpiryDate)
       if (expdate.year() > 2020) this.quotationBindForm.ExpiryDate = expdate
       else this.quotationBindForm.ExpiryDate = null
+      this.quotationBindForm.ProducerID = this.currentApplication.ProducerID
       this.quotationBindForm.ClientCode = this.currentApplication.ClientCode
       this.quotationBindForm.PolicyNumber = this.currentApplication.PolicyNumber
       if (this.currentApplication.TypeID > 0) this.quotationBindForm.TypeID = this.currentApplication.TypeID
-      else this.quotationBindForm.TypeID = null
+      else this.quotationBindForm.TypeID = 1
       this.quotationBindForm.LeadFromCorpID = this.currentApplication.LeadFromCorpID
       this.quotationBindForm.Premium = quotation.Premium
+      this.quotationBindForm.OutstandingBalance = this.currentApplication.OutstandingBalance
       this.quotationBindVisible = true
     },
     showQuotationProcessing: function (quotation) {
@@ -484,40 +520,50 @@ export default {
       */
     },
     quotationBind: function () {
-      this.$confirm('Are you sure to bind it?', 'Confirm', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }).then(() => {
-        let id = this.quotationBindForm.InsuranceCorpQuotationID
-        this.isLoadingApplicationQuotations = true
-        let value = JSON.stringify(this.quotationBindForm)
-        this.axios.post('/api/Services/CommerceService.asmx/BindQuotation', {id: id, jsonvalue: value}).then(res => {
-          if (res) {
-            console.log('bind', res)
-            this.$message({
-              type: 'success',
-              message: 'Operation Succeeded'
+      this.$refs['quotationBindForm'].validate((valid) => {
+        if (valid) {
+          this.$confirm('Are you sure to bind it?', 'Confirm', {
+            confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }).then(() => {
+            let id = this.quotationBindForm.InsuranceCorpQuotationID
+            this.isLoadingApplicationQuotations = true
+            let value = JSON.stringify(this.quotationBindForm)
+            this.axios.post('/api/Services/CommerceService.asmx/BindQuotation', {id: id, jsonvalue: value}).then(res => {
+              if (res) {
+                console.log('bind', res)
+                this.$message({
+                  type: 'success',
+                  message: 'Operation Succeeded'
+                })
+                this.currentApplication.StatusID = res.data
+                this.setApplicationStatus(this.currentApplication)
+                this.currentApplication.EffectiveDate = this.quotationBindForm.EffectiveDate
+                this.currentApplication.Premium = this.quotationBindForm.Premium
+                let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
+                quotation.StatusID = 4
+                quotation.StatusName = 'Bound'
+                quotation.Premium = this.quotationBindForm.Premium
+              }
+              this.isLoadingApplicationQuotations = false
+              this.quotationBindVisible = false
+            }).catch(err => {
+              console.log('删除出错', err)
+              this.isLoadingApplicationQuotations = false
             })
-            this.currentApplication.StatusID = res.data
-            this.setApplicationStatus(this.currentApplication)
-            this.currentApplication.EffectiveDate = this.quotationBindForm.EffectiveDate
-            this.currentApplication.Premium = this.quotationBindForm.Premium
-            let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
-            quotation.StatusID = 4
-            quotation.StatusName = 'Bound'
-            quotation.Premium = this.quotationBindForm.Premium
-          }
-          this.isLoadingApplicationQuotations = false
-        }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoadingApplicationQuotations = false
-        })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Operation Cancelled'
-        })
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: 'Operation Cancelled'
+            })
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
       })
     },
     effectiveDateChange: function () {
@@ -555,6 +601,7 @@ export default {
             this.setApplicationStatus(this.currentApplication)
           }
           this.isLoadingApplicationQuotations = false
+          this.quotationProcessingVisible = false
         }).catch(err => {
           console.log('删除出错', err)
           this.isLoadingApplicationQuotations = false
@@ -659,7 +706,7 @@ export default {
         })
       })
     },
-    saveApplicationBlock: function () {
+    saveApplicationBlock: function (close) {
       let blockitem = this.currentBlockItem
       let ablock = JSON.parse(JSON.stringify(this.currentApplicationBlock))
       ablock.answers.forEach(answer => {
@@ -685,6 +732,7 @@ export default {
           blockitem.Status = appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))
         }
         this.isLoading = false
+        if (close) this.editApplicationBlockVisible = false
       }).catch(err => {
         console.log('修改出错', err)
         this.$message({
@@ -769,102 +817,115 @@ export default {
     showEditBlock: function (blockItem) {
       this.currentBlockItem = blockItem
       let aTemplate = blockItem.applicationTemplate
+      if (aTemplate.blockQuestion === undefined) this.loadTemplateBlockQuestions(aTemplate)
       let aBlock = blockItem.applicationBlock
       this.loadApplicationBlock(aTemplate, aBlock)
     },
     loadApplication: function (app) {
-      if (app.applicationTemplate !== null) return
+      // if (app.applicationTemplate !== null) return
       let id = app.ApplicationID
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
+          console.log('GetApplicationFrame', res.data)
           app.applicationTemplate = res.data.applicationTemplate
-          // build application tree
-          app.blocks = []
-          let id = 0
-          app.applicationTemplate.templateBlocks.forEach(tb => {
-            if (tb.ChildTypeID === 0) {
-              let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
-              tb.applicationBlock = appBlock
-              tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
-              // appBlock.BlockName = tb.BlockName
-              // appBlock.id = id++
-              // appBlock.TypeID = 0
-              let blockItem = {
-                id: id++,
-                TypeID: 0,
-                BlockID: tb.BlockID,
-                BlockName: tb.BlockName,
-                Status: appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering')),
-                applicationBlock: appBlock,
-                applicationTemplate: app.applicationTemplate,
-                application: app
-              }
-              app.blocks.push(blockItem)
-              return
-            }
-            // tb.applicationBlocks = []
-            let appb = {
-              id: id++,
-              BlockID: tb.BlockID,
-              BlockName: tb.BlockName,
-              TypeID: 2,
-              ApplicationID: app.ApplicationID,
-              applicationTemplate: app.applicationTemplate,
-              application: app,
-              templateBlock: tb,
-              children: []
-            }
-            app.blocks.push(appb)
-            tb.applicationTemplates = []
-            app.applicationTemplate.applicationBlocks.forEach(ab => {
-              let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
-              if (templateBlock === undefined) return
-              // tb.applicationBlocks.push(ab)
-              let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
-              if (subatemplate === undefined) {
-                subatemplate = {
-                  BlockName: tb.BlockName,
-                  RepeatedID: ab.RepeatedID,
-                  applicationBlocks: []
+          if (app.applicationTemplate !== null) {
+            app.applicationTemplate.applicationBlocks = app.applicationTemplate.applicationBlocks.filter(ab => ab !== null)
+            // build application tree
+            app.blocks = []
+            app.blockCount = 0
+            let id = 0
+            app.applicationTemplate.templateBlocks.forEach(tb => {
+              if (tb.ChildTypeID === 0) {
+                let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
+                if (appBlock !== undefined) {
+                  tb.applicationBlock = appBlock
+                  tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
                 }
-                tb.applicationTemplates.push(subatemplate)
-              }
-              subatemplate.applicationBlocks.push(ab)
-              ab.topTemplateBlockID = tb.TemplateBlockID
-              ab.BlockName = templateBlock.BlockName
-            })
-            tb.applicationTemplates.forEach(at => {
-              let childat = {
-                id: id++,
-                ApplicationID: app.ApplicationID,
-                BlockID: appb.BlockID,
-                RepeatedID: at.RepeatedID,
-                Parent: appb,
-                BlockName: at.BlockName + ':' + at.RepeatedID,
-                TypeID: 1,
-                applicationTemplate: app.applicationTemplate,
-                application: app,
-                children: []
-              }
-              appb.children.push(childat)
-              at.applicationBlocks.forEach(ab => {
-                let childab = {
+                let blockItem = {
                   id: id++,
                   TypeID: 0,
-                  BlockID: ab.BlockID,
-                  BlockName: ab.BlockName + ':' + at.RepeatedID,
-                  Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
-                  applicationBlock: ab,
-                  applicationTemplate: app.applicationTemplate,
-                  application: app
+                  templateBlock: tb,
+                  BlockID: tb.BlockID,
+                  BlockName: tb.BlockName,
+                  Status: appBlock === undefined ? 'Not Answer' : (appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))),
+                  applicationBlock: appBlock,
+                  app: app,
+                  applicationTemplate: app.applicationTemplate
                 }
-                childat.children.push(childab)
+                app.blocks.push(blockItem)
+                app.blockCount = id
+                return
+              }
+              // tb.applicationBlocks = []
+              let appb = {
+                id: id++,
+                BlockID: tb.BlockID,
+                BlockName: tb.BlockName,
+                TypeID: 2,
+                ApplicationID: app.ApplicationID,
+                applicationTemplate: app.applicationTemplate,
+                templateBlock: tb,
+                app: app,
+                children: []
+              }
+              app.blocks.push(appb)
+              // fill in subApplicationTemplate
+              tb.applicationTemplates = app.applicationTemplate.children.filter(c => c.TemplateID === tb.BlockID)
+              app.applicationTemplate.applicationBlocks.forEach(ab => {
+                let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
+                if (templateBlock === undefined) return
+                // tb.applicationBlocks.push(ab)
+                let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
+                if (subatemplate === undefined) {
+                  subatemplate = {
+                    BlockName: tb.BlockName,
+                    RepeatedID: ab.RepeatedID,
+                    applicationBlocks: []
+                  }
+                  tb.applicationTemplates.push(subatemplate)
+                }
+                if (subatemplate.applicationBlocks === null) subatemplate.applicationBlocks = []
+                subatemplate.applicationBlocks.push(ab)
+                ab.topTemplateBlockID = tb.TemplateBlockID
+                ab.BlockName = templateBlock.BlockName
+              })
+              tb.applicationTemplates.forEach(at => {
+                let childat = {
+                  id: id++,
+                  ApplicationTemplateID: at.ApplicationTemplateID,
+                  ApplicationID: app.ApplicationID,
+                  BlockID: appb.BlockID,
+                  TemplateBlockID: tb.TemplateBlockID,
+                  RepeatedID: at.RepeatedID,
+                  Parent: appb,
+                  BlockName: tb.BlockName + ':' + (at.RepeatedID + 1),
+                  TypeID: 1,
+                  QuestionnaireID: at.QuestionnaireID,
+                  app: app,
+                  applicationTemplate: app.applicationTemplate,
+                  children: []
+                }
+                appb.children.push(childat)
+                at.applicationBlocks.forEach(ab => {
+                  let childab = {
+                    id: id++,
+                    TypeID: 0,
+                    BlockID: ab.BlockID,
+                    BlockName: ab.BlockName + ':' + (at.RepeatedID + 1),
+                    Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
+                    app: app,
+                    applicationBlock: ab,
+                    applicationTemplate: at
+                  }
+                  childat.children.push(childab)
+                })
               })
             })
-          })
-          this.loadTemplateBlockQuestions(app.applicationTemplate)
-          console.log('ApplicationFrame', app)
+            app.blockCount = id
+            this.loadTemplateBlockQuestions(app.applicationTemplate)
+          }
+          // console.log('ApplicationFrame', app)
         }
         this.isLoading = false
       }).catch(err => {
@@ -900,6 +961,9 @@ export default {
         if (res) {
           console.log('GetBlockQuestionsByTemplate_all', res)
           atemplate.blockQuestions = res.data
+          atemplate.children.forEach(c => {
+            c.blockQuestions = atemplate.blockQuestions
+          })
           // console.log('isLoadingTemplateBlockQuestions:', this.isLoadingTemplateBlockQuestions)
         }
         this.isLoadingTemplateBlockQuestions = false
@@ -910,6 +974,7 @@ export default {
     },
     matchBlockQuestions: function (aTemplate, aBlock) {
       console.log('applicationTemplate', aTemplate)
+      if (aTemplate.blockQuestions === undefined) return
       aBlock.answers.forEach(a => {
         if (a.IsRoute) {
           // console.log('answer.QuestionID:', a.QuestionID)
@@ -929,16 +994,16 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = blockItem.ApplicationID
+        let appid = blockItem.ApplicationID
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: id, templateid: blockItem.BlockID}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: appid, templateid: blockItem.BlockID}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('AddSubApplicationTemplate', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            let id = blockItem.children.length * 100
+            let id = blockItem.app.blockCount
             let atBlockItem = {
               id: id++,
               BlockID: blockItem.BlockID,
@@ -947,9 +1012,9 @@ export default {
               children: []
             }
             blockItem.children.push(atBlockItem)
-            let repeatedid = 0
+            let childIndex = 0
             res.data.forEach(ab => {
-              repeatedid = ab.RepeatedID
+              childIndex = ab.RepeatedID + 1
               // let templateblock = blockItem.applicationTemplate.templateBlocks.find(tb => tb.BlockID === ab.BlockID)
               let templateblock = blockItem.templateBlock.subTemplateBlocks.find(subtb => subtb.BlockID === ab.BlockID)
               let blockname = ''
@@ -959,15 +1024,16 @@ export default {
                 ApplicationBlockID: ab.ApplicationBlockID,
                 applicationBlock: ab,
                 applicationTemplate: blockItem.applicationTemplate,
-                application: blockItem.application,
-                RepeatedID: repeatedid,
+                RepeatedID: ab.RepeatedID,
                 BlockID: ab.BlockID,
-                BlockName: blockname + ':' + ab.RepeatedID,
+                BlockName: blockname + ':' + childIndex,
+                Status: 'Not Answer',
                 TypeID: 0
               }
               atBlockItem.children.push(child)
             })
-            atBlockItem.BlockName += repeatedid
+            atBlockItem.BlockName += childIndex
+            blockItem.app.blockCount = id
           }
           this.isLoading = false
         }).catch(err => {

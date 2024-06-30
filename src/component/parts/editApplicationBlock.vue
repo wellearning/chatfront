@@ -78,8 +78,8 @@ export default {
     }
   },
   mounted: function () {
-    this.setComputedAttributes()
-    this.setRateTypes()
+    // this.setComputedAttributes()
+    // this.setRateTypes()
     // this.viewCoverLetter()
     // this.initial()
   },
@@ -233,6 +233,12 @@ export default {
       return ''
     },
     getAttributeByName: function (name) {
+      /*
+      let appBlock = this.applicationBlock
+      let answer = appBlock.answers.find(a => a.QuestionDesc === name)
+      if (answer !== undefined) return answer
+      else return undefined
+       */
       let appTemp = this.applicationTemplate
       for (let j = 0; j < appTemp.applicationBlocks.length; j++) {
         let appBlock = appTemp.applicationBlocks[j]

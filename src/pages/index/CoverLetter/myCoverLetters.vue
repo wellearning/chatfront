@@ -45,19 +45,26 @@ Function: Show my cover letter list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="220" fixed="right">
+        <el-table-column label="Action" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-            <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
-            <!--el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 2 " @click="voidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Void</el-button>
-            <el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID === 5" @click="unvoidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Unvoid</el-button-->
-            <!--<el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
-            <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button>-->
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
+              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit" type="primary" @click="showEditBase(scope.row)" :loading="isLoading" size="small">EditBase</el-button>
+              <!--el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 2 " @click="voidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Void</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
+              <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button-->
+            </el-button-group>
           </template>
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
+      <!----------------------------------------------修改Base弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="editCoverLetterBaseVisible" width="780px" center :before-close="closeEdit">
+        <EditBase ref="ebase" :coverletter="currentCoverLetter" :insuranceCorpList="insuranceCompanyList" @hideEdition="hideEdition()"></EditBase>
+      </el-dialog>
+      <!----------------------------------------------修改Base弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="editAutoCoverLetterWindowVisible" width="1184.56px" center :before-close="closeEdit">
         <EditAutoCoverLetter ref="eacl" :coverletterid="currentCoverLetterID" :insuranceCorps="insuranceCompanyList" @close="closeEditCoverLetter"></EditAutoCoverLetter>
@@ -78,12 +85,14 @@ import moment from 'moment'
 import PinkSlip from '@/component/window/pinkSlip'
 import ViewCoverLetter from '@/component/window/viewCoverLetter'
 import EditAutoCoverLetter from '@/component/parts/editAutoCoverLetter'
+import EditBase from '@/component/parts/editCoverLetterBase'
 
 export default {
   components: {
     PinkSlip,
     EditAutoCoverLetter,
-    ViewCoverLetter
+    ViewCoverLetter,
+    EditBase
   },
   data: function () {
     return {
@@ -155,7 +164,7 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       },
-      // 查阅
+      editCoverLetterBaseVisible: false,
       editAutoCoverLetterWindowVisible: false,
       viewFormVisible: false,
       viewForm: {
@@ -241,10 +250,23 @@ export default {
       }
     },
     closeEditCoverLetter: function (id, type) {
-      this.editAutoCoverLetterWindowVisible = false
+      this.editCoverLetterWindowVisible = false
       if (type === 'saveAndPrint') {
         this.showCoverLetter(this.currentCoverLetter)
       }
+      this.search(this.searchForm.name)
+    },
+    showEditBase: function (coverletter) {
+      let id = coverletter.CoverLetterID
+      this.currentCoverLetterID = id
+      this.currentCoverLetter = coverletter
+      this.editCoverLetterBaseVisible = true
+      if (this.$refs.ebase !== undefined) {
+        this.$refs.ebase.loadCoverLetter(id)
+      }
+    },
+    closeEditBase: function (id, type) {
+      this.editCoverLetterBaseVisible = false
       this.search(this.searchForm.name)
     },
     // 关闭修改
@@ -515,7 +537,11 @@ export default {
     },
     showAddProperty: function () {
       this.$router.push({path: '/newForPropertyCoverLetter'})
+    },
+    hideEdition: function () {
+      this.editCoverLetterBaseVisible = false
     }
+
   }
 }
 </script>

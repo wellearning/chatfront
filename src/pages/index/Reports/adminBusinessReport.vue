@@ -1,19 +1,25 @@
+<!--
+FileName: Reports/adminCoverLetterReport.vue
+Author: Ge Chen
+Update Date: 2023/9/20
+Function: Show cover letter report as administrator role.
+-->
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Figure Report</span>
-      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.Name}} Report</span>
+      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">{{reportTitle}}</span>
+      <span v-if="adminVisible" style="color:darkblue" class="inPageNav" href="#" title="Click here to return to the branch report.">  - {{currentItem.value}} Report</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
-          <el-form-item label="Report" prop="ReportItem"  v-loading="isLoadingReportItems" >
+          <el-form-item label="Report" prop="ReportItem">
             <el-select v-model="searchForm.ReportItem" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
-              <el-option v-for="item in reportItems" :key="item.ParameterID" :label="item.Name" :value="item.ParameterID"></el-option>
+              <el-option v-for="item in reportItems" :key="item.key" :label="item.value" :value="item.key"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
             <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
-              <el-radio-button label="View Monthly" />
-              <el-radio-button label="View Yearly" />
+              <el-radio-button label="Month to Date" />
+              <el-radio-button label="Year to Date" />
             </el-radio-group>
             <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
           </el-form-item>
@@ -35,16 +41,42 @@
     </div>
     <div v-if="adminVisible" class="inPageContent">
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
-        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
+        <el-table-column label="ID" prop="ID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="Name" prop="ProducerName" min-width="150" sortable="custom">
+        <el-table-column label="Name" prop="Name" min-width="150" sortable="custom">
+          <!--template slot-scope="scope" >
+            <a @click = "showBranch(scope.row)" style="color:darkblue" href="#" title="Click here to show the branch detail.">{{scope.row.Name}}</a>
+          </template-->
         </el-table-column>
-        <el-table-column label="Total Counts" prop="NBCounts" min-width="100" sortable="custom">
+        <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
+          <!--template slot="header" >
+            <span @click = "rank('NBCounts')" @dblclick="rankdesc('NBCounts')" title="Click to rank, double click to rank desc">NB Counts</span>
+          </template-->
         </el-table-column>
-        <el-table-column v-for="(col, index) in tableColumns" :key="index" :label="col.Name" :prop="col.Prop" min-width="100" sortable="custom" >
+        <el-table-column label="NB Premium" prop="NBPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
-            <span v-if="col.Prop.indexOf('Percent')>=0">{{scope.row[col.Prop]}}%</span>
-            <span v-else>{{scope.row[col.Prop]}}</span>
+            <span>${{scope.row.NBPremium.toLocaleString()}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Remarket Counts" prop="RemarketCounts" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Remarket Premium" prop="RemarketPremium" min-width="150" sortable="custom">
+          <template slot-scope="scope" >
+            <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="businessLineID===2" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column v-if="businessLineID===2" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
+          <template slot-scope="scope" >
+            <span>${{scope.row.RenewalPremium.toLocaleString()}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Total Counts" prop="Counts" min-width="150" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Total Premium" prop="Premium" min-width="150" sortable="custom">
+          <template slot-scope="scope" >
+            <span>${{scope.row.Premium.toLocaleString()}}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -62,17 +94,18 @@ export default {
   },
   data: function () {
     return {
-      viewMonthly: 'View Monthly',
+      reportTitle: 'P/L Business Report',
+      viewMonthly: 'Month to Date',
       isLoading: false,
-      isLoadingReportItems: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
+      businessLineID: 1,
       // 搜索
       searchForm: {
         name: null,
         Year: 2022,
         Month: 1,
-        ReportItem: null,
+        ReportItem: 'Corperation',
         years: [],
         months: [
           {name: 'January', value: 1},
@@ -90,10 +123,8 @@ export default {
       },
       // 列表
       list: [],
-      reportItems: [],
-      currentItem: {},
-      reportID: '0',
-      tableColumns: [],
+      reportItems: [ {key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'} ],
+      currentItem: {key: 'Corperation', value: 'Company'},
       coverletters: [],
       coverletterproperties: [],
       currentProducer: null,
@@ -112,12 +143,13 @@ export default {
     }
   },
   mounted: function () {
+    this.presets()
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
-    for (var i = 2020; i <= this.searchForm.Year; i++) {
+    for (let i = 2020; i <= this.searchForm.Year; i++) {
       this.searchForm.years.push(i)
     }
-    this.loadReportItems()
+    this.search()
   },
   watch: {
     finishNum (val) {
@@ -188,71 +220,46 @@ export default {
     },
     showMain: function () {
       this.adminVisible = true
-      this.currentItem = this.reportItems.find(i => i.ParameterID === this.searchForm.ReportItem)
-      if (this.currentItem === undefined) return
-      this.setColumns(this.currentItem)
+      this.currentItem = this.reportItems.find(i => i.key === this.searchForm.ReportItem)
       this.search()
-      this.$forceUpdate()
     },
     // 日期格式
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
-    setColumns (parameter) {
-      if (parameter.DataType === 'Check') {
-        this.tableColumns = [{'Name': 'Counts of ' + parameter.DisplayName, 'Prop': 'RemarketCounts'}, {'Name': 'Percentage', 'Prop': 'Percentage'}]
-      } else if (parameter.DataType === 'List') {
-        this.tableColumns = []
-        for (var i = 0; i < parameter.listValues.length; i++) {
-          this.tableColumns.push({'Name': 'Counts of ' + parameter.listValues[i].Name, 'Prop': 'ListCounts' + i})
-          this.tableColumns.push({'Name': 'Percent of ' + parameter.listValues[i].Name, 'Prop': 'ListPercent' + i})
-        }
+    presets: function () {
+      this.businessLineID = Number(this.$route.params.id)
+      if (this.businessLineID === 2) this.reportTitle = 'C/L Business Report'
+      if (this.businessLineID === 1) {
+        this.reportItems = [{key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'}]
+      } else if (this.businessLineID === 2) {
+        this.reportItems = [{key: 'Corperation', value: 'Company'}, {key: 'Template', value: 'Template'}]
       }
-    },
-    loadReportItems: function () {
-      this.isLoadingReportItems = true
-      let service = '/api/Services/BaseService.asmx/GetFiguredBusinessParameters'
-      let param = {businesstypeid: 2}
-      this.axios.post(service, param).then(res => {
-        if (res) {
-          console.log('查询', res)
-          this.reportItems = res.data
-          this.isLoadingReportItems = false
-        }
-      }).catch(err => {
-        console.log('查询出错', err)
-        this.isLoadingReportItems = false
-      })
     },
     // 查询
     search: function () {
-      if (this.searchForm.ReportItem === null) return
       this.isLoading = true
-      let service = '/api/Services/NewBusinessService.asmx/GetFigureReport'
-      let param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'View Yearly') {
-        // service += '_year'
-        param = param = {parameterid: this.searchForm.ReportItem, year: this.searchForm.Year, month: 0}
+      let service = '/api/Services/NewBusinessService.asmx/Get' + this.searchForm.ReportItem + 'Records'
+      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      if (this.viewMonthly === 'Year to Date') {
+        service += '_year'
+        param = {year: this.searchForm.Year}
       }
+      let lineId = this.businessLineID
+      if (lineId === 2) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data
-          if (this.currentItem.DataType === 'List') {
-            this.list.forEach(function (item) {
-              for (var i = 0; i < item.listValueRecords.length; i++) {
-                item['ListCounts' + i] = item.listValueRecords[i].Count
-                if (item.NBCounts !== 0) item['ListPercent' + i] = Math.round(item.listValueRecords[i].Count / item.NBCounts * 100)
-                else item['ListPercent' + i] = 0
-              }
-            })
-          } else if (this.currentItem.DataType === 'Check') {
-            this.list.forEach(function (item) {
-              if (item.NBCounts !== 0) item['Percentage'] = Math.round(item.RemarketCounts * 100 / item.NBCounts)
-              else item['Percentage'] = 0
-            })
-          }
-
+          this.list.forEach(function (item) {
+            if (lineId === 2) {
+              item.Counts = item.NBCounts + item.RemarketCounts + item.RenewalCounts
+              item.Premium = item.NBPremium + item.RemarketPremium + item.RenewalPremium
+            } else {
+              item.Counts = item.NBCounts + item.RemarketCounts
+              item.Premium = item.NBPremium + item.RemarketPremium
+            }
+          })
           this.total = this.list.length
           this.currentPage = 1
           this.isLoading = false

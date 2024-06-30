@@ -45,23 +45,32 @@ Function: Show my commercial application list and do all operations on the list.
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column>
-        <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Title" prop="Title" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
+        <el-table-column label="InsuCorp" prop="CorpName" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="150" sortable="custom">
+          <template slot-scope="scope">
+            <span>{{scope.row.EffectiveDate.format('YYYY-MM-DD')}}</span>
+          </template>
+        </el-table-column>
+        <!--el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
-        </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
+        </el-table-column-->
+        <el-table-column label="Status" prop="PolicyStatus" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Action" width="400">
           <template slot-scope="scope">
             <el-button-group>
+              <el-icon><CopyDocument /></el-icon>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
               <!--el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button-->
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-circle-plus" type="primary" @click="duplicate(scope.row)"  size="small">Duplicate</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -163,6 +172,7 @@ export default {
       searchName: null,
       questionnaireFormVisible: false,
       pinkSlipFormVisible: false,
+      RepeatedID: -1,
       currentApplicationID: null,
       currentApplication: null,
       currentApplicationTemplate: null,
@@ -184,6 +194,7 @@ export default {
       isLoadingInsuranceCompany: false,
       templatesList: [],
       statusList: [],
+      renewalStatusList: [],
       insuranceCorpList: [],
       currentTemplates: [],
       applicationFormVisible: false,
@@ -228,6 +239,7 @@ export default {
   mounted: function () {
     // this.loadProducers()
     this.loadApplicationStatus()
+    this.loadRenewalStatus()
     this.initInsuranceCompany()
     this.loadApplications(0)
     this.initTemplates()
@@ -581,9 +593,10 @@ export default {
     },
     showQuestionnaire: function (applicationid) {
       this.currentApplicationID = applicationid
+      this.RepeatedID = -1
       this.questionnaireFormVisible = true
       if (this.$refs.vq !== undefined) {
-        this.$refs.vq.loadApplication(applicationid)
+        this.$refs.vq.loadApplication(applicationid, -1)
       }
     },
     // 关闭修改
@@ -622,12 +635,18 @@ export default {
               a.ExpiryDate = moment(a.ExpiryDate)
               a.RequestDate = moment(a.RequestDate)
               a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
+              let status = this.statusList.find(s => s.key === a.Status)
+              let renewalStatus = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
+              if (status.value !== 'Bound') {
+                a.PolicyStatus = status.value
+              } else {
+                if (renewalStatus.value === 'Opened') {
+                  let dateline = moment().add(2, 'M')
+                  if (a.ExpiryDate < dateline) a.PolicyStatus = 'Open Renewal'
+                  else a.PolicyStatus = 'NB'
+                } else if (renewalStatus.value === 'Pending') a.PolicyStatus = 'Pending Renewal'
+                else a.PolicyStatus = renewalStatus.value
+              }
               let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
               if (corp !== undefined) a.CorpName = corp.Name
               else a.CorpName = ''
@@ -735,6 +754,19 @@ export default {
         this.isLoadingInsuranceCompany = false
       })
     },
+    loadRenewalStatus: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationRenewalStatus'}).then(res => {
+        if (res) {
+          console.log('loadRenewalStatus', res)
+          this.renewalStatusList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('loadRenewalStatus', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
@@ -788,6 +820,34 @@ export default {
       if (this.currentApplication.applicationTemplate !== null) {
         this.loadApplication(this.currentApplication)
       }
+    },
+    duplicate: function (application) {
+      this.$confirm('Are you sure to duplicate a new application? The new application will be shown in my applications', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        let id = application.ApplicationID
+        this.isLoading = true
+        this.axios.post('/api/Services/CommerceService.asmx/DuplicateApplication', {applicationid: id}).then(res => {
+          if (res) {
+            console.log('duplicate', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded. The new ApplicationID is ' + res.data
+            })
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('duplicate error', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
     }
   }
 }

@@ -36,6 +36,7 @@ Function: Show all organization list and do all operations on the list.
                 <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingList" size="small">Confirm</el-button>
                 <el-button icon="el-icon-delete" type="danger" @click="del()" :loading="isLoading || isLoadingList" size="small">Delete</el-button>
                 <el-button icon="el-icon-close" type="primary" @click="cancel()" :loading="isLoading || isLoadingList" size="small" plain>Cancel</el-button>
+                <el-button v-if="currentInstitution.TypeID === 3" icon="el-icon-plus" type="primary" @click="showStaffForm()" :loading="isLoading || isLoadingList" size="small">Add Member</el-button>
               </div>
             </div>
             <div class="organization-editContent" v-loading="isLoading || isLoadingList" element-loading-background="rgba(255, 255, 255, 0.5)">
@@ -51,8 +52,15 @@ Function: Show all organization list and do all operations on the list.
                     </el-radio>
                   </el-radio-group>
                 </el-form-item>
-                <el-form-item label="ProcessingType" prop="BusinessProcessingTypeID">
-                  <el-radio-group v-model="form.BusinessProcessingTypeID">
+                <el-form-item label="Memo ProcessingType" prop="MemoProcessingType">
+                  <el-radio-group v-model="form.MemoProcessingType">
+                    <el-radio v-for="item in processingTypeList" :label="item.key" :key="item.key">
+                      <span>{{item.value}}</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
+                <el-form-item label="Coverletter ProcessingType" prop="CoverletterProcessingType">
+                  <el-radio-group v-model="form.CoverletterProcessingType">
                     <el-radio v-for="item in processingTypeList" :label="item.key" :key="item.key">
                       <span>{{item.value}}</span>
                     </el-radio>
@@ -96,6 +104,31 @@ Function: Show all organization list and do all operations on the list.
           </div>
         </el-col>
       </el-row>
+      <!----------------------------------------------add staffs 弹窗开始----------------------------------------------------->
+      <el-dialog title="Select Staff" :visible.sync="staffFormVisible" width="600px" center :before-close="closeStaff">
+        <el-form :model="staffForm" ref="staffForm" class="form">
+          <el-form-item class="marginLeft10">
+            <el-checkbox-group v-model="staffForm.checkedChildren" >
+              <el-checkbox v-for="staff in selectedChildren" :label="staff.Name" :key="staff.StaffID"></el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item class="marginLeft10">
+            <el-select v-model="staffForm.selectedIDs" filterable multiple placeholder="Please Select">
+              <el-option
+                v-for="item in children"
+                :key="item.StaffID"
+                :label="item.Name"
+                :value="item.StaffID">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item class="confirmBtn smallLine">
+            <el-button icon="el-icon-plus" type="primary" plain size="small" @click="selectStaff()" :loading="isLoading">Select</el-button>
+            <el-button icon="el-icon-minus" type="primary" plain size="small" @click="removeStaff()" :loading="isLoading">Remove</el-button>
+          </el-form-item>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------add staffs 窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -118,9 +151,14 @@ export default {
       },
       isAdd: false,
       isEdit: false,
+      currentInstitution: null,
       currentNode: null,
       currentNodeName: null,
-      typeList: [{key: 1, value: 'Department', icon: 'el-icon-house'}, {key: 2, value: 'Branch', icon: 'el-icon-office-building'}],
+      typeList: [
+        {key: 1, value: 'Department', icon: 'el-icon-house'},
+        {key: 2, value: 'Branch', icon: 'el-icon-office-building'},
+        {key: 3, value: 'Group', icon: 'el-icon-watch'}
+      ],
       processingTypeList: [{key: 1, value: 'Centralized'}, {key: 2, value: 'Independent'}],
       form: {
         InstitutionID: null,
@@ -128,6 +166,8 @@ export default {
         Parent: null,
         TypeID: 1,
         BusinessProcessingTypeID: 1,
+        MemoProcessingType: 1,
+        CoverletterProcessingType: 1,
         Name: null,
         BranchCode: null,
         Telphone: null,
@@ -159,10 +199,21 @@ export default {
         Website: [
           { max: 100, message: 'Within 100 Characters', trigger: 'blur' }
         ]
-      }
+      },
+      staffFormVisible: false,
+      isLoadingStaffs: false,
+      staffList: [],
+      staffCount: 0,
+      staffForm: {
+        selectedIDs: [],
+        checkedChildren: []
+      },
+      selectedChildren: [],
+      children: []
     }
   },
   mounted: function () {
+    this.loadStaffs(0)
     this.search()
   },
   methods: {
@@ -174,6 +225,30 @@ export default {
     },
     handlePreview (file) {
       console.log(file)
+    },
+    loadStaffs: function (start) {
+      this.isLoadingStaffs = true
+      this.axios.post('/api/Services/baseservice.asmx/GetNormalStaffs', {start: start}).then(res => {
+        if (res) {
+          console.log('staffList', res)
+          // this.staffList = res.data
+          if (start === 0) {
+            this.staffCount = res.count
+            this.staffList = res.data
+          } else {
+            let list = this.staffList.concat(res.data)
+            this.staffList = list
+          }
+          if (this.staffList.length >= this.staffCount) {
+            this.isLoadingStaffs = false
+          } else {
+            this.loadStaffs(this.staffList.length)
+          }
+        }
+      }).catch(err => {
+        console.log('staffList', err)
+        this.isLoadingStaffs = false
+      })
     },
     // 查询
     search: function () {
@@ -205,9 +280,12 @@ export default {
       this.resetForm()
       this.$refs.organizationTree.setCurrentKey(data.InstitutionID) // 设置节点高亮
       this.currentNode = data.InstitutionID
+      this.currentInstitution = data
       this.currentNodeName = data.Name
       this.isAdd = false
       this.isEdit = true
+      this.form.IsNew = data.IsNew
+      this.form.StatusID = data.StatusID
       this.form.InstitutionID = data.InstitutionID
       this.form.ParentID = data.ParentID
       if (data.ParentID !== 0) {
@@ -217,6 +295,8 @@ export default {
       }
       this.form.TypeID = data.TypeID
       this.form.BusinessProcessingTypeID = data.BusinessProcessingTypeID
+      this.form.MemoProcessingType = data.MemoProcessingType
+      this.form.CoverletterProcessingType = data.CoverletterProcessingType
       this.form.Name = data.Name
       this.form.BranchCode = data.BranchCode
       this.form.Telphone = data.Telphone
@@ -228,6 +308,7 @@ export default {
     // 显示新增
     showAdd: function () {
       this.$refs['form'].resetFields()
+      this.form.IsNew = true
       this.isAdd = true
       this.isEdit = false
       if (this.currentNode !== null) {
@@ -240,8 +321,9 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
-          this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
+          let data = JSON.stringify(this.form)
+          // let data = {ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
+          this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: data}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -273,8 +355,9 @@ export default {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           this.isLoading = true
-          let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, IsNew: false, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
-          this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: JSON.stringify(data)}).then(res => {
+          // let data = {InstitutionID: this.form.InstitutionID, ParentID: this.form.ParentID, TypeID: this.form.TypeID, BusinessProcessingTypeID: this.form.BusinessProcessingTypeID, Name: this.form.Name, StatusID: 1, IsNew: false, BranchCode: this.form.BranchCode, Telphone: this.form.Telphone, Address: this.form.Address, PostCode: this.form.PostCode, Email: this.form.Email, Website: this.form.Website}
+          let data = JSON.stringify(this.form)
+          this.axios.post('/api/Services/baseservice.asmx/SaveInstitution', {inst: data}).then(res => {
             if (res) {
               console.log('修改', res)
               this.$message({
@@ -335,6 +418,94 @@ export default {
       this.isAdd = false
       this.isEdit = false
       this.$refs.organizationTree.setCurrentKey(null) // 取消节点高亮
+    },
+    // 隐藏地址弹窗
+    showStaffForm: function () {
+      let inst = this.currentInstitution
+      inst.staffs = []
+      this.staffForm.selectedIDs = []
+      this.isLoadingStaffs = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInstitutionStaffs', {institutionid: inst.InstitutionID}).then(res => {
+        if (res) {
+          console.log('GetInstitutionStaffs', res)
+          res.data.forEach(is => {
+            let staff = this.staffList.find(s => s.StaffID === is.StaffID)
+            if (staff !== undefined) inst.staffs.push(staff)
+          })
+          this.selectedChildren = inst.staffs
+          this.children = this.staffList.filter(s => !this.selectedChildren.includes(s))
+          this.isLoadingStaffs = false
+          this.staffFormVisible = true
+        }
+      }).catch(err => {
+        console.log('staffList', err)
+        this.isLoadingStaffs = false
+      })
+    },
+    closeStaff: function (done) {
+      this.$confirm('Are you sure to close it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        done()
+      }).catch(() => {})
+    },
+    selectStaff: function () {
+      let childids = this.staffForm.selectedIDs
+      // if (childid === null) return
+      childids.forEach(id => {
+        let staff = this.children.find(a => a.StaffID === id)
+        this.selectedChildren.push(staff)
+      })
+      let inst = this.currentInstitution
+      let parentid = inst.InstitutionID
+      let ids = JSON.stringify(childids)
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/AddInstitutionStaffs', {institutionid: parentid, staffids: ids}).then(res => {
+        if (res) {
+          console.log('select staff', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+        }
+        this.children = this.staffList.filter(s => !this.selectedChildren.includes(s))
+        this.staffForm.selectedIDs = []
+        this.staffForm.checkedChildren = []
+        this.isLoading = false
+      }).catch(err => {
+        console.log('Fail to remove staff', err)
+        this.isLoading = false
+      })
+    },
+    removeStaff: function () {
+      let children = []
+      let selected = this.selectedChildren
+      this.staffForm.checkedChildren.forEach(function (item) {
+        let staff = selected.find(a => a.Name === item)
+        children.push(staff.StaffID)
+      })
+      let value = JSON.stringify(children)
+      let node = this.currentInstitution
+      let parentid = node.InstitutionID
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/RemoveInstitutionStaffs', {institutionid: parentid, children: value}).then(res => {
+        if (res) {
+          console.log('removeStaff', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.selectedChildren = selected.filter(s => !children.includes(s.StaffID))
+          this.children = this.staffList.filter(s => !this.selectedChildren.includes(s))
+          this.staffForm.checkedChildren = []
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('Fail to remove staff', err)
+        this.isLoading = false
+      })
     }
   }
 }

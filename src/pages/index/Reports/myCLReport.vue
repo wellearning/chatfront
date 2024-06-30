@@ -1,14 +1,14 @@
 <!--
-FileName: CoverLetter/myReport.vue
+FileName: Reports/myCLReport.vue
 Author: Ge Chen
-Update Date: 2023/9/20
+Update Date: 2024/5/25
 Function: Show my report.
 -->
 <template>
   <div>
     <div class="inPageTitle">
       <!--span class="inPageNav">My Report</span-->
-      <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">My Report</a>
+      <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">My Commercial Report</a>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
@@ -38,65 +38,40 @@ Function: Show my report.
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoadingMonthToDate">
-            <el-col :span="4" class="">Month to Date: </el-col>
-            <el-col :span="4">NB Counts: {{monthSummary.NBCounts}}</el-col>
+            <el-col :span="3" class="">Month to Date: </el-col>
+            <el-col :span="3">NB Counts: {{monthSummary.NBCounts}}</el-col>
             <el-col :span="4">NB Premium: ${{monthSummary.NBPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Remarket Counts: {{monthSummary.RemarketCounts}}</el-col>
+            <el-col :span="3">Remarket Counts: {{monthSummary.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{monthSummary.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Score Average: {{monthSummary.ScoreAverage}}</el-col>
+            <el-col :span="3">Renewal Counts: {{monthSummary.RenewalCounts}}</el-col>
+            <el-col :span="4">Renewal Premium: ${{monthSummary.RenewalPremium.toLocaleString()}}</el-col>
           </el-row>
           <el-row :gutter="20" class="title" v-loading="isLoadingYearToDate">
-            <el-col :span="4" class="">Year to Date: </el-col>
-            <el-col :span="4">NB Counts: {{yearSummary.NBCounts}}</el-col>
+            <el-col :span="3" class="">Year to Date: </el-col>
+            <el-col :span="3">NB Counts: {{yearSummary.NBCounts}}</el-col>
             <el-col :span="4">NB Premium: ${{yearSummary.NBPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Remarket Counts: {{yearSummary.RemarketCounts}}</el-col>
+            <el-col :span="3">Remarket Counts: {{yearSummary.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{yearSummary.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4">Score Average: {{yearSummary.ScoreAverage}}</el-col>
+            <el-col :span="3">Renewal Counts: {{yearSummary.RenewalCounts}}</el-col>
+            <el-col :span="4">Renewal Premium: ${{yearSummary.RenewalPremium.toLocaleString()}}</el-col>
           </el-row>
         </el-main>
-        <!--el-form :model="searchForm" ref="searchForm" class="searchForm">
-          <el-form-item label="Monthly Summary:  NB Counts:" prop="totalPremium">
-            <el-input v-model="totalPremium" readonly="readonly"></el-input>
-          </el-form-item>
-          <el-form-item label="Sum of NB" prop="sumOfNB">
-            <el-input v-model="sumOfNB" readonly="readonly"></el-input>
-          </el-form-item>
-          <el-form-item label="Sum of Remarket" prop="sumOfRemarket">
-            <el-input v-model="sumOfRemarket" readonly="readonly"></el-input>
-          </el-form-item>
-          <el-form-item label="Average of Score" prop="averageOfScore">
-            <el-input v-model="averageScore" readonly="readonly"></el-input>
-          </el-form-item>
-        </el-form-->
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="CoverLetterID" width="60" fixed="left"></el-table-column>
+        <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left"></el-table-column>
         <el-table-column label="Client Code" prop="ClientCode" min-width="100"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150"></el-table-column>
-        <el-table-column label="App Type" prop="LeadsFrom" min-width="100"></el-table-column>
+        <el-table-column label="Applicant" prop="NameInsured" min-width="150"></el-table-column>
+        <el-table-column label="App Type" prop="AppType" min-width="100"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150"></el-table-column>
-        <el-table-column label="Line of Business" prop="Title" min-width="150"></el-table-column>
         <el-table-column label="Effective Date" min-width="120">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="80"></el-table-column>
-        <el-table-column label="APP Premium" prop="PremiumOnApp" min-width="120">
-          <template slot-scope="scope" >
-            <span>${{scope.row.PremiumOnApp.toLocaleString()}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Submit Premium" prop="Premium" min-width="120">
-          <template slot-scope="scope" >
+        <el-table-column label="Premium" prop="Premium" min-width="120">
+          <template v-slot="scope" >
             <span>${{scope.row.Premium.toLocaleString()}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
-        <el-table-column label="Q-Score" prop="QualityScore" min-width="80"></el-table-column>
-        <el-table-column label="Detail" prop="" min-width="80">
-          <template slot-scope="scope" >
-            <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
         </el-table-column>
       </el-table>
@@ -107,24 +82,15 @@ Function: Show my report.
       <div class="searchBox">
         <el-main class="" >
           <el-row :gutter="20" class="title" v-loading="isLoading">
-            <el-col :span="4" class="">CoverLetterID: {{currentCoverLetter.CoverLetterID}} </el-col>
-            <el-col :span="4">Client Code: {{currentCoverLetter.ClientCode}}</el-col>
-            <el-col :span="4">Name Insured: {{currentCoverLetter.NameInsured}}</el-col>
-            <el-col :span="4">Premium: ${{currentCoverLetter.Premium.toLocaleString()}}</el-col>
-            <el-col :span="4">UW Score: {{currentCoverLetter.Score}}</el-col>
-            <el-col :span="4">Quality Score: {{currentCoverLetter.QualityScore}}</el-col>
+            <el-col :span="4" class="">ApplicationID: {{currentApplication.ApplicationID}} </el-col>
+            <el-col :span="4">Client Code: {{currentApplication.ClientCode}}</el-col>
+            <el-col :span="4">Name Insured: {{currentApplication.NameInsured}}</el-col>
+            <el-col :span="4">Premium: ${{currentApplication.Premium.toLocaleString()}}</el-col>
+            <el-col :span="4">UW Score: {{currentApplication.Score}}</el-col>
+            <el-col :span="4">Quality Score: {{currentApplication.QualityScore}}</el-col>
           </el-row>
         </el-main>
       </div>
-      <el-table :data="coverletterpropertylist.slice((coverlettercurrentPage - 1) * pageSize, coverlettercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingCoverLetter" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="PropertyID" min-width="100" fixed="left"></el-table-column>
-        <el-table-column label="Name" prop="Name" min-width="150"></el-table-column>
-        <el-table-column label="" prop="" min-width="1"></el-table-column>
-        <el-table-column label="Value" prop="Value" min-width="150"></el-table-column>
-        <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="80"></el-table-column>
-
-      </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=coverlettercurrentPage layout="prev, pager, next" :total=coverlettertotal class="pageList">
       </el-pagination>
     </div>
@@ -146,15 +112,11 @@ export default {
       RemarketCounts: 0,
       RemarketPremium: 0,
       ScoreAverage: 0,
-      AutoBindingAuthority: null,
-      PropertyBindingAuthority: null,
       EffectiveDate: null,
       isAnswering: false,
       isPost: false,
       totalNum: 0,
       finishNum: 0,
-      totalQuestionNum: 1,
-      AnsweredArr: [],
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       // printObj: {
       //   id: 'pdfDom',
@@ -186,18 +148,6 @@ export default {
       },
       searchName: null,
       mainVisible: true,
-      coverLetterVisible: false,
-      currentCoverLetterID: null,
-      coverletterpropertylist: [],
-      currentCoverLetter: {
-        CoverLetterID: 0,
-        ClientCode: '',
-        NameInsured: '',
-        Score: 0,
-        QualityScore: 0
-      },
-      coverlettercurrentPage: 1,
-      coverlettertotal: 0,
       // 列表
       tempList: [],
       list: [],
@@ -206,14 +156,16 @@ export default {
         NBPremium: 0,
         RemarketCounts: 0,
         RemarketPremium: 0,
-        ScoreAverage: 0
+        RenewalCounts: 0,
+        RenewalPremium: 0
       },
       monthSummary: {
         NBCounts: 0,
         NBPremium: 0,
         RemarketCounts: 0,
         RemarketPremium: 0,
-        ScoreAverage: 0
+        RenewalCounts: 0,
+        RenewalPremium: 0
       },
       showRecord: 'Show Year',
       pageSize: 20,
@@ -225,10 +177,10 @@ export default {
   mounted: function () {
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
-    for (let i = 2020; i <= this.searchForm.Year; i++) {
+    for (var i = 2020; i <= this.searchForm.Year; i++) {
       this.searchForm.years.push(i)
     }
-    this.showMain()
+    this.search()
     this.loadYearToDate()
     this.loadMonthToDate()
   },
@@ -246,7 +198,7 @@ export default {
   },
   methods: {
     switchRecords: function () {
-      this.showMain()
+      this.search()
     },
     prevMonth: function () {
       if (this.searchForm.Month === 1) {
@@ -254,7 +206,7 @@ export default {
         this.searchForm.Year--
         this.loadYearToDate()
       } else this.searchForm.Month--
-      this.showMain()
+      this.search()
       this.loadMonthToDate()
     },
     nextMonth: function () {
@@ -263,16 +215,16 @@ export default {
         this.searchForm.Year++
         this.loadYearToDate()
       } else this.searchForm.Month++
-      this.showMain()
+      this.search()
       this.loadMonthToDate()
     },
     changeYear: function () {
       this.loadYearToDate()
       this.loadMonthToDate()
-      this.showMain()
+      this.search()
     },
     changeYearMonth: function () {
-      this.showMain()
+      this.search()
       this.loadMonthToDate()
     },
     // 日期格式
@@ -281,20 +233,11 @@ export default {
     },
     showMain: function () {
       this.mainVisible = true
-      this.coverLetterVisible = false
-      this.loadCoverLetters(0)
-    },
-    showCoverLetter: function (letter) {
-      this.mainVisible = false
-      this.coverLetterVisible = true
-      if (letter !== undefined) {
-        this.currentCoverLetter = letter
-        this.loadCoverLetter()
-      }
+      this.search()
     },
     loadMonthToDate: function () {
       this.isLoadingMonthToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_producermonthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetProducerRecord_producermonthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('查询', res)
           this.monthSummary = res.data
@@ -308,7 +251,7 @@ export default {
 
     loadYearToDate: function () {
       this.isLoadingYearToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_produceryearsummary', {year: this.searchForm.Year}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetProducerRecord_produceryearsummary', {year: this.searchForm.Year}).then(res => {
         if (res) {
           console.log('查询', res)
           this.yearSummary = res.data
@@ -319,42 +262,13 @@ export default {
         this.isLoadingYearToDate = false
       })
     },
-    loadCoverLetters: function (start) {
-      this.isLoading = true
-      let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month_start'
-      let param = {year: this.searchForm.Year, month: this.searchForm.Month, start: start}
-      if (this.viewMonthly === 'Year to Date') {
-        service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year_start'
-        param = {year: this.searchForm.Year, start: start}
-      }
-      this.axios.post(service, param).then(res => {
-        if (res) {
-          console.log('loadCoverLetters', res)
-          if (start === 0) {
-            this.list = res.data
-            this.total = res.count
-            this.currentPage = 1
-          } else {
-            this.list = this.list.concat(res.data)
-          }
-          if (this.list.length < this.total) {
-            this.loadCoverLetters(this.list.length)
-          } else {
-            this.isLoading = false
-          }
-        }
-      }).catch(err => {
-        console.log('loadCoverLetters', err)
-        this.isLoading = false
-      })
-    },
     // 查询
     search: function () {
       this.isLoading = true
-      let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month'
+      let service = '/api/Services/CommerceService.asmx/GetMyApplications_month'
       let param = {year: this.searchForm.Year, month: this.searchForm.Month}
       if (this.viewMonthly === 'Year to Date') {
-        service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year'
+        service = '/api/Services/CommerceService.asmx/GetMyApplications_year'
         param = {year: this.searchForm.Year}
       }
       this.axios.post(service, param).then(res => {
@@ -368,23 +282,6 @@ export default {
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoading = false
-      })
-    },
-    // loading current coverletter properties
-    loadCoverLetter: function () {
-      let coverletterid = this.currentCoverLetter.CoverLetterID
-      this.isLoadingCoverLetter = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties_score', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
-        if (res) {
-          console.log('查询', res)
-          this.coverletterpropertylist = res.data
-          this.coverlettertotal = this.coverletterpropertylist.length
-          this.coverlettercurrentPage = 1
-        }
-        this.isLoadingCoverLetter = false
-      }).catch(err => {
-        console.log('查询出错', err)
-        this.isLoadingCoverLetter = false
       })
     },
     // 重置查询

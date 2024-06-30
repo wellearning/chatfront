@@ -7,7 +7,7 @@ Function: Show broker report as administrator role.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">Admin Broker Report</span>
+      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">{{reportTitle}}</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
@@ -53,11 +53,18 @@ Function: Show broker report as administrator role.
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+        <el-table-column v-if="businessLineID===2" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+        <el-table-column v-if="businessLineID===2" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
+          <template slot-scope="scope" >
+            <span>${{scope.row.RenewalPremium.toLocaleString()}}</span>
+          </template>
         </el-table-column>
-        <el-table-column label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
+        <el-table-column v-if="businessLineID===1" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+        </el-table-column>
+        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+        </el-table-column>
+        <el-table-column v-if="businessLineID===1" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
@@ -74,10 +81,12 @@ export default {
   },
   data: function () {
     return {
+      reportTitle: 'P/L Broker Report',
       viewMonthly: 'Month to Date',
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
+      businessLineID: 1,
       // 搜索
       searchForm: {
         name: null,
@@ -119,6 +128,8 @@ export default {
     }
   },
   mounted: function () {
+    this.businessLineID = Number(this.$route.params.id)
+    if (this.businessLineID === 2) this.reportTitle = 'C/L Broker Report'
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (var i = 2020; i <= this.searchForm.Year; i++) {
@@ -210,6 +221,7 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all_year'
         param = {year: this.searchForm.Year}
       }
+      if (this.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)

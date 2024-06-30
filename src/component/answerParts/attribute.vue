@@ -26,20 +26,29 @@
               <el-option class="questionOption" key="0" label="No" value="0"></el-option>
               <el-option class="questionOption" key="1" label="Yes" value="1"></el-option>
             </el-select>
-            <el-input v-else class="additionContent" v-model="item[p.ItemValue]" :type="p.type" size="mini" placeholder="" style="width: 300px;" @change="changeArray()"></el-input>
+            <el-input v-else-if="p.type === 'money'" class="additionContent" v-model="item[p.Name+'_c']" type="text" size="mini" style="width: 200px;" @blur="setItemCurrency(item,p)" @focus="setItemNumeric(item,p)"></el-input>
+            <span v-else-if="p.type === 'moneyplus'">
+              <el-checkbox v-model="item[p.Name+'_p']" @change="moneyplusCheck(item, p)">{{p.ItemValue}}</el-checkbox>
+              <el-input class="additionContent" v-model="item[p.Name+'_c']" type="text" size="mini" style="width: 200px;" @blur="setItemCurrency(item,p)"  @focus="setItemNumeric(item,p)"></el-input>
+            </span>
+            <el-input v-else class="additionContent" v-model="item[p.Name]" :type="p.type" size="mini" placeholder="" style="width: 300px;" @change="changeArray()"></el-input>
           </div>
         </el-row>
         <el-button icon="el-icon-plus" type="primary" plain size="small" @click="addItem()">Add</el-button>
         <el-button icon="el-icon-minus" type="primary" plain size="small" @click="removeItem()">Remove</el-button>
         <el-button icon="el-icon-plus" type="primary" plain size="small" @click="changeVal()">Done</el-button>
       </div>
-      <GmapAutocomplete v-else-if="answer.InputType === 'address'" style="width: 500px; height: 25px;"
-                        :options="{
+      <div v-else-if="answer.InputType === 'address'" style="padding-left:20px">
+        <GmapAutocomplete v-if="!enableEdit" style="width: 500px; height: 25px;"
+                          :options="{
             componentRestrictions: { country: 'ca' },
           }"
-                        :value="answer.AnswerDesc"
-                        @place_changed="setPlace">
-      </GmapAutocomplete>
+                          :value="answer.AnswerDesc"
+                          @place_changed="setPlace">
+        </GmapAutocomplete>
+        <el-input v-else-if="enableEdit" class="additionContent" v-model="answer.AnswerDesc" size="mini" @change="changeVal()"  placeholder="Text" style="width: 490px;"></el-input>
+        <el-checkbox v-model="enableEdit">need edit</el-checkbox>
+      </div>
       <!--<el-input-number v-else-if="question.InputType === 'number'" class="additionContent" v-model="question.value" size="mini" @input="changeVal(question.value)" placeholder="Number"></el-input-number>-->
       <div class="questionTips">{{answer.Tips}}</div>
     </div>
@@ -47,6 +56,8 @@
 </template>
 
 <script>
+// import {isNumeric} from 'echarts/lib/util/number'
+
 export default {
   name: 'answerProperty',
   data: function () {
@@ -54,6 +65,7 @@ export default {
       input: '',
       currencyValue: '',
       isLoading: false,
+      enableEdit: false,
       dataList: [], // 从DataSource中获取的数据列表，在list,children, array等类型中用到
       answerItems: [], // array中回答的对象数组
       operands: [],
@@ -80,7 +92,7 @@ export default {
   },
   mounted: function () {
     this.parseAnswer(this.answer)
-    if (this.$refs.name !== undefined) this.$refs.name.focus()
+    // if (this.$refs.name !== undefined) this.$refs.name.focus()
   },
   methods: {
     addItem: function () {
@@ -96,6 +108,14 @@ export default {
       this.changeArray()
     },
     changeArray: function () {
+      /*
+      console.log('changeArray: ')
+      if (item !== undefined) {
+        if (p.type === 'money' || p.type === 'moneyplus') {
+          item[p.Name] = Number(item[p.Name + '_c'])
+        }
+      }
+       */
       let value = JSON.stringify(this.answerItems)
       this.answer.AnswerDesc = value
     },
@@ -116,15 +136,70 @@ export default {
       if (!isNaN(this.currencyValue)) {
         this.answer.AnswerDesc = Number(this.currencyValue)
         this.currencyValue = this.answer.AnswerDesc.toLocaleString()
+      } else {
+        // this.currencyValue = ''
       }
     },
     setNumeric: function () {
       this.currencyValue = this.answer.AnswerDesc
     },
+    setItemCurrency: function (item, p) {
+      if (item[p.Name + '_c'] === undefined) return
+      if (p.type === 'moneyplus') {
+        if (item[p.Name + '_p']) return
+      }
+      console.log('setItemCurrency: ' + item[p.Name + '_c'])
+      if (!isNaN(item[p.Name + '_c'])) {
+        item[p.Name] = Number(item[p.Name + '_c'])
+        item[p.Name + '_c'] = '$' + item[p.Name].toLocaleString()
+      } else {
+        item[p.Name] = 0
+        // item[p.Name + '_c'] = ''
+      }
+      this.changeArray()
+      /*
+      */
+    },
+    setItemNumeric: function (item, p) {
+      if (item[p.Name] === undefined || item[p.Name] === '') return
+      if (p.type === 'moneyplus' && item[p.Name + '_p']) return
+      console.log('setItemNumeric: ' + p.Name)
+      item[p.Name + '_c'] = item[p.Name]
+      /*
+      if (p.type === 'moneyplus') {
+        if (item[p.Name] === p.ItemValue) {
+          item[p.Name + '_c'] = ''
+          item[p.Name + '_p'] = true
+        } else {
+          item[p.Name + '_c'] = item[p.Name]
+          item[p.Name + '_p'] = false
+        }
+      } else if (p.type === 'money') {
+        console.log(item[p.Name + '_c'])
+        if (isNaN(item[p.Name])) {
+          item[p.Name + '_c'] = ''
+        } else {
+          item[p.Name + '_c'] = item[p.Name]
+        }
+      }
+      */
+    },
+    moneyplusCheck: function (item, p) {
+      if (item[p.Name + '_p']) {
+        item[p.Name] = p.ItemValue
+        item[p.Name + '_c'] = ''
+      } else {
+        item[p.Name] = 0
+      }
+      this.changeArray()
+    },
     parseAnswer: function (answer) {
+      this.enableEdit = false
       if (answer.InputType === 'array') {
         this.loadDataSource(answer)
-        if (answer.AnswerDesc !== null && answer.AnswerDesc !== '') this.answerItems = JSON.parse(answer.AnswerDesc)
+        if (answer.AnswerDesc !== null && answer.AnswerDesc !== '') {
+          this.answerItems = JSON.parse(answer.AnswerDesc)
+        }
       } else if (answer.InputType === 'computed') {
         this.computeVal(answer)
       } else if (answer.InputType === 'money') {
@@ -155,6 +230,25 @@ export default {
               if (da.children.length > 0) da.type = da.children[0].Name
               else da.type = 'text'
               if (da.type === 'list') da.datasource = da.children.slice(1)
+              else if (da.type === 'money') {
+                this.answerItems.forEach(item => {
+                  if (isNaN(item[da.Name])) {
+                    item[da.Name + '_c'] = ''
+                  } else {
+                    item[da.Name + '_c'] = '$' + Number(item[da.Name]).toLocaleString()
+                  }
+                })
+              } else if (da.type === 'moneyplus') {
+                this.answerItems.forEach(item => {
+                  if (item[da.Name] === da.ItemValue) {
+                    item[da.Name + '_c'] = ''
+                    item[da.Name + '_p'] = true
+                  } else {
+                    item[da.Name + '_p'] = false
+                    item[da.Name + '_c'] = '$' + Number(item[da.Name]).toLocaleString()
+                  }
+                })
+              }
             })
           }
         }
@@ -181,7 +275,10 @@ export default {
       // this.loadRateTypes(answer)
     },
     setPlace (place) {
-      this.answer.AnswerDesc = place.formatted_address
+      let value = place.formatted_address.replace(/加拿大|Canada/, '')
+      if (value.endsWith(' ')) value = value.substring(0, value.length - 1)
+      if (value.endsWith(',')) value = value.substring(0, value.length - 1)
+      this.answer.AnswerDesc = value
       this.$emit('changeValue')
     }
   }

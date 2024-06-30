@@ -31,6 +31,15 @@
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
+            <el-form-item label="Producer" prop="ProducerID">
+              <el-select v-model="applicationForm.ProducerID" placeholder="Producer" no-data-text="No Record" filterable >
+                <el-option v-for="item in producerList" :key="item.StaffID" :label="item.Name" :value="item.StaffID"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
             <el-form-item label="AppType" prop="TypeID">
               <el-select v-model="applicationForm.TypeID" placeholder="App Type" no-data-text="No Record" filterable >
                 <el-option v-for="item in appTypes" :key="item.key" :label="item.value" :value="item.key"></el-option>
@@ -70,71 +79,91 @@
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
-            <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
-              <el-select v-model="applicationForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
-                <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+            <el-form-item label="InsuranceCorp" prop="InsuranceCorpID">
+              <el-select v-model="applicationForm.InsuranceCorpID" placeholder="Template" no-data-text="No Record" filterable >
+                <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
-            <el-form-item label="ApplicationType" prop="TemplateID">
-              <el-select v-model="applicationForm.TemplateID" placeholder="Template" no-data-text="No Record" filterable >
-                <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
+            <el-form-item label="Agen/Dir" prop="BillWayID">
+              <el-select v-model="applicationForm.BillWayID" placeholder="Agen/Dir" no-data-text="No Record" filterable >
+                <el-option v-for="item in billWays" :key="item.key" :label="item.value" :value="item.key"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <!--GmapAutocomplete style="width: 500px; height: 25px;"
-                          :options="{
-            componentRestrictions: { country: 'ca' },
-          }"
-                          :value="applicationForm.Address"
-                          @place_changed="setPlace">
-        </GmapAutocomplete-->
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="Address" prop="Address">
-              <el-input id="pac-input" v-model="applicationForm.Address" placeholder="Address" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="City" prop="City">
-              <el-input v-model="applicationForm.City" placeholder="" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="Province" prop="Province">
-              <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="PersonContact" prop="PersonContact">
-              <el-input v-model="applicationForm.PersonContact" placeholder="Policy Number" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="PhoneNumber" prop="PhoneNumber">
-              <el-input v-model="applicationForm.PhoneNumber" placeholder="Policy Number" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="24">
-            <el-form-item label="Email" prop="Email">
-              <el-input v-model="applicationForm.Email" placeholder="Policy Number" title=""></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <div v-if="businessTypeId !== 3">
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
+                <el-select v-model="applicationForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
+                  <el-option v-for="item in questionnaires" :key="item.BlockID" :label="item.Name" :value="item.BlockID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="ApplicationType" prop="TemplateID">
+                <el-select v-model="applicationForm.TemplateID" placeholder="Template" no-data-text="No Record" filterable >
+                  <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <!--GmapAutocomplete style="width: 500px; height: 25px;"
+                            :options="{
+              componentRestrictions: { country: 'ca' },
+            }"
+                            :value="applicationForm.Address"
+                            @place_changed="setPlace">
+          </GmapAutocomplete-->
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Address" prop="Address">
+                <el-input id="pac-input" v-model="applicationForm.Address" placeholder="Address" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="City" prop="City">
+                <el-input v-model="applicationForm.City" placeholder="" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Province" prop="Province">
+                <el-input v-model="applicationForm.Province" placeholder="" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="PersonContact" prop="PersonContact">
+                <el-input v-model="applicationForm.PersonContact" placeholder="Policy Number" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="PhoneNumber" prop="PhoneNumber">
+                <el-input v-model="applicationForm.PhoneNumber" placeholder="Policy Number" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Email" prop="Email">
+                <el-input v-model="applicationForm.Email" placeholder="Email" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         <div class="newMemo-submit">
           <el-button icon="el-icon-check" type="primary" @click="saveApplication()" :loading="isLoading">Save</el-button>
         </div>
@@ -157,6 +186,8 @@ export default {
       isLoadingTemplates: false,
       templateList: [],
       appTypes: [],
+      billWays: [],
+      producerList: [],
       insuranceCorpList: [],
       questionnaires: [],
       applicationForm: {
@@ -164,6 +195,9 @@ export default {
         NameInsured: null,
         EffectiveDate: null,
         TypeID: null,
+        BillWayID: null,
+        ProducerID: null,
+        InsuranceCorpID: null,
         LeadFromCorpID: 0,
         ExpiryDate: null,
         ClientCode: null,
@@ -179,8 +213,7 @@ export default {
         Email: null,
         PhoneNumber: null,
         BusCode: '',
-        Industry: '',
-        AgenDir: ''
+        Industry: ''
       },
       applicationFormRules: {
         PolicyNumber: [
@@ -191,6 +224,9 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         ExpiryDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        ProducerID: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         TypeID: [
@@ -207,12 +243,18 @@ export default {
     }
   },
   props: {
+    businessTypeId: {
+      type: Number
+    },
     application: {
       type: Object
     }
   },
   mounted: function () {
+    this.loadProducers(0)
     this.loadAppTypes()
+    this.loadBillWays()
+    this.loadApplicationStatus()
     this.loadTemplates()
     this.loadInsuranceCorps()
     this.loadQuestionnaires()
@@ -220,6 +262,29 @@ export default {
     // this.setForm(this.application)
   },
   methods: {
+    loadProducers: function (start) {
+      this.isLoadingProducers = true
+      this.axios.post('/api/Services/baseservice.asmx/GetSelectableProducers', {}).then(res => {
+        if (res) {
+          console.log('producerList', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producerList = res.data
+          } else {
+            this.producerList = this.producerList.concat(res.data)
+          }
+          if (this.producerList.length < this.producerCount) {
+            this.loadProducers(this.producerList.length)
+          } else {
+            this.isLoadingProducers = false
+            this.attachProducers()
+          }
+        }
+      }).catch(err => {
+        console.log('producerList', err)
+        this.isLoadingProducers = false
+      })
+    },
     loadAppTypes: function () {
       this.isLoadingAppTypes = true
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
@@ -231,6 +296,32 @@ export default {
       }).catch(err => {
         console.log('loadAppTypes出错', err)
         this.isLoadingAppTypes = false
+      })
+    },
+    loadBillWays: function () {
+      this.isLoadingAppTypes = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'BillWay'}).then(res => {
+        if (res) {
+          console.log('loadAppTypes', res)
+          this.billWays = res.data
+        }
+        this.isLoadingAppTypes = false
+      }).catch(err => {
+        console.log('loadAppTypes出错', err)
+        this.isLoadingAppTypes = false
+      })
+    },
+    loadApplicationStatus: function () {
+      this.isLoadingInsuranceCorps = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.statusList = res.data
+        }
+        this.isLoadingInsuranceCorps = false
+      }).catch(err => {
+        console.log('statusList', err)
+        this.isLoadingInsuranceCorps = false
       })
     },
     loadTemplates: function () {
@@ -281,6 +372,7 @@ export default {
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBase', {applicationid: id}).then(res => {
         if (res) {
           console.log('ApplicationBase', res)
+          if (res.data.BusinessTypeID === 0) res.data.BusinessTypeID = this.application.BusinessTypeID
           this.applicationForm = res.data
           this.applicationForm.RequestDate = moment(res.data.RequestDate)
           this.applicationForm.EffectiveDate = moment(res.data.EffectiveDate)
@@ -372,6 +464,21 @@ export default {
       app.PersonContact = this.applicationForm.PersonContact
       app.Email = this.applicationForm.Email
       app.PhoneNumber = this.applicationForm.PhoneNumber
+      app.ProducerID = this.applicationForm.ProducerID
+      app.BillWayID = this.applicationForm.BillWayID
+      app.InsuranceCorpID = this.applicationForm.InsuranceCorpID
+      let producer = this.producerList.find(p => p.StaffID === app.ProducerID)
+      if (producer !== undefined) app.Producer = producer.Name
+      else app.Producer = ''
+      let insuranceCorp = this.insuranceCorpList.find(p => p.InsuranceCorpID === app.InsuranceCorpID)
+      if (insuranceCorp !== undefined) app.CorpName = insuranceCorp.Name
+      else app.CorpName = ''
+      if (app.BillWayID === 1) app.AgenDir = 'A'
+      else if (app.BillWayID === 2) app.AgenDir = 'D'
+      else app.AgenDir = ''
+      let status = this.statusList.find(s => s.key === app.StatusID)
+      if (status !== undefined) app.Status = status.value
+      else app.Status = ''
     },
 
     saveApplication: function () {
@@ -389,6 +496,8 @@ export default {
         this.axios.post('/api/Services/CommerceService.asmx/SaveApplicationBase', {application: value}).then(res => {
           if (res) {
             console.log('saveApplication', res)
+            this.applicationForm.ApplicationID = res.data.ApplicationID
+            this.applicationForm.StatusID = res.data.StatusID
             this.setApplication(this.application)
             this.$message({
               type: 'success',

@@ -582,7 +582,7 @@ table tr td {
   font-size: 18px;
   position: relative;
   white-space: pre-line;
-  background-image: url(../images/sheet_line.png);
+  /*background-image: url(../images/sheet_line.png);*/
   background-repeat: no-repeat;
   font-family: "Arial";
   font-weight: normal;
@@ -610,7 +610,7 @@ table tr td {
 }
 .coiLogo {
   position: absolute;
-  left: 160px;
+  left: 100px;
   top: 60px;
   width: auto;
   height: 50px;

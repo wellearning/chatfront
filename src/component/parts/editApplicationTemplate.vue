@@ -16,7 +16,7 @@
         >
         </editApplicationBlock>
         <div v-if="ab.isLast && ab.StatusID === 1">
-          <el-button v-if="ab.isLastTemplate" icon="el-icon-plus" type="primary" plain size="small" @click="addTemplate(ab)">Add new {{ab.Title}}</el-button>
+          <el-button v-if="ab.isLastTemplate" icon="el-icon-plus" type="primary" plain size="small" @click="addTemplate(ab)">Add new risk {{ab.Title}}</el-button>
         </div>
       </div>
     </div>

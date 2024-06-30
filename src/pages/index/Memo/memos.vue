@@ -126,7 +126,7 @@ Function: Show all personal line memo list and do all operations on the list.
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog title="" :visible.sync="editMemoWindowVisible" width="1184.56px" center >
+      <el-dialog z-index="5" title="" :visible.sync="editMemoWindowVisible" width="1184.56px" center >
         <EditMemo ref="eacl" :memoid="currentMemoID" :templateList="templateList" :insuranceCorps="insuranceCompanyList" @close="closeEditMemo"></EditMemo>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->

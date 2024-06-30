@@ -2,11 +2,17 @@
   <div>
     <div class="printDiv" >
       <el-button icon="el-icon-document" type="primary" @click="toPDF('Questionnaire', printDate)" size="small">Print</el-button>
+      <el-button icon="el-icon-document" :loading="isLoading"  type="primary" @click="downloadPDF()" size="small">Download</el-button>
+      <el-button icon="el-icon-email" :loading="isLoading"  type="primary" @click="sendEmail()" size="small">SendEmail</el-button>
     </div>
     <div class="viewQuestionnaire" id="questionnaireDom" v-if="businessObj !== null" style="margin-top:0px;">
       <img class="coiLogo" :src="logo" crossorigin="anonymous">
-      <el-row :gutter="20" style="margin-top:-01px; margin-left:402px; color: steelblue; text-align: right; font-size:14px;">
-        <el-col :span="10">
+      <el-row :gutter="20" style="margin-top:20px; margin-left:402px; color: steelblue; text-align: right; font-size:14px;">
+        <el-col :span="22">
+          <div class="viewMemo-subtitle head">{{branch.Address}}{{branch.CityProv}}{{branch.PostCode}}</div>
+          <div class="viewMemo-subtitle head">Bus: {{branch.Telphone}}</div>
+        </el-col>
+        <!--el-col :span="10">
           <div class="viewMemo-subtitle head">{{producer.institution.Telphone}}</div>
           <div class="viewMemo-subtitle head">{{producer.institution.Email}}</div>
           <div class="viewMemo-subtitle head">{{producer.institution.Website}}</div>
@@ -15,7 +21,7 @@
           <div class="viewMemo-subtitle head">{{producer.institution.Address}}</div>
           <div class="viewMemo-subtitle head">{{producer.institution.CityProv}}</div>
           <div class="viewMemo-subtitle head">{{producer.institution.PostCode}}</div>
-        </el-col>
+        </el-col-->
       </el-row>
       <el-row :gutter="20" style="margin-top:20px; margin-left:55px; ">
         <el-col :span="12">
@@ -35,7 +41,7 @@
         </el-col>
         <el-col :span="22">
           <div>Your policy {{businessObj.CorpName}} {{businessObj.PolicyNumber}} expiry on {{businessObj.ExpiryDate.format("LL")}}</div>
-          <div style="font-weight:normal;">Business location at {{businessObj.Address}} {{businessObj.City}} .{{businessObj.Province}}  {{businessObj.PostCode}}</div>
+          <!--div style="font-weight:normal;">Business location at {{businessObj.Address}} {{businessObj.City}} .{{businessObj.Province}}  {{businessObj.PostCode}}</div-->
         </el-col>
       </el-row>
       <el-row :gutter="20" style="margin-top:20px; margin-left:55px; font-size:18px; font-weight: normal;">
@@ -50,7 +56,7 @@
         </div>
       </el-row>
       <el-row :gutter="20" style="margin-top:20px; margin-left:40px; margin-right:60px; word-break: break-word; font-weight: normal;">
-        <div id="questionnaire">
+        <div id="questionnaire" :loading="isLoading" >
         </div>
       </el-row>
       <el-row :gutter="20" style="margin-top:20px; margin-left:55px; font-size:19px; ">
@@ -99,6 +105,7 @@ export default {
       logo: '/api' + JSON.parse(this.$store.getters.getAccount).institution.FormLogoUrl + '?time=' + moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       root: JSON.parse(this.$store.getters.getAccount).rootInstitution,
       branch: JSON.parse(this.$store.getters.getAccount).institution,
+      isLoading: false,
       businessObj: null,
       // email: this.branch.Email === null ? this.root.Email : this.branch.Email,
       application: {
@@ -154,8 +161,9 @@ export default {
     }
   },
   mounted: function () {
-    if (this.objTypeID === 0) this.loadApplication(this.applicationid)
-    else this.loadApplicationTemplate(this.applicationid, this.templateBlockID, this.repeatedID, this.questionnaireID)
+    this.loadApplication(this.applicationid, this.repeatedID)
+    // if (this.objTypeID === 0) this.loadApplication(this.applicationid)
+    // else this.loadApplicationTemplate(this.applicationid, this.templateBlockID, this.repeatedID, this.questionnaireID)
   },
   methods: {
     replaceAttribute: function (text) {
@@ -241,6 +249,102 @@ export default {
       }
       return text
     },
+    createQuestionnaires: function (questionnaires) {
+      let $root = $('#questionnaire')
+      $root.children().remove()
+      let riskid = 0
+      questionnaires.forEach(qtn => {
+        riskid++
+        let $risk = $('<div style="margin:30px 20px 10px 10px;">Location#' + riskid + ': ' + qtn.RiskLocation + '</div>')
+        $root.append($risk)
+        let index = 0
+        qtn.blockQuestions.forEach(bq => {
+          let label = bq.Label
+          let q = bq.question
+          if (q.TypeID === 1) {
+            label = ''
+          } else if (bq.Label === null || bq.Label === '') {
+            index++
+            label = index + '.'
+          } else {
+            label = bq.Label
+          }
+          // index++
+          this.createQuestion(bq, $root, label)
+        })
+      })
+    },
+    createQuestion: function (bq, $root, label) {
+      let q = bq.question
+      // let label = bq.Label
+      let $question = $('<div style="margin-left:30px;"></div>')
+      if (!(bq.Label === null || bq.Label === '')) {
+        $question = $('<div style="margin-left:40px;"></div>')
+        // label = index
+      }
+      $root.append($question)
+      if (label !== '') {
+        let $label = $('<span class="question">' + label + ' </span>')
+        $question.append($label)
+      }
+      if (q.TypeID === 1) {
+        let $des = $('<span class="question">' + q.Description + ' </span>')
+        $question.append($des)
+      } else if (q.TypeID === 2) {
+        let $des = $(q.Description)
+        $question.append($des)
+      } else if (q.TypeID === 3) {
+        let $des = $('<span class="question">' + q.Description + ' </span>')
+        $question.append($des)
+        if (q.InputType === 'checklist') {
+          let $table = $('<table border="1"></table>')
+          $question.append($table)
+          let $tbody = $('<tbody></tbody>')
+          $table.append($tbody)
+          this.createCheckList(q, $tbody)
+        } else {
+          let $input = $('<input type="text" style="border:none; border-bottom:1px solid #000000; width: 120px;" />')
+          $question.append($input)
+        }
+      } else if (q.TypeID === 4) {
+        let $des = $('<span class="question">' + q.Description + ' </span>')
+        $question.append($des)
+        let $input = $('<br><input type="text" style="border:none; border-bottom:1px solid #000000; width: 100%;" />')
+        $question.append($input)
+      } else if (q.TypeID === 5) {
+        let description = ''
+        q.fillinParts.forEach(part => {
+          if (part.IsFillin) {
+            let length = Math.min(parseInt(part.Part) * 12, 300)
+            description += '<input type="text" style="border:none; border-bottom:1px solid #000000; width: ' + length + 'px;" />'
+          } else {
+            description += part.Part
+          }
+        })
+        let $des = $('<span class="question">' + description + ' </span>')
+        $question.append($des)
+      } else if (q.TypeID === 6) {
+        let $des = $('<span class="question">' + q.Description + ' </span>')
+        $question.append($des)
+        q.options.forEach(item => {
+          item.Content = this.replaceAttribute(item.Content)
+          let $cb = $('<input type="checkbox"/> <label>' + item.Content + ' </label>')
+          $question.append($cb)
+          if (item.Tips !== null) {
+            let $tips = $('<span>' + item.Tips + '</span>')
+            $question.append($tips)
+          }
+          if (item.NeedAddition) {
+            let $addi = $('<input type="text" placeholder="" style="border:none; border-bottom:1px solid #000000; width: 120px;" />')
+            $question.append($addi)
+          }
+        })
+        if (q.Tips !== null) {
+          let $qtips = $('<span>' + q.Tips + '</span>')
+          $question.append($qtips)
+        }
+      }
+    },
     createQuestionnaire: function () {
       let $root = $('#questionnaire')
       $root.children().remove()
@@ -315,6 +419,8 @@ export default {
     createCheckList: function (question, $tbody) {
       let service = '/api/Services/baseservice.asmx/GetDataItems'
       let param = { datatype: question.DataSource }
+      let columns = Number(question.Tips)
+      if (columns === 0) columns = 3
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('loadDataSource', res)
@@ -322,6 +428,13 @@ export default {
           let tdindex = 0
           let $tr = $('<tr></tr>')
           $tbody.append($tr)
+          for (let i = 0; i < columns; i++) {
+            let $td01 = $('<td></td>')
+            let $td02 = $('<td style="word-break: keep-all">Yes</td>')
+            let $td03 = $('<td style="word-break: keep-all">No</td>')
+            $tr.append($td01).append($td02).append($td03)
+          }
+          /*
           let $td01 = $('<td></td>')
           let $td02 = $('<td style="word-break: keep-all">Yes</td>')
           let $td03 = $('<td style="word-break: keep-all">No</td>')
@@ -332,6 +445,7 @@ export default {
           let $td08 = $('<td style="word-break: keep-all">Yes</td>')
           let $td09 = $('<td style="word-break: keep-all">No</td>')
           $tr.append($td01).append($td02).append($td03).append($td04).append($td05).append($td06).append($td07).append($td08).append($td09)
+           */
           checklist.forEach(item => {
             if (tdindex === 0) {
               let $tr0 = $('<tr></tr>')
@@ -343,10 +457,9 @@ export default {
             let $td2 = $('<td><input type="checkbox"></input></td>')
             let $td3 = $('<td><input type="checkbox"></input></td>')
             $tr.append($td1).append($td2).append($td3)
-            if (tdindex === 2) {
+            tdindex++
+            if (tdindex === columns) {
               tdindex = 0
-            } else {
-              tdindex++
             }
           })
         }
@@ -361,7 +474,7 @@ export default {
       let producerid = this.businessObj.StaffID
       if (this.businessObj.ProducerID !== undefined) producerid = this.businessObj.ProducerID
       let para = {staffid: producerid}
-      this.isLoading = true
+      // this.isLoading = true
       this.axios.post(service, para).then(res => {
         if (res) {
           console.log('producer', res)
@@ -369,6 +482,23 @@ export default {
           let index = res.data.institution.Address.indexOf(',')
           this.producer.institution.CityProv = res.data.institution.Address.substring(index + 1)
           this.producer.institution.Address = res.data.institution.Address.substring(0, index)
+        }
+        // this.isLoading = false
+      }).catch(err => {
+        console.log('loadProducer出错', err)
+        this.isLoading = false
+      })
+    },
+    loadQuestionnaires: function (id, repeatedid) {
+      let service = '/api/Services/CommerceService.asmx/GetQuestionnaires'
+      // let id = this.applicationid
+      let para = {applicationid: id, repeatedid: repeatedid}
+      // this.isLoading = true
+      this.axios.post(service, para).then(res => {
+        if (res) {
+          console.log('questionnaires', res)
+          let questionnaires = res.data
+          this.createQuestionnaires(questionnaires)
         }
         this.isLoading = false
       }).catch(err => {
@@ -398,9 +528,11 @@ export default {
         this.isLoading = false
       })
     },
-    loadApplication: function (id) {
+    loadApplication: function (id, repeatedid) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
+      let $root = $('#questionnaire')
+      $root.children().remove()
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
           console.log('loadApplication', res)
@@ -408,6 +540,8 @@ export default {
           let corp = this.insuranceCorps.find(c => c.InsuranceCorpID === this.businessObj.InsuranceCorpID)
           if (corp !== undefined) this.businessObj.CorpName = corp.Name
           this.businessObj.ExpiryDate = moment(this.businessObj.ExpiryDate)
+          this.loadQuestionnaires(id, repeatedid)
+          /*
           if (this.businessObj.applicationTemplate.applicationBlocks.length === 0) {
             this.businessObj.answers = []
             this.loadQuestionnaire()
@@ -418,8 +552,9 @@ export default {
               this.loadApplicationBlock(ablock, id)
             })
           }
+           */
           this.loadProducer()
-          this.isLoading = false
+          // this.isLoading = false
         }
       }).catch(err => {
         console.log('loadApplication出错', err)
@@ -523,6 +658,25 @@ export default {
       done()
     },
     // 转pdf
+    sendEmail: function () {
+      let service = '/api/Services/CommerceService.asmx/SendQuestionnaire'
+      let applicationid = this.businessObj.ApplicationID
+      let para = {applicationid: applicationid}
+      this.isLoading = true
+      this.axios.post(service, para).then(res => {
+        if (res) {
+          console.log('sendEmail', res)
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('sendEmail', err)
+        this.isLoading = false
+      })
+    },
+    downloadPDF: function () {
+      let filename = 'questionnaire.pdf'
+      this.downloadData('questionnaire', this.applicationid, filename, filename)
+    },
     toPDF: function (title, EffectiveDate) {
       this.htmlTitle = title + ' ' + EffectiveDate
       this.getPdf('#questionnaireDom')
@@ -541,7 +695,7 @@ table {
   font-size: 0.8rem;
   letter-spacing: 0px;
 }
-td {
+table tr td  {
   border: 1px solid rgb(160 160 160);
   padding: 4px 5px;
 }

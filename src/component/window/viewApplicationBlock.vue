@@ -123,9 +123,9 @@ export default {
       }
     },
     loadApplicationBlock: function (id, name) {
-      this.applicationBlockId = id
+      // this.applicationBlockId = id
       this.applicationBlock = null
-      if (name !== undefined) this.blockName = name
+      // if (name !== undefined) this.blockName = name
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBlock', {id: id}).then(res => {
         if (res) {
           console.log('GetApplicationBlock', res)

@@ -62,7 +62,7 @@ Function: Show all user list and do all operations on the list.
               <el-table-column label="Action" width="300" fixed="right">
                 <template slot-scope="scope">
                   <el-tooltip class="item" effect="dark" :content="scope.row.StatusID === 2 ? 'Set Active' : 'Set Inactive'" placement="top-end">
-                    <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+                    <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
                   </el-tooltip>
                   <el-tooltip class="item" effect="dark" content="Reset Password" placement="top-end">
                     <el-button icon="el-icon-key" type="primary" @click="showPass(scope.row.StaffID)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
@@ -398,7 +398,7 @@ export default {
     // 组织列表
     initOrganization: function () {
       this.isLoadingOrganization = true
-      this.axios.post('/api/Services/baseservice.asmx/GetOrganization', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetOrganization_nogrp', {}).then(res => {
         if (res) {
           console.log('查询树', res)
           this.organizationIdOptions = res.data
@@ -697,20 +697,21 @@ export default {
       })
     },
     // 切换状态
-    switchStatus: function (id) {
+    switchStatus: function (staff) {
       this.$confirm('Are you sure to switch status?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/baseservice.asmx/SwitchStaffStatus', {staffid: id}).then(res => {
+        this.axios.post('/api/Services/baseservice.asmx/SwitchStaffStatus', {staffid: staff.StaffID}).then(res => {
           if (res) {
             console.log('切换', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
+            staff.StatusID = res.data
             this.search(this.searchStatus, this.searchName, this.currentPage)
           }
           this.isLoading = false

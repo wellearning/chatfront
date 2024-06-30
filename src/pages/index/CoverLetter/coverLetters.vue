@@ -11,7 +11,7 @@ Function: Show all cover letter list and do all operations on the list.
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-date-picker @change="loadCoverLetters()"
+            <el-date-picker @change="loadCoverLetters(0)"
                             v-model="searchForm.periodDates" class="middleWidth"
                             type="daterange"
                             unlink-panels
@@ -200,7 +200,7 @@ export default {
         let year = new Date().getFullYear()
         let month = new Date().getMonth()
         let startDate = new Date(year, 0, 1)
-        let endDate = new Date(year + 1, month, 1)
+        let endDate = new Date(year, month + 1, 1)
         this.searchForm.periodDates = [startDate, endDate]
       } else {
         let now = new Date().getTime()

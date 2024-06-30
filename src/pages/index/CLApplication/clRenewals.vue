@@ -34,7 +34,7 @@ Function: Show all commercial application list and do all operations on the list
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-view" type="info" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 1 && scope.row.QuestionnaireID > 0" icon="el-icon-view" type="primary" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
                   <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
               </el-table-column>
@@ -50,7 +50,9 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="Applicant" prop="NameInsured" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
-        <el-table-column label="Premium" prop="Premium" min-width="80" sortable="custom"></el-table-column>
+        <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
+        <!--el-table-column label="Premium" prop="Premium" min-width="80" sortable="custom"></el-table-column-->
+        <el-table-column label="A/D" prop="AgenDir" min-width="70" sortable="custom"></el-table-column>
         <!--el-table-column label="EffecDate" prop="EffectiveDate" min-width="90" sortable="custom">
           <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
@@ -63,8 +65,8 @@ Function: Show all commercial application list and do all operations on the list
             <el-button-group>
               <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-view" :type="processType(scope.row)" @click="showRenewalProcessing(scope.row)"  size="small">Process</el-button>
-              <el-button icon="el-icon-view" type="info" plain @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.QuestionnaireID > 0" type="info" plain @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
+              <el-button icon="el-icon-view" type="primary" plain @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.QuestionnaireID > 0" type="primary" plain @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -97,7 +99,8 @@ Function: Show all commercial application list and do all operations on the list
         >
         </editApplicationBlock>
         <div class="newMemo-submit">
-          <el-button icon="el-icon-check" type="primary" @click="saveApplicationBlock()" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID !== 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(false)" :loading="isLoading">Save</el-button>
+          <el-button v-if="currentApplicationBlock!==null && currentApplicationBlock.StatusID === 1" icon="el-icon-check" type="primary" @click="saveApplicationBlock(true)" :loading="isLoading">Finish</el-button>
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
@@ -132,6 +135,13 @@ Function: Show all commercial application list and do all operations on the list
             <el-col :span="24">
               <el-form-item label="Premium" prop="Premium">
                 <el-input v-model="renewalProcessingForm.Premium" type="number" placeholder="Premium" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8"  class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="OutstandingBalance" prop="OutstandingBalance">
+                <el-input v-model="renewalProcessingForm.OutstandingBalance" type="number" placeholder="OutstandingBalance" title=""></el-input>
               </el-form-item>
             </el-col>
           </el-row>
@@ -228,7 +238,7 @@ export default {
       insuranceCorpList: [],
       questionnaires: [],
       renewalProcessings: [
-        {ID: 6, Name: 'Update'},
+        {ID: 6, Name: 'Questionnaire Obtain'},
         {ID: 7, Name: 'Pend'},
         {ID: 8, Name: 'Renew'},
         {ID: 9, Name: 'Cancel'}
@@ -272,6 +282,7 @@ export default {
         Brief: null,
         EffectiveDate: null,
         ExpiryDate: null,
+        OutstandingBalance: null,
         Premium: null
       },
       renewalProcessingFormRules: {
@@ -355,18 +366,24 @@ export default {
     },
     showRenewalProcessing: function (app) {
       console.log('Application', app)
+      this.currentApplication = app
       this.renewalProcessingForm.ApplicationID = app.ApplicationID
       this.renewalProcessingForm.Premium = app.Premium
-      this.renewalProcessingForm.EffectiveDate = app.EffectiveDate.add(1, 'year')
-      this.renewalProcessingForm.ExpiryDate = app.ExpiryDate.add(1, 'year')
+      this.renewalProcessingForm.OutstandingBalance = app.OutstandingBalance
+      this.renewalProcessingForm.EffectiveDate = moment(app.EffectiveDate)
+      this.renewalProcessingForm.ExpiryDate = moment(app.ExpiryDate)
+      this.renewalProcessingForm.EffectiveDate.add(1, 'year')
+      this.renewalProcessingForm.ExpiryDate.add(1, 'year')
       this.renewalProcessingVisible = true
     },
     effectiveDateChange: function () {
       this.quotationBindForm.ExpiryDate = moment(this.quotationBindForm.EffectiveDate).add(1, 'year')
     },
     setRenewalStatus: function (app) {
-      let astatus = this.renewalStatusList.find(s => s.StatusID === app.RenewalStatus)
-      app.RenewalStatus = astatus.Name
+      let astatus = this.renewalStatusList.find(s => s.key === app.RenewalStatus)
+      if (astatus.value === 'Opened') app.RenewalStatus = 'Open Renewal'
+      else if (astatus.value === 'Pending') app.RenewalStatus = 'Pending Renewal'
+      else app.RenewalStatus = astatus.value
     },
     renewalProcess: function () {
       this.$confirm('Are you sure to process it?', 'Confirm', {
@@ -382,7 +399,8 @@ export default {
           let value = {
             EffectiveDate: this.renewalProcessingForm.EffectiveDate,
             ExpiryDate: this.renewalProcessingForm.ExpiryDate,
-            Premium: this.renewalProcessingForm.Premium,
+            Premium: Number(this.renewalProcessingForm.Premium),
+            OutstandingBalance: Number(this.renewalProcessingForm.OutstandingBalance),
             Brief: this.renewalProcessingForm.Brief
           }
           brief = JSON.stringify(value)
@@ -396,13 +414,22 @@ export default {
               type: 'success',
               message: 'Operation Succeeded'
             })
-            let appStatusID = res.data
-            let status = this.renewalStatusList.find(s => s.StatusID === appStatusID)
-            if (status !== undefined) this.currentApplication.RenewalStatus = status.Name
-            else this.currentApplication.RenewalStatus = ''
+            if (typeid === 8) {
+              this.totalList = this.totalList.filter(p => p.ApplicationID !== id)
+              this.search()
+            } else if (typeid === 6) {
+              let status = this.emailStatusList.find(s => s.key === 3)
+              if (status !== undefined) this.currentApplication.QuestionnaireStatus = status.value
+            } else {
+              let appStatusID = res.data
+              let status = this.renewalStatusList.find(s => s.key === appStatusID)
+              if (status !== undefined) this.currentApplication.RenewalStatus = status.value
+              else this.currentApplication.RenewalStatus = ''
+            }
             // this.setRenewalStatus(this.currentApplication)
           }
           this.isLoadingApplicationQuotations = false
+          this.renewalProcessingVisible = false
         }).catch(err => {
           console.log('删除出错', err)
           this.isLoadingApplicationQuotations = false
@@ -414,7 +441,7 @@ export default {
         })
       })
     },
-    saveApplicationBlock: function () {
+    saveApplicationBlock: function (close) {
       let blockitem = this.currentBlockItem
       let ablock = JSON.parse(JSON.stringify(this.currentApplicationBlock))
       ablock.answers.forEach(answer => {
@@ -440,6 +467,7 @@ export default {
           blockitem.Status = appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))
         }
         this.isLoading = false
+        if (close) this.editApplicationBlockVisible = false
       }).catch(err => {
         console.log('修改出错', err)
         this.$message({
@@ -524,7 +552,11 @@ export default {
       this.currentBlockItem = blockItem
       let aTemplate = blockItem.applicationTemplate
       let aBlock = blockItem.applicationBlock
-      this.loadApplicationBlock(aTemplate, aBlock)
+      if (aBlock !== undefined) {
+        this.loadApplicationBlock(aTemplate, aBlock)
+      } else {
+        this.loadNewApplicationBlock(aTemplate, blockItem.templateBlock)
+      }
     },
     loadApplication: function (app) {
       // if (app.applicationTemplate !== null && app.applicationTemplate.applicationBlocks !== null) return
@@ -621,7 +653,7 @@ export default {
                     Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
                     app: app,
                     applicationBlock: ab,
-                    applicationTemplate: app.applicationTemplate
+                    applicationTemplate: at
                   }
                   childat.children.push(childab)
                 })
@@ -638,6 +670,31 @@ export default {
         this.isLoading = false
       })
     },
+    loadNewApplicationBlock: function (aTemplate, templateBlock) {
+      let start = true
+      this.isLoadingApplicationBlock = false
+      this.axios.post('/api/Services/CommerceService.asmx/GetNewApplicationBlock', {templateblockid: templateBlock.TemplateBlockID, start: start}).then(res => {
+        if (res) {
+          console.log('GetNewApplicationBlock', res.data)
+          let aBlock = res.data
+          aBlock.ApplicationTemplateID = aTemplate.ApplicationTemplateID
+          templateBlock.applicationBlock = aBlock
+          aTemplate.applicationBlocks.push(res.data)
+          this.matchBlockQuestions(aTemplate, aBlock)
+          this.isLoadingApplicationBlock = false
+          if (aBlock.answers[0].StatusID !== 1) {
+            aBlock.answers[0].StatusID = 1
+            // aBlock.StatusID = 1
+          }
+          this.currentApplicationBlock = aBlock
+          this.currentApplicationTemplate = aTemplate
+          this.editApplicationBlockVisible = true
+        }
+      }).catch(err => {
+        console.log('GetNewApplicationBlock列表出错', err)
+        this.isLoadingApplicationBlock = false
+      })
+    },
     loadApplicationBlock: function (aTemplate, aBlock) {
       this.isLoadingApplicationBlock = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBlock', {id: aBlock.ApplicationBlockID}).then(res => {
@@ -648,7 +705,7 @@ export default {
           this.isLoadingApplicationBlock = false
           if (aBlock.answers[0].StatusID !== 1) {
             aBlock.answers[0].StatusID = 1
-            aBlock.StatusID = 1
+            // aBlock.StatusID = 1
           }
           this.currentApplicationBlock = aBlock
           this.currentApplicationTemplate = aTemplate
@@ -673,6 +730,9 @@ export default {
         if (res) {
           console.log('GetBlockQuestionsByTemplate_all', res)
           atemplate.blockQuestions = res.data
+          atemplate.children.forEach(c => {
+            c.blockQuestions = atemplate.blockQuestions
+          })
           // console.log('isLoadingTemplateBlockQuestions:', this.isLoadingTemplateBlockQuestions)
         }
         this.isLoadingTemplateBlockQuestions = false
@@ -702,16 +762,16 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = blockItem.ApplicationID
+        let appid = blockItem.ApplicationID
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: id, templateid: blockItem.BlockID}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: appid, templateid: blockItem.BlockID}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('AddSubApplicationTemplate', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            let id = blockItem.children.length * 100
+            let id = blockItem.app.blockCount
             let atBlockItem = {
               id: id++,
               BlockID: blockItem.BlockID,
@@ -720,9 +780,9 @@ export default {
               children: []
             }
             blockItem.children.push(atBlockItem)
-            let repeatedid = 0
+            let childIndex = 0
             res.data.forEach(ab => {
-              repeatedid = ab.RepeatedID
+              childIndex = ab.RepeatedID + 1
               // let templateblock = blockItem.applicationTemplate.templateBlocks.find(tb => tb.BlockID === ab.BlockID)
               let templateblock = blockItem.templateBlock.subTemplateBlocks.find(subtb => subtb.BlockID === ab.BlockID)
               let blockname = ''
@@ -732,14 +792,16 @@ export default {
                 ApplicationBlockID: ab.ApplicationBlockID,
                 applicationBlock: ab,
                 applicationTemplate: blockItem.applicationTemplate,
-                RepeatedID: repeatedid,
+                RepeatedID: ab.RepeatedID,
                 BlockID: ab.BlockID,
-                BlockName: blockname + ':' + ab.RepeatedID,
+                BlockName: blockname + ':' + childIndex,
+                Status: 'Not Answer',
                 TypeID: 0
               }
               atBlockItem.children.push(child)
             })
-            atBlockItem.BlockName += repeatedid
+            atBlockItem.BlockName += childIndex
+            blockItem.app.blockCount = id
           }
           this.isLoading = false
         }).catch(err => {
@@ -925,27 +987,33 @@ export default {
       a.RequestDate = moment(a.RequestDate)
       a.DateOfBirth = moment(a.DateOfBirth)
       let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
-      if (corp !== undefined) a.CorpName = corp.Name
+      if (corp !== undefined) a.CorpName = corp.ShortName
       else a.CorpName = ''
-      let status = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
-      if (status !== undefined) a.RenewalStatus = status.value
-      else a.RenewalStatus = ''
-      status = this.emailStatusList.find(s => s.key === a.QuestionnaireStatus)
+      this.setRenewalStatus(a)
+      // let status = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
+      // if (status !== undefined) a.RenewalStatus = status.value
+      // else a.RenewalStatus = ''
+      let status = this.emailStatusList.find(s => s.key === a.QuestionnaireStatus)
       if (status !== undefined) a.QuestionnaireStatus = status.value
       else a.QuestionnaireStatus = ''
+      if (a.BillWayID === 1) a.AgenDir = 'A'
+      else if (a.BillWayID === 2) a.AgenDir = 'D'
+      else a.AgenDir = ''
       this.attachProducers()
     },
 
     // 查询
     search: function () {
       let query = this.searchForm.name
-      if (query === '') {
+      if (query === '' || query === null) {
         this.list = this.totalList
       } else {
         this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
           r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
+          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
@@ -1046,9 +1114,10 @@ export default {
     },
     showQuestionnaire: function (applicationid) {
       this.currentApplicationID = applicationid
+      this.RepeatedID = -1
       this.questionnaireFormVisible = true
       if (this.$refs.vq !== undefined) {
-        this.$refs.vq.loadApplication(applicationid)
+        this.$refs.vq.loadApplication(applicationid, -1)
       }
     },
     showBlockQuestionnaire: function (blockItem) {
@@ -1060,7 +1129,8 @@ export default {
       this.QuestionnaireID = blockItem.QuestionnaireID
       this.questionnaireFormVisible = true
       if (this.$refs.vq !== undefined) {
-        this.$refs.vq.loadApplicationTemplate(blockItem.ApplicationID, blockItem.TemplateBlockID, blockItem.RepeatedID, blockItem.QuestionnaireID)
+        // this.$refs.vq.loadApplicationTemplate(blockItem.ApplicationID, blockItem.TemplateBlockID, blockItem.RepeatedID, blockItem.QuestionnaireID)
+        this.$refs.vq.loadApplication(blockItem.ApplicationID, this.RepeatedID)
       }
     },
     showSetBlockQuestionnaire: function (blockItem) {
@@ -1068,6 +1138,24 @@ export default {
       this.setQuestionnaireForm.blockItem = blockItem
       this.setQuestionnaireForm.QuestionnaireID = blockItem.QuestionnaireID
       this.setQuestionnaireForm.ApplicationTemplateID = blockItem.ApplicationTemplateID
+    },
+    setBlockQuestionnaire: function () {
+      this.axios.post('/api/Services/CommerceService.asmx/SetApplicationTemplateQuestionnaire', {applicationtemplateid: this.setQuestionnaireForm.ApplicationTemplateID, questionnaireid: this.setQuestionnaireForm.QuestionnaireID}).then(res => {
+        if (res) {
+          console.log('setBlockQuestionnaire', res.data)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.setQuestionnaireForm.blockItem.QuestionnaireID = this.setQuestionnaireForm.QuestionnaireID
+          this.setBlockQuestionnaireVisible = false
+          this.setQuestionnaireForm.blockItem = null
+          this.setQuestionnaireForm.QuestionnaireID = 0
+          this.setQuestionnaireForm.ApplicationTemplateID = 0
+        }
+      }).catch(err => {
+        console.log('setBlockQuestionnaire出错', err)
+      })
     },
     showEdition: function (application) {
       this.currentApplication = application

@@ -45,7 +45,7 @@ Function: Show my commercial application list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column>
-        <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
+        <!--el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column-->
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
           <template slot-scope="scope">
@@ -57,7 +57,6 @@ Function: Show my commercial application list and do all operations on the list.
           <template slot-scope="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
