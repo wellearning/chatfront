@@ -7,14 +7,26 @@ Function: Show all insurance company list and do all operations on the list.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">Policy Accounts</span>
+      <span class="inPageNav">Outstanding</span>
       <div class="rightBtnBox">
         <!--el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading">New</el-button-->
+        <el-button icon="el-icon-download" @click="exportExcel()" :loading="isDownloading" size="small">ToExcel</el-button>
       </div>
     </div>
     <div class="inPageContent">
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
+          <div style="margin-top: 0px;">
+            <el-col :span="3">Over Due Summary: </el-col>
+            <el-col :span="3" class="padding-top:10px;">1 - 30 days: ${{overDueItems[3].amount.toLocaleString()}}</el-col>
+            <el-col :span="3" class="">31 - 60 days: ${{overDueItems[2].amount.toLocaleString()}}</el-col>
+            <el-col :span="3" class="">Over 60 days: ${{overDueItems[1].amount.toLocaleString()}}</el-col>
+          </div>
+          <el-form-item label="Over Due" prop="overDueItem">
+            <el-select v-model="searchForm.overDueItem" class="yearMonthSelection" size="small" no-data-text="No Record" filterable @change="search()">
+              <el-option v-for="item in overDueItems" :key="item.key" :label="item.value" :value="item.key"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="" prop="name">
             <el-input v-model="searchForm.name" placeholder="search on Name/ID/CreateTime" size="small"></el-input>
           </el-form-item>
@@ -30,16 +42,17 @@ Function: Show all insurance company list and do all operations on the list.
         <!--el-table-column label="ID" prop="BusinessID" width="100" fixed="left" sortable="custom"></el-table-column-->
         <el-table-column label="ID" prop="BusinessID" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="Applicant" prop="Name" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Producer" prop="ProducerName" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="ClientCode" prop="ClientCode" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="Balance" prop="Balance" min-width="100">
+        <el-table-column label="Branch" prop="Branch" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Balance" prop="Balance" min-width="100" sortable="custom">
           <template v-slot="scope" >
             <span style="text-align: right">${{scope.row.Balance.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Due Date" prop="DueDate_f" min-width="100"></el-table-column>
-        <el-table-column label="Over Days" prop="OverDays" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="400" fixed="right">
+        <el-table-column label="Due Date" prop="DueDate_f" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Over Due" prop="OverDays" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="Action" width="200" fixed="right">
           <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" plain @click="loadTransactionRecords(scope.row)" :loading="isLoading" size="small">Show Detail</el-button>
@@ -59,14 +72,14 @@ Function: Show all insurance company list and do all operations on the list.
           <el-table-column label="ID" prop="TransactionRecordID" min-width="100" ></el-table-column>
           <el-table-column label="Date" prop="CreateTime" min-width="100"></el-table-column>
           <el-table-column label="Type" prop="TypeName" min-width="100"></el-table-column>
-          <el-table-column label="Create" prop="Debit" min-width="100">
+          <el-table-column label="Plus +" prop="Debit" min-width="100">
             <template v-slot="scope" >
-              <span v-if="scope.row.OrientID === 1" style="text-align: right">${{scope.row.Debit.toLocaleString()}}</span>
+              <span v-if="scope.row.OrientID === 0" style="text-align: right">${{scope.row.Debit.toLocaleString()}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="WriteOff" prop="Credit" min-width="100">
+          <el-table-column label="Minus -" prop="Credit" min-width="100">
             <template v-slot="scope" >
-              <span v-if="scope.row.OrientID === 2" style="text-align: right">${{scope.row.Credit.toLocaleString()}}</span>
+              <span v-if="scope.row.OrientID === 1" style="text-align: right">${{scope.row.Credit.toLocaleString()}}</span>
             </template>
           </el-table-column>
           <el-table-column label="Balance" prop="Balance" min-width="100">
@@ -106,7 +119,9 @@ export default {
   data: function () {
     return {
       RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
+      reportTypeID: 1,
       BusinessTypeID: 4,
+      isDownloading: false,
       isLoading: false,
       isLoadingAccountList: false,
       isLoadingRecord: false,
@@ -117,6 +132,7 @@ export default {
         records: []
       },
       transactionTypes: [],
+      overDueItems: [{key: 0, value: 'All'}, {key: 1, value: 'Over 60 days', amount: 10020}, {key: 2, value: 'Over 31-60 days', amount: 100200}, {key: 3, value: 'Over 1-30 days', amount: 100200}],
       viewDetailVisible: false,
       // 列表
       totalList: [],
@@ -151,6 +167,7 @@ export default {
     }
   },
   mounted: function () {
+    if (this.$route.params.id !== undefined) this.reportTypeID = Number(this.$route.params.id)
     this.loadTransactionTypes()
     this.loadAccounts()
   },
@@ -203,7 +220,7 @@ export default {
             let type = this.transactionTypes.find(t => t.key === r.TypeID)
             if (type !== undefined) r.TypeName = type.value
             else r.TypeName = ''
-            if (r.OrientID === 1) {
+            if (r.OrientID === 0) {
               r.Debit = r.Amount
               r.Credit = ''
               balance += r.Debit
@@ -226,15 +243,18 @@ export default {
     // 查询
     loadAccounts: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/GetBusiAccounts', {}).then(res => {
+      let service = '/api/Services/CommerceService.asmx/GetBusiAccounts'
+      if (this.reportTypeID === 2) service = '/api/Services/CommerceService.asmx/GetMyBusiAccounts'
+      this.axios.post(service, {}).then(res => {
         if (res) {
-          console.log('TransactionRecords', res.data)
+          console.log('loadAccounts', res.data)
           res.data.forEach(r => {
             let dueDate = moment(r.DueDate)
             if (dueDate.year() <= moment().year()) r.DueDate_f = dueDate.format('YYYY-MM-DD')
             else r.DueDate_f = ''
             r.DueDate = dueDate
           })
+          this.statistics(res.data)
           this.totalList = res.data
           this.list = this.totalList
           this.total = this.list.length
@@ -246,12 +266,30 @@ export default {
         this.isLoading = false
       })
     },
+    statistics: function (records) {
+      this.overDueItems[1].amount = 0
+      this.overDueItems[2].amount = 0
+      this.overDueItems[3].amount = 0
+      records.forEach(r => {
+        if (r.OverDays > 60) this.overDueItems[1].amount += r.Balance
+        else if (r.OverDays > 30) this.overDueItems[2].amount += r.Balance
+        else if (r.OverDays > 0) this.overDueItems[3].amount += r.Balance
+      })
+    },
     search: function () {
       let query = this.searchForm.name
+      let selectable = this.totalList
+      if (this.searchForm.overDueItem === 1) {
+        selectable = this.totalList.filter(r => r.OverDays > 60)
+      } else if (this.searchForm.overDueItem === 2) {
+        selectable = this.totalList.filter(r => r.OverDays > 30 && r.OverDays <= 60)
+      } else if (this.searchForm.overDueItem === 3) {
+        selectable = this.totalList.filter(r => r.OverDays > 0 && r.OverDays <= 30)
+      }
       if (query === '') {
-        this.list = this.totalList
+        this.list = selectable
       } else {
-        this.list = this.totalList.filter(r => r.Name.indexOf(query) >= 0 ||
+        this.list = selectable.filter(r => r.Name.indexOf(query) >= 0 ||
           r.BusinessID === Number(query) ||
           r.ClientCode.indexOf(query) >= 0 ||
           r.PolicyNumber.indexOf(query) >= 0 ||
@@ -355,6 +393,11 @@ export default {
     showAdd: function () {
       this.editForm = {BusinessTypeID: 4}
       this.editFormVisible = true
+    },
+    exportExcel: function () {
+      this.isDownloading = true
+      let tablename = 'outstandingReport.xlsx'
+      this.downloadData('accounts', this.BusinessTypeID, this.reportTypeID, tablename, this)
     }
   }
 }

@@ -565,7 +565,7 @@ export default {
       cb.StatusID = 0
       cb.answers.forEach(ca => {
         ca.StatusID = 0
-        ca.AnswerDesc = ''
+        // ca.AnswerDesc = ''
         ca.hasAnswer = false
         if (ca.TypeID === 6) {
           ca.checkvalue = 0

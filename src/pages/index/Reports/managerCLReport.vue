@@ -65,21 +65,21 @@ Function: Show manager report.
         </el-main>
       </div>
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
-        <el-table-column label="" prop="ProducerID" width="60" fixed="left" sortable="custom">
+        <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="ProducerName" min-width="150" sortable="custom">
+        <el-table-column label="Name" prop="ProducerName" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="NBCounts" min-width="100" sortable="custom">
+        <el-table-column label="NBCounts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column  prop="NBPremium" min-width="150" sortable="custom">
+        <el-table-column label="NBPremium" prop="NBPremium" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RemarketCounts" min-width="100" sortable="custom">
+        <el-table-column label="RMCounts" prop="RemarketCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RemarketPremium" min-width="150" sortable="custom">
+        <el-table-column label="RMPremium" prop="RemarketPremium" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RenewalCounts" min-width="100" sortable="custom">
+        <el-table-column label="RNCounts" prop="RenewalCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column label="" prop="RenewalPremium" min-width="150" sortable="custom">
+        <el-table-column label="RNPremium" prop="RenewalPremium" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
@@ -271,18 +271,20 @@ export default {
       else this.rank(column.prop)
     },
     rank: function (name) {
-      if (this.adminVisible) this.list.sort(this.by(name))
+      if (this.managerVisible) this.list.sort(this.by(name))
       else {
-        if (name.indexOf('Institution') >= 0) name = name.replace('Institution', 'Producer')
-        this.producers.sort(this.by(name))
+        this.applicationlist.sort(this.by(name))
+        // if (name.indexOf('Institution') >= 0) name = name.replace('Institution', 'Producer')
+        // this.producers.sort(this.by(name))
       }
       // this.list.sort(this.by(name))
     },
     rankdesc: function (name) {
-      if (this.adminVisible) this.list.sort(this.bydesc(name))
+      if (this.managerVisible) this.list.sort(this.bydesc(name))
       else {
-        if (name.indexOf('Institution') >= 0) name = name.replace('Institution', 'Producer')
-        this.producers.sort(this.bydesc(name))
+        this.applicationlist.bydesc(this.by(name))
+        // if (name.indexOf('Institution') >= 0) name = name.replace('Institution', 'Producer')
+        // this.producers.sort(this.bydesc(name))
       }
       // this.list.sort(this.bydesc(name))
     },

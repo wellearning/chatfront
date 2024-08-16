@@ -7,7 +7,7 @@ Function: Show my commercial application list and do all operations on the list.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">My Application renewal</span>
+      <span class="inPageNav">Renewal in Progress</span>
       <!--div class="rightBtnBox">
         <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">New Application</el-button>
       </div-->
@@ -44,17 +44,22 @@ Function: Show my commercial application list and do all operations on the list.
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column>
+        <el-table-column label="ExpiryDate" prop="ExpiryDate" min-width="90" sortable="custom">
+          <template v-slot="scope">
+            <span>{{dateFormat(scope.row.ExpiryDate)}}</span>
+          </template>
+        </el-table-column>
+        <!--el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column-->
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="RenewalStatus" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Action" width="300">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
             <!--el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button-->
             <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
@@ -70,7 +75,7 @@ Function: Show my commercial application list and do all operations on the list.
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------查阅弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="viewApplicationVisible" width="1184.56px" center :before-close="closeViewApplication">
-        <ViewApplication ref="ps" :applicationid="currentApplicationID" :insuranceCorps="insuranceCompanyList"></ViewApplication>
+        <ViewApplication ref="ps" :applicationid="currentApplicationID" :insuranceCorps="insuranceCorpList"></ViewApplication>
       </el-dialog>
       <!----------------------------------------------查阅弹窗结束----------------------------------------------------->
       <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
@@ -162,7 +167,9 @@ export default {
       isLoadingApplicationBlock: false,
       isLoadingInsuranceCompany: false,
       templatesList: [],
-      insuranceCompanyList: [],
+      insuranceCorpList: [],
+      renewalStatusList: [],
+      emailStatusList: [],
       currentTemplates: [],
       applicationFormVisible: false,
       applicationForm: {
@@ -205,6 +212,8 @@ export default {
   },
   mounted: function () {
     // this.search(null)
+    this.loadRenewalStatus()
+    this.loadEmailStatus()
     this.initTemplates()
     this.initInsuranceCompany()
     this.loadApplications(0)
@@ -574,6 +583,32 @@ export default {
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
+    loadRenewalStatus: function () {
+      this.isLoadingStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationRenewalStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.renewalStatusList = res.data
+        }
+        this.isLoadingStatus = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingStatus = false
+      })
+    },
+    loadEmailStatus: function () {
+      this.isLoadingStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'EmailStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.emailStatusList = res.data
+        }
+        this.isLoadingStatus = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingStatus = false
+      })
+    },
     loadApplications: function (start) {
       this.isLoading = true
       if (start === 0) this.totalList = []
@@ -588,19 +623,7 @@ export default {
           }
           if (this.totalList.length === this.total) {
             this.totalList.forEach(a => {
-              a.EffectiveDate = moment(a.EffectiveDate)
-              a.ExpiryDate = moment(a.ExpiryDate)
-              a.RequestDate = moment(a.RequestDate)
-              a.DateOfBirth = moment(a.DateOfBirth)
-              let status = this.statusList.find(s => s.key === a.StatusID)
-              if (status !== undefined) a.Status = status.value
-              else a.Status = ''
-              // let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
-              // if (producer !== undefined) a.Producer = producer.Name
-              // else a.Producer = ''
-              let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
-              if (corp !== undefined) a.CorpName = corp.Name
-              else a.CorpName = ''
+              this.attachInfo(a)
             })
             this.list = this.totalList
             this.pageCount = Math.ceil(this.total / this.pageSize)
@@ -612,6 +635,28 @@ export default {
         console.log('查询出错', err)
         this.isLoading = false
       })
+    },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      a.RequestDate = moment(a.RequestDate)
+      a.DateOfBirth = moment(a.DateOfBirth)
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.ShortName
+      else a.CorpName = ''
+      this.setRenewalStatus(a)
+      let status = this.emailStatusList.find(s => s.key === a.QuestionnaireStatus)
+      if (status !== undefined) a.QuestionnaireStatus = status.value
+      else a.QuestionnaireStatus = ''
+      if (a.BillWayID === 1) a.AgenDir = 'A'
+      else if (a.BillWayID === 2) a.AgenDir = 'D'
+      else a.AgenDir = ''
+    },
+    setRenewalStatus: function (app) {
+      let astatus = this.renewalStatusList.find(s => s.key === app.RenewalStatus)
+      if (astatus.value === 'Opened') app.RenewalStatus = 'Open Renewal'
+      else if (astatus.value === 'Pending') app.RenewalStatus = 'Pending Renewal'
+      else app.RenewalStatus = astatus.value
     },
 
     handleCurrentChange: function (val) {
@@ -703,7 +748,7 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data
+          this.insuranceCorpList = res.data
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {

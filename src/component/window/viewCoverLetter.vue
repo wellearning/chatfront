@@ -64,7 +64,7 @@
       <EditCoverLetterBody :coverLetter="viewForm" :disabled="true"></EditCoverLetterBody>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col>
-          <b>{{coverletter.Author + ' ' + printDate}}</b>
+          <b>{{viewForm.Author + ' ' + printDate}}</b>
         </el-col>
       </el-row>
     </div>
@@ -89,6 +89,7 @@ export default {
       isLoading: true,
       totalBlocks: 0,
       rootInstitution: JSON.parse(this.$store.getters.getAccount).rootInstitution,
+      author: JSON.parse(this.$store.getters.getAccount).Name,
       viewForm: {
         CoverLetterID: null,
         Title: null,
@@ -100,7 +101,8 @@ export default {
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
         branch: null,
         PremiumOnApp: null,
-        Templates: null
+        Templates: null,
+        Author: ''
       }
     }
   },

@@ -52,8 +52,8 @@ Function: Show my cover letter list and do all operations on the list.
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-edit" type="primary" @click="showEditBase(scope.row)" :loading="isLoading" size="small">EditBase</el-button>
               <!--el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 2 " @click="voidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Void</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
-              <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Delete</el-button-->
+              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button-->
+              <el-button icon="el-icon-delete" type="danger"  v-if="scope.row.StatusID < 2 " @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -200,8 +200,11 @@ export default {
     this.initTemplates()
     this.initInsuranceCompany()
     if (this.$store.state.CoverLetterID !== undefined && this.$store.state.CoverLetterID !== '') {
-      this.view(this.$store.state.CoverLetterID)
+      // this.view(this.$store.state.CoverLetterID)
+      let coverLetterId = this.$store.state.CoverLetterID
       this.$store.state.CoverLetterID = ''
+      this.currentCoverLetterID = coverLetterId
+      this.viewFormVisible = true
     }
   },
   watch: {
@@ -243,6 +246,7 @@ export default {
     },
     showEditCoverLetter: function (coverletter) {
       let id = coverletter.CoverLetterID
+      this.currentCoverLetter = coverletter
       this.currentCoverLetterID = id
       this.editAutoCoverLetterWindowVisible = true
       if (this.$refs.eacl !== undefined) {
@@ -250,7 +254,7 @@ export default {
       }
     },
     closeEditCoverLetter: function (id, type) {
-      this.editCoverLetterWindowVisible = false
+      this.editAutoCoverLetterWindowVisible = false
       if (type === 'saveAndPrint') {
         this.showCoverLetter(this.currentCoverLetter)
       }

@@ -459,7 +459,7 @@ export default {
 
       this.axios.post(service, param).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('GetProducerRecords', res)
           this.list = res.data
           this.list.sort(this.bydesc('NBPremium'))
           /*
@@ -489,7 +489,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询出错', err)
+        console.log('GetProducerRecords error', err)
         this.isLoading = false
       })
     },
@@ -507,7 +507,7 @@ export default {
       }
       this.axios.post(service, param).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('loadProducer', res)
           this.coverletterlist = res.data
           this.coverletterlist.forEach(function (c) {
             c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
@@ -518,7 +518,7 @@ export default {
         }
         this.isLoadingProducer = false
       }).catch(err => {
-        console.log('查询出错', err)
+        console.log('loadProducer error', err)
         this.isLoadingProducer = false
       })
     },
@@ -527,14 +527,14 @@ export default {
       this.isLoadingCoverLetter = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterProperties_score', {coverletterid: coverletterid, processingtypeid: 1}).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('loadCoverLetter', res)
           this.coverletterpropertylist = res.data
           this.coverlettertotal = this.coverletterpropertylist.length
           this.coverlettercurrentPage = 1
         }
         this.isLoadingCoverLetter = false
       }).catch(err => {
-        console.log('查询出错', err)
+        console.log('loadCoverLetter error', err)
         this.isLoadingCoverLetter = false
       })
     },

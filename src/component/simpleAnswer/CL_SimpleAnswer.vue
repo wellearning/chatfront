@@ -2,7 +2,7 @@
   <div class="answer">
     <div class="choiceQuestion">
       <div class="question">{{answer.QuestionDesc}}</div>
-      <el-input class="textAreaWithLine" v-model="answer.AnswerDesc" type="textarea" :autosize="{ minRows: 3, maxRows: 20}" @input="changeVal()"></el-input>
+      <el-input class="textAreaWithLine" v-model="answer.AnswerDesc" type="textarea" :autosize="{ minRows: 3, maxRows: 20}" @keydown.native.tab="changeVal" @change="changeVal()"></el-input>
     </div>
   </div>
 </template>

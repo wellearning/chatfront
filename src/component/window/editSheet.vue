@@ -251,7 +251,7 @@ export default {
     addCol: function (row) {
       let td = {
         text: row.text,
-        colspan: row.colspan
+        colspan: Number(row.colspan)
       }
       row.tds.push(td)
       row.text = ''
@@ -336,6 +336,9 @@ export default {
             table.trs.forEach(function (tr) {
               tr.text = ''
               tr.colspan = 1
+              tr.tds.forEach(function (td) {
+                td.colspan = Number(td.colspan)
+              })
             })
           })
           this.sheetContent = content

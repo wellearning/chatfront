@@ -95,7 +95,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <div v-if="businessTypeId !== 3">
+        <div v-if="businessTypeId !== 3 && businessTypeId !== 6">
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
@@ -290,7 +290,8 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
         if (res) {
           console.log('loadAppTypes', res)
-          this.appTypes = res.data
+          if (this.businessTypeId === 3) this.appTypes = res.data
+          else this.appTypes = res.data.filter(t => t.key !== 6)
         }
         this.isLoadingAppTypes = false
       }).catch(err => {
@@ -341,10 +342,15 @@ export default {
     // 保险公司列表
     loadInsuranceCorps: function () {
       this.isLoadingInsuranceCorps = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('InsuranceCorps', res)
-          this.insuranceCorpList = res.data
+          this.insuranceCorpList = res.data.filter(c => c.Province === null || c.Province === '' || c.Province === 'ON')
+          if (this.businessTypeId === 6) {
+            this.insuranceCorpList = res.data.filter(c => c.BusinessLineID === 3)
+          } else {
+            this.insuranceCorpList = res.data.filter(c => c.BusinessLineID !== 3)
+          }
         }
         this.isLoadingInsuranceCorps = false
       }).catch(err => {

@@ -165,7 +165,7 @@ Function: Show manager report.
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="80"></el-table-column>
+        <el-table-column label="Status" prop="StatusName" min-width="80"></el-table-column>
         <el-table-column label="APP Premium" prop="appPremium" min-width="120">
         </el-table-column>
         <el-table-column label="Submit Premium" prop="submitPremium" min-width="120">
@@ -288,6 +288,7 @@ export default {
       managerVisible: true,
       producerVisible: false,
       coverLetterVisible: false,
+      insuranceCorpList: [],
       producers: [],
       producer: {
         ProducerID: 0,
@@ -312,6 +313,7 @@ export default {
       },
       producercurrentPage: 1,
       producertotal: 0,
+      appTypes: [],
       coverletterpropertylist: [],
       currentCoverLetter: {
         CoverLetterID: 0,
@@ -330,6 +332,8 @@ export default {
     }
   },
   mounted: function () {
+    this.loadInsuranceCorps()
+    this.loadAppTypes()
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (var i = 2020; i <= this.searchForm.Year; i++) {
@@ -420,6 +424,19 @@ export default {
         this.currentCoverLetter = letter
         this.loadCoverLetter()
       }
+    },
+    loadAppTypes: function () {
+      this.isLoadingAppTypes = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
+        if (res) {
+          console.log('loadAppTypes', res)
+          this.appTypes = res.data
+        }
+        this.isLoadingAppTypes = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingAppTypes = false
+      })
     },
     loadYearToDate: function () {
       this.isLoadingYearToDate = true
@@ -522,6 +539,20 @@ export default {
         this.isLoadingProducer = false
       })
     },
+    // 保险公司列表
+    loadInsuranceCorps: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps_all', {}).then(res => {
+        if (res) {
+          console.log('保险公司列表', res)
+          this.insuranceCorpList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
     loadProducerCoverLetters: function (start) {
       let producerid = this.currentProducer.ProducerID
       this.isLoadingProducer = true
@@ -545,12 +576,15 @@ export default {
             this.loadProducerCoverLetters(this.coverletters.length)
           } else {
             this.coverletters.forEach(c => {
-              if (c.appPremium !== undefined) c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
+              c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
               c.submitPremium = '$' + c.Premium.toLocaleString()
               c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
-              let corp = this.insuranceCorList.find(ic => ic.InsuranceCorpID === c.InsuranceCorpID)
+              let corp = this.insuranceCorpList.find(ic => ic.InsuranceCorpID === c.InsuranceCorpID)
               if (corp === undefined) c.CorpName = ''
               else c.CorpName = corp.ShortName
+              let appType = this.appTypes.find(ic => ic.key === c.TypeID)
+              if (appType === undefined) c.LeadsFrom = ''
+              else c.LeadsFrom = appType.value
             })
             this.isLoading = false
           }

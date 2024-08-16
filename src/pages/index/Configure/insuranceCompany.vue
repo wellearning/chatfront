@@ -32,17 +32,19 @@ Function: Show all insurance company list and do all operations on the list.
         <el-table-column label="SName" prop="ShortName" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Code" prop="Code" min-width="80" sortable="custom"></el-table-column>
         <el-table-column label="Address" prop="Address" min-width="200"></el-table-column>
-        <el-table-column label="Avai" prop="Used" min-width="80" sortable="custom">
+        <!--el-table-column label="Avai" prop="Used" min-width="80" sortable="custom">
           <template v-slot:="scope">
             <span v-if="scope.row.Used" size="medium">Yes</span>
             <span v-else></span>
           </template>
-        </el-table-column>
+        </el-table-column-->
         <el-table-column label="BusinessLine" width="100">
           <template v-slot:="scope">
             <span v-if="scope.row.BusinessLineID === 0" size="medium">Both</span>
             <span v-else-if="scope.row.BusinessLineID === 1" size="medium">Personal</span>
-            <span v-else size="medium">Commercial</span>
+            <span v-else-if="scope.row.BusinessLineID === 2" size="medium">Commercial</span>
+            <span v-else-if="scope.row.BusinessLineID === 3" size="medium">Non-standard</span>
+            <span v-else size="medium"></span>
           </template>
         </el-table-column>
         <el-table-column label="Status" width="100">
@@ -58,8 +60,8 @@ Function: Show all insurance company list and do all operations on the list.
               <el-button icon="el-icon-document" type="primary" @click="showPrivilege(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Broker Code</el-button>
               <el-button v-if="RoleName === 'Developer'" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
               <el-button v-if="RoleName === 'Developer'" icon="el-icon-delete" type="danger" @click="del(scope.row.InsuranceCorpID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
-              <el-button v-if="scope.row.Used" icon="el-icon-minus" type="" @click="moveout(scope.row)" :loading="isLoading" size="small">MoveOut</el-button>
-              <el-button v-else icon="el-icon-plus" type="" @click="addin(scope.row)" :loading="isLoading" size="small">AddIn</el-button>
+              <!--el-button v-if="scope.row.Used" icon="el-icon-minus" type="" @click="moveout(scope.row)" :loading="isLoading" size="small">MoveOut</el-button>
+              <el-button v-else icon="el-icon-plus" type="" @click="addin(scope.row)" :loading="isLoading" size="small">AddIn</el-button-->
             </el-button-group>
           </template>
         </el-table-column>
@@ -325,6 +327,7 @@ export default {
     }
   },
   mounted: function () {
+    this.loadBusinessLines()
     this.initProvinceList()
     this.search(null)
     this.initOrganization()
@@ -355,6 +358,16 @@ export default {
     },
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
+    },
+    loadBusinessLines: function () {
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'BusinessLine'}).then(res => {
+        if (res) {
+          console.log('loadTransactionTypes', res)
+          this.businessLineList = res.data
+        }
+      }).catch(err => {
+        console.log('loadTransactionTypes', err)
+      })
     },
     initProvinceList: function () {
       this.isLoadingProvinceList = true
@@ -544,7 +557,7 @@ export default {
         this.isLoading = true
         this.axios.post('/api/Services/baseservice.asmx/MoveoutInsuranceCorp', {corpid: corp.InsuranceCorpID}).then(res => {
           if (res) {
-            console.log('Addin', res)
+            console.log('MoveoutInsuranceCorp', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
@@ -553,7 +566,7 @@ export default {
           }
           this.isLoading = false
         }).catch(err => {
-          console.log('删除出错', err)
+          console.log('MoveoutInsuranceCorp出错', err)
           this.isLoading = false
         })
       }).catch(() => {

@@ -161,7 +161,7 @@ export default {
         CreateTime: null
       },
       editFormRules: {
-        BusiAccountID: [
+        BusinessID: [
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         Amount: [

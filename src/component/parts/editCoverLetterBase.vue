@@ -34,7 +34,7 @@
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
             <el-form-item label="Insurance Corporation" prop="InsuranceCorpID">
-              <el-select v-model="coverLetterForm.InsuranceCorpID" placeholder="Insurance Corporation" no-data-text="No Record" filterable >
+              <el-select v-model="coverLetterForm.InsuranceCorpID" placeholder="Insurance Corporation" disabled no-data-text="No Record" filterable >
                 <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
               </el-select>
             </el-form-item>

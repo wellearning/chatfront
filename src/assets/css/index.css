@@ -308,6 +308,17 @@ table tr td {
   background-color: #F5F7FA;
   border-color: black;
 }
+.el-checkbox__input.is-checked+.el-checkbox__label {
+  font-weight: normal;
+}
+.el-checkbox__input.is-disabled .el-checkbox__inner {
+  background-color: #F5F7FA;
+  border-color: #e4e7ed;
+}
+.choice .el-checkbox__input.is-disabled.is-checked .el-checkbox__inner{
+  background-color: #F5F7FA;
+  border-color: black;
+}
 .answer .choiceQuestion .choice .choiceTitle{
   font-size: 18px;
   color: #303133;

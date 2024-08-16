@@ -243,6 +243,7 @@ export default {
       if (reportitem === undefined) return
       if (reportitem.id === 2) {
         this.tableColumns = [{'Name': 'Uploaded by ', 'Prop': 'Name'},
+          {'Name': 'Counts', 'Prop': 'Counts'},
           {'Name': 'Audit Counts', 'Prop': 'AuditCounts'},
           {'Name': 'Total Score', 'Prop': 'QualityScore'},
           {'Name': 'Average Score', 'Prop': 'AverageScore'}]

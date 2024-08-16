@@ -147,11 +147,11 @@ export default {
       },
       applicationFormRules: {
         Title: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { required: false, message: 'Please Enter', trigger: 'blur' },
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
         ProducerID: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: false, message: 'Please Select', trigger: 'blur' }
         ],
         ClientCode: [
           { required: false, message: 'Please Enter', trigger: 'blur' },
@@ -354,7 +354,7 @@ export default {
       this.EffectiveDate = moment(date).format('YYYY-MM-DD')
     },
     checkOver: function () {
-      if (this.applicationForm.StatusID > 1) return
+      // if (this.applicationForm.StatusID > 1) return
       if (this.applicationForm.applicationTemplate.StatusID === 1) this.applicationForm.StatusID = 1
       else this.applicationForm.StatusID = 0
     },
@@ -376,6 +376,7 @@ export default {
           template.SequenceNo = sequenceno
           sequenceno++
           console.log('submit application:', application)
+          let appBlocks = []
           template.applicationBlocks.forEach(block => {
             block.answers.forEach(answer => {
               answer.blockQuestion = null
@@ -385,30 +386,33 @@ export default {
                 answer.optionAnswers = answer.optionAnswers.filter(oa => { return oa.IsChecked })
               }
             })
+            let ablock = JSON.parse(JSON.stringify(block))
+            ablock.answers = undefined
+            appBlocks.push(ablock)
           })
           // console.log('submit application:', application)
           if (type === 'save' || (type === 'finish')) {
             console.log('SaveApplication', application)
             this.isLoading = true
-            this.saveBlockCount = application.applicationTemplate.applicationBlocks
+            this.saveBlockCount = application.applicationTemplate.applicationBlocks.length
             this.saveBlockIndex = 0
             // application.applicationTemplate.applicationBlocks.forEach(aBlock => {
             // this.saveApplicationBlock(aBlock)
             // })
             let ablocks = application.applicationTemplate.applicationBlocks
-            application.applicationTemplate.applicationBlocks = null
+            application.applicationTemplate.applicationBlocks = appBlocks
             application.branch = null
+            application.children = undefined
             let value = JSON.stringify(application)
+            console.log('the length of Application', value.length)
             this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
               if (res) {
                 console.log('SaveApplication', res)
                 ablocks.forEach(aBlock => {
-                  aBlock.ApplicationTemplateID = res.data.applicationTemplate.ApplicationTemplateID
+                  let block = res.data.applicationTemplate.applicationBlocks.find(ab => ab.BlockID === aBlock.BlockID && ab.RepeatedID === aBlock.RepeatedID)
+                  if (block !== undefined) aBlock.ApplicationTemplateID = block.ApplicationTemplateID
+                  // aBlock.ApplicationTemplateID = res.data.applicationTemplate.ApplicationTemplateID
                   this.saveApplicationBlock(aBlock)
-                })
-                this.$message({
-                  type: 'success',
-                  message: 'Operation Succeeded'
                 })
                 this.$refs['applicationForm'].resetFields()
                 this.currentTemplates = []

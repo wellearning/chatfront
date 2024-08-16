@@ -20,7 +20,7 @@ Function: Show all commercial application list and do all operations on the list
       </div>
     </div>
     <div class="inPageContent">
-      <el-table height="680" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="680" :data="currentlist" :row-class-name="tableRowClassName" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
@@ -41,7 +41,7 @@ Function: Show all commercial application list and do all operations on the list
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="ExpiryDate" prop="ExpiryDate" min-width="90" sortable="custom">
+        <el-table-column label="ExpiryD" prop="ExpiryDate" min-width="90" sortable="custom">
           <template v-slot="scope">
             <span>{{dateFormat(scope.row.ExpiryDate)}}</span>
           </template>
@@ -58,8 +58,13 @@ Function: Show all commercial application list and do all operations on the list
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column-->
-        <el-table-column label="Questionnaire" prop="QuestionnaireStatus" min-width="60" :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column label="Status" prop="RenewalStatus" min-width="60" :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column label="QuesStat" prop="QuestionnaireStatus" min-width="100" :show-overflow-tooltip="true" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="RenewalStatus" min-width="120" :show-overflow-tooltip="true" sortable="custom">
+          <template v-slot="scope">
+            <el-tag v-if="scope.row.RenewalStatus === 'NeedBinding' || scope.row.RenewalStatus === 'NeedAction'" type="danger" size="medium">{{scope.row.RenewalStatus}}</el-tag>
+            <span v-else>{{scope.row.RenewalStatus}}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="Action" width="380" >
           <template slot-scope="scope">
             <el-button-group>
@@ -138,13 +143,13 @@ Function: Show all commercial application list and do all operations on the list
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8"  class="subtitle">
+          <!--el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8"  class="subtitle">
             <el-col :span="24">
               <el-form-item label="OutstandingBalance" prop="OutstandingBalance">
                 <el-input v-model="renewalProcessingForm.OutstandingBalance" type="number" placeholder="OutstandingBalance" title=""></el-input>
               </el-form-item>
             </el-col>
-          </el-row>
+          </el-row-->
           <el-row :gutter="20" v-if="renewalProcessingForm.ProcessingTypeID === 8" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Effective Date" prop="EffectiveDate">
@@ -238,10 +243,12 @@ export default {
       insuranceCorpList: [],
       questionnaires: [],
       renewalProcessings: [
-        {ID: 6, Name: 'Questionnaire Obtain'},
-        {ID: 7, Name: 'Pend'},
-        {ID: 8, Name: 'Renew'},
-        {ID: 9, Name: 'Cancel'}
+        // {ID: 5, Name: 'Manually Send Questionnaire'},
+        // {ID: 6, Name: 'Questionnaire Obtain'},
+        {ID: 7, Name: 'NeedBinding'},
+        {ID: 10, Name: 'NeedAction'},
+        {ID: 8, Name: 'Renew'}
+        // {ID: 9, Name: 'Cancel'}
       ],
       currentInsuranceCorpID: null,
       currentBlockItem: null,
@@ -282,7 +289,7 @@ export default {
         Brief: null,
         EffectiveDate: null,
         ExpiryDate: null,
-        OutstandingBalance: null,
+        OutstandingBalance: 0,
         Premium: null
       },
       renewalProcessingFormRules: {
@@ -349,6 +356,12 @@ export default {
     this.loadQuestionnaires()
   },
   methods: {
+    tableRowClassName: function ({row, rowIndex}) {
+      if (row.RenewalStatus === 'NeedBinding' || row.RenewalStatus === 'NeedAction') {
+        return 'warning-row'
+      }
+      return ''
+    },
     sorttable: function (column) {
       if (column.order === 'descending') this.rankdesc(column.prop)
       else this.rank(column.prop)
@@ -417,6 +430,9 @@ export default {
             if (typeid === 8) {
               this.totalList = this.totalList.filter(p => p.ApplicationID !== id)
               this.search()
+            } else if (typeid === 5) {
+              let status = this.emailStatusList.find(s => s.key === 2)
+              if (status !== undefined) this.currentApplication.QuestionnaireStatus = status.value
             } else if (typeid === 6) {
               let status = this.emailStatusList.find(s => s.key === 3)
               if (status !== undefined) this.currentApplication.QuestionnaireStatus = status.value
@@ -885,6 +901,7 @@ export default {
           this.insuranceCorpList = nocorp.concat(res.data.filter(c => c.BusinessLineID !== 1))
         }
         this.isLoadingInsuranceCompany = false
+        this.attachCorps()
       }).catch(err => {
         console.log('保险公司列表出错', err)
         this.isLoadingInsuranceCompany = false
@@ -948,9 +965,18 @@ export default {
           if (a.StaffID === a.ProducerID) a.Author = a.Producer
           else {
             let author = this.producerList.find(p => p.StaffID === a.StaffID)
-            if (producer !== undefined) a.Author = author.Name
+            if (author !== undefined) a.Author = author.Name
             else a.Author = ''
           }
+        })
+      }
+    },
+    attachCorps: function () {
+      if (!this.isLoadingApplications && !this.isLoadingInsuranceCompany) {
+        this.totalList.forEach(a => {
+          let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+          if (corp !== undefined) a.CorpName = corp.ShortName
+          else a.CorpName = ''
         })
       }
     },
@@ -974,6 +1000,8 @@ export default {
             this.pageCount = Math.ceil(this.total / this.pageSize)
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
             this.isLoadingApplications = false
+            this.attachCorps()
+            this.attachProducers()
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
@@ -986,9 +1014,6 @@ export default {
       a.ExpiryDate = moment(a.ExpiryDate)
       a.RequestDate = moment(a.RequestDate)
       a.DateOfBirth = moment(a.DateOfBirth)
-      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
-      if (corp !== undefined) a.CorpName = corp.ShortName
-      else a.CorpName = ''
       this.setRenewalStatus(a)
       // let status = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
       // if (status !== undefined) a.RenewalStatus = status.value
@@ -999,7 +1024,7 @@ export default {
       if (a.BillWayID === 1) a.AgenDir = 'A'
       else if (a.BillWayID === 2) a.AgenDir = 'D'
       else a.AgenDir = ''
-      this.attachProducers()
+      // this.attachProducers()
     },
 
     // 查询
@@ -1014,6 +1039,7 @@ export default {
           (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
           (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
           (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
+          (r.QuestionnaireStatus.indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )

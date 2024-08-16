@@ -72,16 +72,18 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="A/D" prop="AgenDir" min-width="70" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Status" prop="PolicyStatus" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Action" width="460">
+        <el-table-column label="Action" min-width="400">
           <template slot-scope="scope">
             <el-button-group>
               <!--el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button-->
-              <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 8"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Form</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 8 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
-              <el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 8" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status !== 8"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 8" type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Form</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 8 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
+              <el-button icon="el-icon-unlock" v-if="scope.row.Status === 8" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
               <el-button icon="el-icon-circle-plus" type="primary" @click="duplicate(scope.row)"  size="small">Duplic</el-button>
-              <el-button icon="el-icon-close" v-if="scope.row.StatusID !== 8 && scope.row.StatusID !== 6" type="danger" @click="showSetCancellation(scope.row)"  size="small">Cancel</el-button>
+              <el-button icon="el-icon-close" v-if="scope.row.Status !== 8 && scope.row.Status !== 6" type="danger" @click="showSetCancellation(scope.row)"  size="small">Cancel</el-button>
+              <el-button icon="el-icon-view" type="primary" @click="showQuestionnaireObtain(scope.row)"  size="small">QObtain</el-button>
+              <el-button icon="el-icon-view" type="primary" @click="showObtainRecord(scope.row)"  size="small">qoRecord</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -182,6 +184,74 @@ Function: Show all commercial application list and do all operations on the list
         </div>
       </el-dialog>
       <!----------------------------------------------setCancellation弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Questionnaire obtain Processing 弹窗开始----------------------------------------------------->
+      <el-dialog title="Questionnaire obtain Processing" :visible.sync="questionnaireObtainVisible" width="600px" center>
+        <el-form :model="questionnaireObtainForm" class="newMemo" :rules="questionnaireObtainFormRules">
+          <!--el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Effective Date" prop="EffectiveDate">
+                <el-date-picker v-model="questionnaireObtainForm.EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Expiry Date" prop="ExpiryDate">
+                <el-date-picker v-model="questionnaireObtainForm.ExpiryDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+              </el-form-item>
+            </el-col>
+          </el-row-->
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Obtain Date" prop="ObtainDate">
+                <el-date-picker v-model="questionnaireObtainForm.ObtainDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Description" prop="Brief">
+                <el-input v-model="questionnaireObtainForm.Brief" type="textarea" :rows="3" placeholder="Description" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <div class="newMemo-submit">
+            <el-button icon="el-icon-check" type="primary" @click="questionnaireObtainProcess" :loading="isLoading">Confirm</el-button>
+          </div>
+        </el-form>
+      </el-dialog>
+      <!----------------------------------------------IQuestionnaire obtain Processing弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Questionnaire obtain records start----------------------------------------------------->
+      <el-dialog title="Questionnaire obtain records" :visible.sync="viewObtainVisible" width="700px" center >
+        <el-row>
+          <el-col :span="12">Policy Number: {{current.PolicyNumber}}</el-col>
+        </el-row>
+        <el-table height="500" :data="current.obtainRecords" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
+          <!--el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="100" ></el-table-column>
+          <el-table-column label="ExpiryDate" prop="ExpiryDate" min-width="100"></el-table-column-->
+          <el-table-column label="ObtainDate" prop="ObtainDate" min-width="100">
+            <template v-slot:="scope">
+              <el-date-picker :disabled="!(scope.row.BusinessChangeRecordID === currentId)" v-model="scope.row.ObtainDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+            </template>
+          </el-table-column>
+          <el-table-column label="Brief" prop="Brief" min-width="300">
+            <template v-slot:="scope">
+              <el-input v-model="scope.row.Brief" :disabled="!(scope.row.BusinessChangeRecordID === currentId)"></el-input>
+            </template>
+          </el-table-column>
+          <el-table-column label="Action" width="200" fixed="right">
+            <template v-slot:="scope">
+              <el-button-group>
+                <el-button v-if="currentId === null && !(scope.row.BusinessChangeRecordID === currentId)" icon="el-icon-edit" type="primary" @click="showObtainRecordEdit(scope.row)" :loading="isLoading" size="small">Edit</el-button>
+                <el-button v-if="currentId === null && !(scope.row.BusinessChangeRecordID === currentId)" icon="el-icon-delete" type="danger" @click="obtainRecordDel(scope.row.BusinessChangeRecordID)" :loading="isLoading" size="small">Delete</el-button>
+                <el-button v-if="scope.row.BusinessChangeRecordID === currentId" icon="el-icon-check" type="primary" @click="saveObtainRecord(scope.row)" :loading="isLoading" size="small">Confirm</el-button>
+                <el-button v-if="scope.row.BusinessChangeRecordID === currentId" icon="el-icon-close" type="primary" @click="cancelObtainRecordEdit(scope.row)" :loading="isLoading" plain size="small">Cancel</el-button>
+              </el-button-group>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-dialog>
+      <!----------------------------------------------Questionnaire obtain records end----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -259,6 +329,10 @@ export default {
       currentlist: [],
       list: [],
       totalList: [],
+      current: {
+        PolicyNumber: '',
+        obtainRecords: []
+      },
       currentApplication: null,
       currentApplicationID: 0,
       currentApplicationBlockID: 0,
@@ -275,6 +349,8 @@ export default {
       total: 0,
       isAll: false,
       // 查阅
+      viewObtainVisible: false,
+      questionnaireObtainVisible: false,
       editApplicationWindowVisible: false,
       editApplicationBlockVisible: false,
       viewApplicationBlockVisible: false,
@@ -361,6 +437,25 @@ export default {
         ],
         Premium: [
           { required: true, message: 'Please Enter', trigger: 'blur' }
+        ]
+      },
+      currentId: null,
+      questionnaireObtainForm: {
+        ApplicationID: null,
+        // EffectiveDate: null,
+        // ExpiryDate: null,
+        ObtainDate: null,
+        Brief: ''
+      },
+      questionnaireObtainFormRules: {
+        EffectiveDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        ExpiryDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
+        ],
+        ObtainDate: [
+          { required: true, message: 'Please Select', trigger: 'blur' }
         ]
       }
 
@@ -481,6 +576,41 @@ export default {
       this.setCancelForm.ApplicationID = policy.ApplicationID
       this.setCancelForm.ExpiryDate = policy.ExpiryDate
     },
+    showQuestionnaireObtain: function (app) {
+      console.log('Application', app)
+      this.currentApplication = app
+      this.questionnaireObtainForm.ApplicationID = app.ApplicationID
+      // this.questionnaireObtainForm.EffectiveDate = moment(app.EffectiveDate)
+      // this.questionnaireObtainForm.ExpiryDate = moment(app.ExpiryDate)
+      this.questionnaireObtainForm.ObtainDate = moment()
+      this.questionnaireObtainForm.Brief = ''
+      this.questionnaireObtainVisible = true
+    },
+    showObtainRecord: function (app) {
+      this.current = app
+      this.loadObtainRecords(app)
+    },
+    loadObtainRecords: function (app) {
+      this.axios.post('/api/Services/CommerceService.asmx/GetPolicyChangeRecords', {id: app.ApplicationID, typeid: 6}).then(res => {
+        if (res) {
+          console.log('loadObtainRecords', res)
+          app.obtainRecords = []
+          res.data.forEach(r => {
+            if (r.Brief === null || r.Brief === '') return
+            let ob = JSON.parse(r.Brief)
+            // ob.EffectiveDate = moment(ob.EffectiveDate).format('YYYY-MM-DD')
+            // ob.ExpiryDate = moment(ob.ExpiryDate).format('YYYY-MM-DD')
+            ob.BusinessChangeRecordID = r.BusinessChangeRecordID
+            ob.ObtainDate = moment(ob.ObtainDate).format('YYYY-MM-DD')
+            app.obtainRecords.push(ob)
+          })
+          this.viewObtainVisible = true
+        }
+      }).catch(err => {
+        console.log('loadObtainRecords', err)
+      })
+    },
+
     setBlockQuestionnaire: function () {
       this.axios.post('/api/Services/CommerceService.asmx/SetApplicationTemplateQuestionnaire', {applicationtemplateid: this.setQuestionnaireForm.ApplicationTemplateID, questionnaireid: this.setQuestionnaireForm.QuestionnaireID}).then(res => {
         if (res) {
@@ -1103,7 +1233,7 @@ export default {
         if (producer !== undefined) a.Producer = producer.Name
         else a.Producer = ''
         let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
-        if (corp !== undefined) a.CorpName = corp.Name
+        if (corp !== undefined) a.CorpName = corp.ShortName
         else a.CorpName = ''
         if (a.BillWayID === 1) a.AgenDir = 'A'
         else if (a.BillWayID === 2) a.AgenDir = 'D'
@@ -1244,6 +1374,104 @@ export default {
         this.$refs.vq.loadApplication(blockItem.ApplicationID, this.RepeatedID)
       }
     },
+    questionnaireObtainProcess: function () {
+      this.$confirm('Are you sure to process it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoadingApplicationQuotations = true
+        let id = this.questionnaireObtainForm.ApplicationID
+        let typeid = 6
+        let value = {
+          // EffectiveDate: this.questionnaireObtainForm.EffectiveDate,
+          // ExpiryDate: this.questionnaireObtainForm.ExpiryDate,
+          ObtainDate: this.questionnaireObtainForm.ObtainDate,
+          Brief: this.questionnaireObtainForm.Brief
+        }
+        let brief = JSON.stringify(value)
+        // console.log('questionnaireObtainForm', value)
+        this.axios.post('/api/Services/CommerceService.asmx/SaveProcessRecord', {id: id, processtypeid: typeid, brief: brief}).then(res => {
+          if (res) {
+            console.log('questionnaireObtainProcess', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+          }
+          this.isLoadingApplicationQuotations = false
+          this.questionnaireObtainVisible = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoadingApplicationQuotations = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+    saveObtainRecord: function (record) {
+      let id = record.BusinessChangeRecordID
+      let value = {
+        ObtainDate: record.ObtainDate,
+        Brief: record.Brief
+      }
+      let brief = JSON.stringify(value)
+      // console.log('questionnaireObtainForm', value)
+      this.axios.post('/api/Services/BaseService.asmx/SaveBusinessChangeRecord', {id: id, brief: brief}).then(res => {
+        if (res) {
+          console.log('saveQuestionnaireObtainRecord', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.currentId = null
+        }
+      }).catch(err => {
+        console.log('删除出错', err)
+      })
+    },
+    showObtainRecordEdit: function (record) {
+      this.currentId = record.BusinessChangeRecordID
+      this.currentObjtainRecord = JSON.parse(JSON.stringify(record))
+    },
+    cancelObtainRecordEdit: function (record) {
+      record.ObtainDate = this.currentObjtainRecord.ObtainDate
+      record.Brief = this.currentObjtainRecord.Brief
+      this.currentId = null
+    },
+    // 删除
+    obtainRecordDel: function (id) {
+      this.$confirm('Are you sure to delete it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/BaseService.asmx/RemoveBusinessChangeRecord', {id: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            this.current.obtainRecords = this.current.obtainRecords.filter(item => item.BusinessChangeRecordID !== id)
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
+
     showEdition: function (application) {
       this.currentApplication = application
       this.applicationFormVisible = true

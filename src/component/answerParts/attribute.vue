@@ -19,7 +19,10 @@
           <div v-for="p in dataList" v-bind:key="p.ItemID">
             <span class="question">{{p.Name}}</span>
             <el-date-picker v-if="p.type === 'date'" class="additionContent" v-model="item[p.ItemValue]" type="date" size="mini" @change="changeArray()" placeholder="yyyy-mm-dd"></el-date-picker>
-            <el-select v-else-if="p.type === 'list'" style="width:300px" class="additionContent" v-model="item[p.ItemValue]" size="mini" @change="changeArray()" placeholder="Please Select" no-data-text="No Data" filterable>
+            <el-select v-else-if="p.type === 'list'" style="width:300px" class="additionContent" v-model="item[p.ItemValue]" size="mini" @change="changeArrayList(item, p)" placeholder="Please Select" no-data-text="No Data" filterable>
+              <el-option class="questionOption" v-for="item in p.datasource" :key="item.ItemValue" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
+            <el-select v-else-if="p.type === 'children'" style="width:300px" class="additionContent" v-model="item[p.ItemValue]" size="mini" @change="changeArray()" placeholder="Please Select" no-data-text="No Data" filterable>
               <el-option class="questionOption" v-for="item in p.datasource" :key="item.ItemValue" :label="item.Name" :value="item.Name"></el-option>
             </el-select>
             <el-select v-else-if="p.type === 'bit'" style="width:300px" class="additionContent" v-model="item[p.ItemValue]" size="mini" @change="changeArray()" placeholder="Please Select" no-data-text="No Data" filterable>
@@ -33,10 +36,10 @@
             </span>
             <el-input v-else class="additionContent" v-model="item[p.Name]" :type="p.type" size="mini" placeholder="" style="width: 300px;" @change="changeArray()"></el-input>
           </div>
+          <el-button icon="el-icon-minus" type="danger" plain size="small" @click="removeItem(i)">Remove</el-button>
         </el-row>
         <el-button icon="el-icon-plus" type="primary" plain size="small" @click="addItem()">Add</el-button>
-        <el-button icon="el-icon-minus" type="primary" plain size="small" @click="removeItem()">Remove</el-button>
-        <el-button icon="el-icon-plus" type="primary" plain size="small" @click="changeVal()">Done</el-button>
+        <el-button icon="el-icon-sunset" type="primary" plain size="small" @click="changeVal()">Done</el-button>
       </div>
       <div v-else-if="answer.InputType === 'address'" style="padding-left:20px">
         <GmapAutocomplete v-if="!enableEdit" style="width: 500px; height: 25px;"
@@ -98,13 +101,41 @@ export default {
     addItem: function () {
       let item = {}
       this.dataList.forEach(function (p) {
-        item[p.ItemValue] = ''
+        if (p.type === 'moneyplus') {
+          item[p.Name] = ''
+          item[p.Name + '_c'] = ''
+          item[p.Name + '_p'] = false
+        } else if (p.type === 'money') {
+          item[p.Name] = ''
+          item[p.Name + '_c'] = ''
+        } else item[p.ItemValue] = ''
       })
       this.answerItems.push(item)
       this.changeArray()
     },
-    removeItem: function () {
-      this.answerItems.pop()
+    removeItem: function (i) {
+      this.$confirm('Are you sure to remove this item?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.answerItems.splice(i, 1)
+        this.changeArray()
+      })
+      // this.answerItems.pop()
+    },
+    changeArrayList: function (item, p) {
+      let childp = this.dataList.find(cp => cp.type === 'children')
+      if (childp === undefined) {
+        this.changeArray()
+        return
+      }
+      let source = p.datasource.find(ds => ds.ItemValue === item[p.ItemValue])
+      if (source !== undefined) {
+        if (source.children === null) source.children = []
+        childp.datasource = source.children
+        if (source.children.length > 0) item[childp.ItemValue] = source.children[0].Name
+      }
       this.changeArray()
     },
     changeArray: function () {
@@ -154,7 +185,7 @@ export default {
         item[p.Name + '_c'] = '$' + item[p.Name].toLocaleString()
       } else {
         item[p.Name] = 0
-        // item[p.Name + '_c'] = ''
+        item[p.Name + '_c'] = ''
       }
       this.changeArray()
       /*

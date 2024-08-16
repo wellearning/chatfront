@@ -52,7 +52,7 @@ Function: Show all user list and do all operations on the list.
               <el-table-column label="Mobile" prop="Mobile" min-width="100"></el-table-column>
               <el-table-column label="Email" prop="Email" min-width="150"></el-table-column>
               <el-table-column label="Status" width="100">
-                <template slot-scope="scope">
+                <template v-slot="scope">
                   <el-tag v-if="scope.row.StatusID === 1" size="medium">Active</el-tag>
                   <el-tag v-else type="danger" size="medium">Inactive</el-tag>
                 </template>
@@ -262,6 +262,7 @@ export default {
       statusOptions: [{id: 1, name: 'Active'}, {id: 2, name: 'Inactive'}],
       producerCount: 0,
       producerList: [],
+      institutionStaffs: [],
       producerLevels: [{id: 1, name: 'Level 1'}, {id: 2, name: 'Level 2'}],
       addFormRules: {
         Name: [
@@ -372,6 +373,7 @@ export default {
     this.initRole()
     this.search(null, null)
     this.loadProducers(0)
+    this.loadInstitutionStaffs()
   },
   methods: {
     exportExcel: function () {
@@ -428,7 +430,7 @@ export default {
       this.searchOrganization = data.InstitutionID
       this.addForm.institution = data.InstitutionID
       this.$refs.organizationTree.setCurrentKey(data.InstitutionID) // 设置节点高亮
-      this.list = this.producerList.filter(p => p.InstitutionID === data.InstitutionID)
+      this.list = this.getInstitutionStaffs(data.InstitutionID) // this.producerList.filter(p => p.InstitutionID === data.InstitutionID)
       // this.search(this.searchStatus, this.searchName)
       this.total = this.list.length
       this.pageCount = Math.ceil(this.total / this.pageSize)
@@ -729,7 +731,7 @@ export default {
     // producer form
     loadProducers: function (start) {
       this.isLoadingProducer = true
-      this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
           if (start === 0) {
@@ -748,6 +750,28 @@ export default {
         console.log('producerList', err)
         this.isLoadingProducer = false
       })
+    },
+    loadInstitutionStaffs: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetInstitutionStaffRelations', {}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.institutionStaffs = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    getInstitutionStaffs: function (institutionId) {
+      let islist = this.institutionStaffs.filter(i => i.InstitutionID === institutionId)
+      let list = []
+      islist.forEach(r => {
+        let staff = this.producerList.find(p => p.StaffID === r.StaffID)
+        if (staff !== undefined) list.push(staff)
+      })
+      return list
     },
     // blocks列表
     initProducer: function () {

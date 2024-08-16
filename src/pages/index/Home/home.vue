@@ -12,7 +12,13 @@
           <span v-if="activity.EndTime !== undefined">to: {{ activity.EndTime.format('YYYY-MM-DD') }}</span>
         </el-col>
         <el-col :span="4" style="font-size: 14px;" >
-          <span v-if="activity.EndTime !== undefined" @dblclick="showRankList">{{ date.format('YYYY-MM-DD hh:mm:ss') }}</span>
+          <span>{{ date.format('YYYY-MM-DD hh:mm:ss') }}</span>
+          <i v-if="rankListVisible" class="el-icon-caret-top" @click="showRankList"></i>
+          <i v-else class="el-icon-s-data" @click="showRankList"></i>
+          <!--i v-if="rankListVisible" :class="historyClass" @click="showHistory"></i-->
+          <i v-if="historyVisible" :class="playClass" @click="playHistory"></i>
+          <i v-if="historyVisible" class="el-icon-d-arrow-right" @click="speedUp"></i>
+          <i v-if="historyVisible" class="el-icon-d-arrow-left" @click="speedDown"></i>
         </el-col>
       </el-row>
       <el-row :gutter="20" class="" style="padding:10px; font-size: 18px;">
@@ -22,6 +28,19 @@
       </el-row>
       <div v-if="rankListVisible" style="font-size:16px; line-height: 24px;">
         <el-row :gutter="20" style="margin:10px; ">
+          <el-col :span="24" style="text-align: center; font-size: 18pt;">
+            <span>{{ endDate.format('YYYY-MM-DD') }}</span>
+          </el-col>
+        </el-row>
+        <el-row v-for="(item, index) in rankList" :key="index" :gutter="20" style="margin:10px; ">
+          <el-col :span="5" style="text-align: right;">
+            <span>{{ item.name }}</span>
+          </el-col>
+          <el-col :span="14">
+            <el-progress :stroke-width="26" :text-inside="true" :percentage="item.percentage" :format="customerFormat" :color="item.color"></el-progress>
+          </el-col>
+        </el-row>
+        <!--el-row :gutter="20" style="margin:10px; ">
           <el-col :span="5" style="text-align: right;">
             <span>{{ gold.name }}</span>
           </el-col>
@@ -44,7 +63,7 @@
           <el-col :span="10" style="padding-bottom: 10px;">
             <el-progress :stroke-width="26" :text-inside="true" :percentage="bronze.percentage" :format="customerFormat" :color="bronze.color"></el-progress>
           </el-col>
-        </el-row>
+        </el-row-->
       </div>
       <div class="inPageContent">
         <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record"
@@ -143,7 +162,14 @@ export default {
   data: function () {
     return {
       rankListVisible: false,
+      historyVisible: false,
+      speed: 10,
+      playStatus: 0,
+      playClass: 'el-icon-video-play',
+      historyClass: 'el-icon-film',
       date: moment(),
+      endDate: moment(),
+      days: 0,
       gold: {name: 'Justin', amount: 3432, color: '#238429', percentage: 100},
       silver: {name: 'James', amount: 1234, color: '#cd84c9', percentage: 90},
       bronze: {name: 'Brown', amount: 234, color: '#cd8429', percentage: 80},
@@ -159,9 +185,13 @@ export default {
       subPath: 'usefulFiles',
       files: [],
       isLoading: false,
+      isLoadingPL: false,
+      isLoadingCL: false,
+      isLoadingIRCA: false,
       sponsors: [],
       groupList: [],
       activity: null,
+      rankList: [],
       list: [],
       pageSize: 15,
       pagerCount: 5,
@@ -173,11 +203,22 @@ export default {
     this.loadSponsors()
     this.loadActivity()
     this.loadDownloadFiles()
-    setInterval(function () {
-      this.date = moment()
-    }, 1000)
+    this.interval = setInterval(this.updateClock, 1000)
   },
   methods: {
+    updateClock: function () {
+      this.date = moment()
+      if (!this.rankListVisible) return
+      if (this.endDate > this.date.add(-1, 'd')) return
+      if (!this.historyVisible) return
+      if (this.playStatus === 1) return
+      if (this.date.seconds() % this.speed === 0) {
+        let startDate = moment('2024-06-01')
+        this.days = this.days + 1
+        this.endDate = startDate.add(this.days, 'd')
+        this.loadStatistics(this.days)
+      }
+    },
     sorttable: function (column) {
       if (column.order === 'descending') this.rankdesc(column.prop)
       else this.rank(column.prop)
@@ -189,11 +230,38 @@ export default {
       this.list.sort(this.bydesc(name))
     },
     customerFormat: function (percentage) {
+      for (let i = 0; i < this.rankList.length; i++) {
+        let item = this.rankList[i]
+        if (percentage === item.percentage) return item.amount
+      }
+      return 0
+      /*
       if (percentage === this.gold.percentage) return this.gold.amount
       else if (percentage === this.silver.percentage) return this.silver.amount
       else return this.bronze.amount
+       */
     },
     fillRank: function () {
+      if (this.list.length === 0) return
+      if (this.isLoadingCL || this.isLoadingPL || this.isLoadingIRCA) return
+      let startDate = moment([2024, 5])
+      let days = this.date.dayOfYear() - startDate.dayOfYear()
+      // this.endDate = startDate.add(this.days, 'd')
+      this.rankdesc('TotalPremium')
+      let rankList = []
+      let topPremium = 600000 * days / 90 // this.list[0].TotalPremium
+      this.list.forEach(a => {
+        let att = {
+          name: a.Name,
+          amount: a.TotalPremium,
+          color: a.color
+        }
+        att.percentage = att.amount / topPremium * 100
+        rankList.push(att)
+      })
+      this.rankList = rankList
+      console.log('rankList', rankList)
+      /*
       if (this.list.length > 0) {
         this.gold.name = this.list[0].Name
         this.gold.amount = this.list[0].TotalPremium.toLocaleString()
@@ -210,10 +278,51 @@ export default {
         if (this.list[0].TotalPremium > 0) this.bronze.percentage = this.list[2].TotalPremium / this.list[0].TotalPremium * 100
         else this.bronze.percentage = 100
       }
+       */
     },
     showRankList: function () {
-      if (this.rankListVisible) this.rankListVisible = false
-      else this.rankListVisible = true
+      if (this.rankListVisible) {
+        this.rankListVisible = false
+        this.historyVisible = false
+        this.endDate = moment()
+        this.loadStatistics()
+      } else {
+        this.rankListVisible = true
+        this.days = 0
+        // this.loadStatistics(this.days)
+      }
+    },
+    showHistory: function () {
+      if (this.historyVisible) {
+        this.days = -1
+        this.historyClass = 'el-icon-data-board'
+        this.historyVisible = false
+        this.endDate = moment()
+        this.loadStatistics()
+      } else {
+        this.days = 0
+        this.endDate = this.activity.StartTime
+        this.historyClass = 'el-icon-film'
+        this.historyVisible = true
+        this.playStatus = 0
+        this.playClass = 'el-icon-video-pause'
+        this.loadStatistics(0)
+      }
+    },
+    playHistory: function () {
+      if (this.playStatus === 1) {
+        this.playClass = 'el-icon-video-pause'
+        this.playStatus = 0
+      } else {
+        this.playClass = 'el-icon-video-play'
+        this.playStatus = 1
+      }
+    },
+    speedUp: function () {
+      if (this.speed > 5) this.speed -= 5
+    },
+    speedDown: function () {
+      if (this.speed < 30) this.speed += 5
     },
     loadSponsors: function () {
       this.isLoadingSponsors = true
@@ -261,15 +370,31 @@ export default {
           })
           this.activity = res.data
           this.list = res.data.attendees
+          let r = 128
+          let g = 32
+          let b = 192
+          let diff = 15
+          let diff2 = 31
+          let diff3 = 47
+          res.data.attendees.forEach(a => {
+            r += diff
+            g -= diff2
+            b += diff3
+            if (r > 255) r = r - 256
+            if (g < 0) g = g + 256
+            if (b > 255) b = b - 256
+            let hr = r.toString(16)
+            let hg = g.toString(16)
+            let hb = b.toString(16)
+            if (hr.length === 1) hr = '0' + hr
+            if (hg.length === 1) hg = '0' + hg
+            if (hb.length === 1) hb = '0' + hb
+            a.color = '#' + hr + hg + hb
+          })
           this.total = this.list.length
           this.currentPage = 1
           this.isLoading = false
-          this.loadPLStatistic()
-          this.loadCLStatistic()
-          this.loadIrcaStatistic()
-          this.activity.sponsors.forEach(s => {
-            this.loadSponsorStatistic(s)
-          })
+          this.loadStatistics()
         }
         this.isLoadingOrganization = false
       }).catch(err => {
@@ -277,9 +402,25 @@ export default {
         this.isLoadingOrganization = false
       })
     },
-    loadPLStatistic: function () {
-      this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetActivityRecords', {activityid: this.activity.ActivityID}).then(res => {
+    loadStatistics: function (days) {
+      this.loadPLStatistic(days)
+      this.loadStatistic(days, 4)
+      this.loadStatistic(days, 3)
+      // this.loadCLStatistic(days)
+      // this.loadIrcaStatistic(days)
+      this.activity.sponsors.forEach(s => {
+        this.loadSponsorStatistic(s)
+      })
+    },
+    loadPLStatistic: function (days) {
+      this.isLoadingPL = true
+      let service = '/api/Services/NewBusinessService.asmx/GetActivityRecords'
+      let param = {activityid: this.activity.ActivityID}
+      if (days !== undefined) {
+        service = '/api/Services/NewBusinessService.asmx/GetActivityRecords_days'
+        param = {activityid: this.activity.ActivityID, days: days}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('loadPLStatistic', res)
           res.data.forEach(r => {
@@ -289,19 +430,51 @@ export default {
             // attendee.TotalCount = attendee.PLCount + attendee.CLCount + attendee.IRCACount
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
-          this.rankdesc('TotalPremium')
+          this.isLoadingPL = false
           this.fillRank()
-          this.isLoading = false
         }
-        this.isLoading = false
       }).catch(err => {
         console.log('loadPLStatistic', err)
+        this.isLoadingPL = false
+      })
+    },
+    loadStatistic: function (days, businesstypeid) {
+      this.isLoadingCL = true
+      let service = '/api/Services/BaseService.asmx/GetActivityRecords'
+      let param = {activityid: this.activity.ActivityID, businesstypeid: businesstypeid}
+      if (days !== undefined) {
+        service = '/api/Services/BaseService.asmx/GetActivityRecords_days'
+        param = {activityid: this.activity.ActivityID, days: days, businesstypeid: businesstypeid}
+      }
+      this.axios.post(service, param).then(res => {
+        if (res) {
+          console.log('loadStatistic', res)
+          res.data.forEach(r => {
+            let attendee = this.list.find(a => a.AttendeeID === r.InstitutionID)
+            if (businesstypeid === 3) {
+              attendee.IRCAPremium = r.NBPremium// + r.RemarketPremium + r.RenewalPremium
+            } else if (businesstypeid === 4) {
+              attendee.CLPremium = r.NBPremium// + r.RemarketPremium + r.RenewalPremium
+            }
+            attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
+          })
+          this.isLoadingCL = false
+          this.fillRank()
+        }
+      }).catch(err => {
+        console.log('loadStatistic', err)
         this.isLoading = false
       })
     },
-    loadCLStatistic: function () {
-      this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/GetActivityRecords', {activityid: this.activity.ActivityID}).then(res => {
+    loadCLStatistic: function (days) {
+      this.isLoadingCL = true
+      let service = '/api/Services/CommerceService.asmx/GetActivityRecords'
+      let param = {activityid: this.activity.ActivityID}
+      if (days !== undefined) {
+        service = '/api/Services/CommerceService.asmx/GetActivityRecords_days'
+        param = {activityid: this.activity.ActivityID, days: days}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
           console.log('loadCLStatistic', res)
           res.data.forEach(r => {
@@ -311,21 +484,25 @@ export default {
             // attendee.TotalCount = attendee.PLCount + attendee.CLCount + attendee.IRCACount
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
-          this.rankdesc('TotalPremium')
+          this.isLoadingCL = false
           this.fillRank()
-          this.isLoading = false
         }
-        this.isLoading = false
       }).catch(err => {
         console.log('loadCLStatistic', err)
         this.isLoading = false
       })
     },
-    loadIrcaStatistic: function () {
-      this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/GetActivityRecords_irca', {activityid: this.activity.ActivityID}).then(res => {
+    loadIrcaStatistic: function (days) {
+      this.isLoadingIRCA = true
+      let service = '/api/Services/CommerceService.asmx/GetActivityRecords_irca'
+      let param = {activityid: this.activity.ActivityID}
+      if (days !== undefined) {
+        service = '/api/Services/CommerceService.asmx/GetActivityRecords_irca_days'
+        param = {activityid: this.activity.ActivityID, days: days}
+      }
+      this.axios.post(service, param).then(res => {
         if (res) {
-          console.log('loadCLStatistic', res)
+          console.log('loadIrcaStatistic', res)
           res.data.forEach(r => {
             let attendee = this.list.find(a => a.AttendeeID === r.InstitutionID)
             // attendee.IRCACount = r.NBCounts + r.RemarketCounts + r.RenewalCounts
@@ -333,21 +510,19 @@ export default {
             // attendee.TotalCount = attendee.PLCount + attendee.CLCount + attendee.IRCACount
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
-          this.rankdesc('TotalPremium')
+          this.isLoadingIRCA = false
           this.fillRank()
-          this.isLoading = false
         }
-        this.isLoading = false
       }).catch(err => {
-        console.log('loadCLStatistic', err)
-        this.isLoading = false
+        console.log('loadIrcaStatistic', err)
+        this.isLoadingIRCA = false
       })
     },
     loadSponsorStatistic: function (sponsor) {
       this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/GetActivityRecords_corp', {activityid: this.activity.ActivityID, corpid: sponsor.SponsorID}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetActivityRecords_corp', {activityid: this.activity.ActivityID, corpid: sponsor.SponsorID}).then(res => {
         if (res) {
-          console.log('loadCLStatistic', res)
+          console.log('loadSponsorStatistic', res)
           res.data.forEach(r => {
             let attendee = this.list.find(a => a.AttendeeID === r.InstitutionID)
             attendee[sponsor.Name] = r.NBPremium// + r.RemarketPremium + r.RenewalPremium
@@ -357,11 +532,11 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('loadCLStatistic', err)
+        console.log('loadSponsorStatistic', err)
         this.isLoading = false
       })
     },
-    loadAttendeeDetail: function (attendee) {
+    loadAttendeeDetail_: function (attendee) {
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetActivityRecords_producer', {activityid: this.activity.ActivityID, attendeeid: attendee.AttendeeID}).then(res => {
         if (res) {
@@ -378,6 +553,35 @@ export default {
             let i = 3
             this.activity.sponsors.forEach(s => {
               child[s.Name] = r.PremiumList[i]
+              i++
+            })
+          })
+          this.rankdesc('TotalPremium')
+          this.isLoading = false
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadAttendeeDetail', err)
+        this.isLoading = false
+      })
+    },
+    loadAttendeeDetail: function (attendee) {
+      this.isLoading = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetActivityRecords_producer', {activityid: this.activity.ActivityID, attendeeid: attendee.AttendeeID}).then(res => {
+        if (res) {
+          console.log('loadAttendeeDetail', res)
+          res.data.forEach(r => {
+            let child = {}
+            attendee.children.push(child)
+            child.ID = attendee.AttendeeID + '_' + r.ProducerID
+            child.Name = r.ProducerName
+            child.PLPremium = r.BusiTypePremiums[1]
+            child.CLPremium = r.BusiTypePremiums[3]
+            child.IRCAPremium = r.BusiTypePremiums[2]
+            child.TotalPremium = child.PLPremium + child.CLPremium + child.IRCAPremium
+            let i = 0
+            this.activity.sponsors.forEach(s => {
+              child[s.Name] = r.CorpPremiums[i]
               i++
             })
           })

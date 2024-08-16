@@ -242,7 +242,7 @@ export default {
               this.$store.dispatch('asynSetPermissionList', JSON.stringify(this.translateTreeForStore(arr)))
               let arr1 = this.translateTree(arr)
               console.log('routes', arr1)
-              this.$router.addRoutes(arr1)
+              // this.$router.addRoutes(arr1)
               this.$router.push({ path: '/' })
             }
             this.isLoading = false

@@ -85,6 +85,8 @@ export default {
       isLoadingInsuranceCompany: false,
       isLoadingProducer: false,
       isLoadingMakers: false,
+      saveBlockIndex: 0,
+      saveBlockCount: 0,
       coverLetterForm: {
         Title: null,
         EffectiveDate: null,
@@ -312,24 +314,32 @@ export default {
           let coverletter = JSON.parse(JSON.stringify(this.coverLetterForm))
           coverletter.PremiumOnApp = parseInt(coverletter.PremiumOnApp)
           coverletter.InsuranceTypeID = this.TemplateTypeID
+          let blockCounts = 0
+          let cblocks = []
           coverletter.coverLetterTemplates.forEach(template => {
+            blockCounts += template.coverLetterBlocks.length
             template.coverLetterBlocks.forEach(block => {
               block.answers.forEach(answer => {
                 answer.blockQuestion = null
               })
+              cblocks.push(block)
             })
+            template.coverLetterBlocks = null
           })
           let value = JSON.stringify(coverletter)
           if (type === 'save' || (type === 'saveAndPrint')) {
             // console.log('提交问题', form)
+            this.saveBlockIndex = 0
+            this.saveBlockCount = blockCounts
             this.isLoading = true
             this.axios.post('/api/Services/NewBusinessService.asmx/SaveCoverLetter', {coverLetter: value}).then(res => {
               if (res) {
                 console.log('修改', res)
-                this.$message({
-                  type: 'success',
-                  message: 'Operation Succeeded'
+                cblocks.forEach(cBlock => {
+                  cBlock.CoverLetterTemplateID = res.data.coverLetterTemplates[0].CoverLetterTemplateID
+                  this.saveCoverLetterBlock(cBlock)
                 })
+
                 this.$refs['coverLetterForm'].resetFields()
                 this.currentTemplates = []
                 this.coverLetterFormVisible = false
@@ -358,7 +368,32 @@ export default {
           })
         }
       })
+    },
+    saveCoverLetterBlock: function (cblock) {
+      let value = JSON.stringify(cblock)
+      console.log('SaveCoverLetterBlock', cblock)
+      this.axios.post('/api/Services/NewBusinessService.asmx/SaveCoverLetterBlock', {coverletterblock: value}).then(res => {
+        if (res) {
+          console.log('SaveCoverLetterBlock', res)
+        }
+        this.saveBlockIndex++
+        if (this.saveBlockIndex === this.saveBlockCount) {
+          this.isLoading = false
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+        }
+      }).catch(err => {
+        console.log('修改出错', err)
+        this.$message({
+          type: 'error',
+          message: 'Operation failed'
+        })
+        this.isLoading = false
+      })
     }
+
   }
 }
 </script>

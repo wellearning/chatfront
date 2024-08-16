@@ -7,7 +7,7 @@ Function: Show all commercial application list and do all operations on the list
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav">IRCA Policies</span>
+      <span class="inPageNav">{{businessType.value}} Policies</span>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <!--el-form-item>
@@ -27,7 +27,8 @@ Function: Show all commercial application list and do all operations on the list
             <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoadingAll" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="resetSearch()" size="small">Reset</el-button>
             <el-button icon="el-icon-plus" type="primary" @click="showAdd()" :loading="isLoading" size="small">New</el-button>
           </el-form-item>
         </el-form>
@@ -52,12 +53,12 @@ Function: Show all commercial application list and do all operations on the list
         </el-table-column-->
         <el-table-column label="A/D" prop="AgenDir" min-width="70" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
+        <!--el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column-->
         <el-table-column label="Action" width="460">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
-              <el-button icon="el-icon-remove" type="danger" @click="removeApplication(scope.row)"  size="small">Delete</el-button>
+              <el-button icon="el-icon-remove" type="danger" @click="del(scope.row)"  size="small">Delete</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -91,6 +92,7 @@ export default {
       },
       htmlTitle: 'null', // pdf文件名
       btypeId: 3,
+      businessType: {key: 3, value: 'IRCA'},
       isLoading: false,
       isLoadingAll: false,
       isLoadingApplications: false,
@@ -131,6 +133,7 @@ export default {
   },
   mounted: function () {
     this.btypeId = Number(this.$route.params.id)
+    this.loadBusinessTypes(this.btypeId)
     this.loadProducers(0)
     this.loadApplicationStatus()
     this.initInsuranceCompany()
@@ -208,7 +211,8 @@ export default {
       })
     },
     // 删除
-    del: function (id) {
+    del: function (row) {
+      let id = row.ApplicationID
       this.$confirm('Are you sure to delete it?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
@@ -243,7 +247,7 @@ export default {
       if (query === '' || query === null) {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        this.list = this.totalList.filter(r =>
           r.ApplicationID === Number(query) ||
           (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
           r.Producer.indexOf(query) >= 0 ||
@@ -256,6 +260,19 @@ export default {
       this.total = this.list.length
       this.pageCount = Math.ceil(this.total / this.pageSize)
       this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
+    loadBusinessTypes: function (id) {
+      this.isLoadingInsuranceCorps = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'BusinessType'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.businessType = res.data.find(t => t.key === id)
+        }
+        this.isLoadingInsuranceCorps = false
+      }).catch(err => {
+        console.log('statusList', err)
+        this.isLoadingInsuranceCorps = false
+      })
     },
     loadApplicationStatus: function () {
       this.isLoadingInsuranceCorps = true
@@ -386,7 +403,7 @@ export default {
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null, 0)
+      this.search()
     },
     // 关闭修改
     closeEdit: function (done) {

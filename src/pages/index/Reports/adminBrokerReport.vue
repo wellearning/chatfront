@@ -7,11 +7,13 @@ Function: Show broker report as administrator role.
 <template>
   <div>
     <div class="inPageTitle">
-      <span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">{{reportTitle}}</span>
+      <!--span class="inPageNav" href="#" style="color:darkblue" title="Click here to return to the main report.">{{reportTitle}}</span-->
+      <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">{{reportTitle}}</a>
+      <a v-if="producerVisible" style="color:darkblue" class="inPageNav" href="#" @click="showProducer()" title="Click here to return to the branch report.">  - {{currentProducer.ProducerName}}</a>
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
-            <el-radio-group v-model="viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
+            <el-radio-group v-model="searchForm.viewMonthly" size="large" @change="switchRecords()" :loading="isLoading" style="margin-top: -3px">
               <el-radio-button label="Month to Date" />
               <el-radio-button label="Year to Date" />
             </el-radio-group>
@@ -19,12 +21,12 @@ Function: Show broker report as administrator role.
           </el-form-item>
           <el-form-item label="Year" prop="Year">
             <el-select v-model="searchForm.Year" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="changeYear()">
-              <el-option v-for="item in searchForm.years" :key="item" :label="item" :value="item"></el-option>
+              <el-option v-for="item in years" :key="item" :label="item" :value="item"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Month" prop="Month">
             <el-select v-model="searchForm.Month" class="yearMonthSelection" placeholder="" no-data-text="No Record" filterable @change="changeYearMonth()">
-              <el-option v-for="item in searchForm.months" :key="item.value" :label="item.name" :value="item.value"></el-option>
+              <el-option v-for="item in months" :key="item.value" :label="item.name" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -38,6 +40,9 @@ Function: Show broker report as administrator role.
         <el-table-column label="ID" prop="ProducerID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column label="Producer Name" prop="ProducerName" min-width="150" sortable="custom">
+          <template v-slot="scope" >
+            <a @click = "showProducer(scope.row)" style="color:darkblue" href="#" title="Click here to show the detail.">{{scope.row.ProducerName}}</a>
+          </template>
         </el-table-column>
         <el-table-column label="NB Counts" prop="NBCounts" min-width="100" sortable="custom">
         </el-table-column>
@@ -70,44 +75,50 @@ Function: Show broker report as administrator role.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
     </div>
+    <div v-else-if="producerVisible">
+      <ProducerDetail ref="producerD" :businessLineID="businessLineID" :searchForm="searchForm" :producer="currentProducer"></ProducerDetail>
+    </div>
   </div>
 </template>
 
 <script>
 import moment from 'moment'
+import ProducerDetail from '@/component/window/producerDetail'
 
 export default {
   components: {
+    ProducerDetail
   },
   data: function () {
     return {
       reportTitle: 'P/L Broker Report',
-      viewMonthly: 'Month to Date',
+      // viewMonthly: 'Month to Date',
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
       businessLineID: 1,
       // 搜索
       searchForm: {
+        viewMonthly: 'Month to Date',
         name: null,
         Year: 2022,
-        Month: 1,
-        years: [],
-        months: [
-          {name: 'January', value: 1},
-          {name: 'February', value: 2},
-          {name: 'March', value: 3},
-          {name: 'April', value: 4},
-          {name: 'May', value: 5},
-          {name: 'June', value: 6},
-          {name: 'July', value: 7},
-          {name: 'August', value: 8},
-          {name: 'September', value: 9},
-          {name: 'October', value: 10},
-          {name: 'November', value: 11},
-          {name: 'December', value: 12}]
+        Month: 1
       },
       // 列表
+      years: [],
+      months: [
+        {name: 'January', value: 1},
+        {name: 'February', value: 2},
+        {name: 'March', value: 3},
+        {name: 'April', value: 4},
+        {name: 'May', value: 5},
+        {name: 'June', value: 6},
+        {name: 'July', value: 7},
+        {name: 'August', value: 8},
+        {name: 'September', value: 9},
+        {name: 'October', value: 10},
+        {name: 'November', value: 11},
+        {name: 'December', value: 12}],
       list: [],
       producers: [],
       coverletters: [],
@@ -115,6 +126,7 @@ export default {
       currentProducer: null,
       currentCoverLetter: null,
       adminVisible: true,
+      producerVisible: false,
       branchcurrentPage: 1,
       branchtotal: 0,
       producercurrentPage: 1,
@@ -133,7 +145,7 @@ export default {
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (var i = 2020; i <= this.searchForm.Year; i++) {
-      this.searchForm.years.push(i)
+      this.years.push(i)
     }
     this.search()
   },
@@ -206,6 +218,7 @@ export default {
     },
     showMain: function () {
       this.adminVisible = true
+      this.producerVisible = false
       this.search()
     },
     // 日期格式
@@ -217,7 +230,7 @@ export default {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all'
       let param = {year: this.searchForm.Year, month: this.searchForm.Month}
-      if (this.viewMonthly === 'Year to Date') {
+      if (this.searchForm.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all_year'
         param = {year: this.searchForm.Year}
       }
@@ -234,8 +247,16 @@ export default {
         console.log('查询出错', err)
         this.isLoading = false
       })
+    },
+    showProducer: function (producer) {
+      this.currentProducer = producer
+      this.adminVisible = false
+      this.producerVisible = true
+      this.coverLetterVisible = false
+      if (this.$refs.producerD !== undefined) {
+        this.$refs.producerD.loadProducer(producer.ProducerID, this.searchForm)
+      }
     }
-
   }
 }
 </script>

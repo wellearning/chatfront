@@ -13,9 +13,9 @@
       <el-col :span="3"><span style="font-size:16px; font-weight:normal; text-align: right"></span></el-col>
     </el-row>
     <div class="printDiv" v-if="sheetVisible">
-      <el-button icon="el-icon-document" type="primary" @click="toPDF()" size="small">Print</el-button>
-      <el-button v-if="businessTypeId === 4" icon="el-icon-document" type="primary" @click="downloadPDF()" size="small">toPdf</el-button>
-      <el-button icon="el-icon-printer" type="primary" v-print="printObj" size="small">print</el-button>
+      <!--el-button icon="el-icon-document" type="primary" @click="toPDF()" size="small">Print</el-button>
+      <el-button-- v-if="businessTypeId === 4" icon="el-icon-document" type="primary" @click="downloadPDF()" size="small">toPdf</el-button-->
+      <el-button icon="el-icon-printer" type="primary" v-print="printObj" size="small">Print</el-button>
     </div>
     <div class="viewSheet" id="sheetDom" v-if="sheetVisible">
       <img class="coiLogo" :src="logo" crossorigin="anonymous">
@@ -59,6 +59,7 @@ export default {
   name: 'sheet',
   data: function () {
     return {
+      autoPageDepart: true,
       printDate: null,
       printObj: {
         id: 'sheetDom',
@@ -431,7 +432,7 @@ export default {
               if (c.InputType === 'date' && value !== '') {
                 value = moment(value).format('YYYY-MM-DD')
                 let date = moment(value)
-                if (date.year() < 2001) value = ''
+                if (date.year() < 1900) value = ''
               } else if (c.InputType === 'money' && value !== '') {
                 value = '$' + Number(value).toLocaleString()
               } else if (c.InputType === 'moneyplus' && !isNaN(value)) {
@@ -466,11 +467,12 @@ export default {
       })
     },
     createSheet: function (sheet) {
-      let pageheight = 1446
+      let pageheight = 1586 // 1446
       let $sheetDom = $('#sheetDom')
       if (sheet === undefined) sheet = this.sheet
       let $sheet = $('#sheet')
       $sheet.children().remove()
+      let autoPageDepart = this.autoPageDepart
       sheet.tables.forEach(function (table) {
         let sheetheight = $sheetDom.height()
         // $sheet.append($('<div>' + sheetheight + '</div>'))
@@ -491,13 +493,15 @@ export default {
             $tr.append($td)
           })
         })
-        let tableheight = $div.height()
-        let pageleft = sheetheight % pageheight
-        let page = Math.floor(sheetheight / pageheight)
-        if (tableheight + pageleft + 20 > pageheight) {
-          let margintop = (pageheight - pageleft + 40)
-          if (page === 0) margintop = margintop + 20
-          $div.css('margin-top', margintop)
+        if (autoPageDepart) {
+          let tableheight = $div.height()
+          let pageleft = sheetheight % pageheight
+          let page = Math.floor(sheetheight / pageheight)
+          if (tableheight + pageleft + 20 > pageheight) {
+            let margintop = (pageheight - pageleft + 40)
+            if (page === 0) margintop = margintop + 20
+            $div.css('margin-top', margintop)
+          }
         }
         // $div.append($('<div>' + tableheight + '</div>'))
       })
@@ -520,9 +524,9 @@ export default {
         this.isLoading = false
       })
     },
-    loadProducer: function () {
+    loadProducer: function (producerid) {
       let service = '/api/Services/baseservice.asmx/GetStaff'
-      let producerid = this.businessObj.StaffID
+      if (producerid === undefined) producerid = this.businessObj.StaffID
       if (this.businessObj.ProducerID !== undefined) producerid = this.businessObj.ProducerID
       let para = {staffid: producerid}
       this.isLoading = true
@@ -625,7 +629,7 @@ export default {
               if (this.repeatedCount <= ablock.RepeatedID) this.repeatedCount = ablock.RepeatedID + 1
             } else this.loadCount++
           })
-          this.loadProducer()
+          this.loadProducer(res.data.ProducerID)
           this.isLoading = false
         }
       }).catch(err => {

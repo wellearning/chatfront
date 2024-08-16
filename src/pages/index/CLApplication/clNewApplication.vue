@@ -438,6 +438,7 @@ export default {
           template.templateBlocks = null
           template.SequenceNo = sequenceno
           sequenceno++
+          let appBlocks = []
           template.applicationBlocks.forEach(block => {
             block.answers.forEach(answer => {
               answer.blockQuestion = null
@@ -447,17 +448,25 @@ export default {
                 answer.optionAnswers = answer.optionAnswers.filter(oa => { return oa.IsChecked })
               }
             })
+            let ablock = JSON.parse(JSON.stringify(block))
+            ablock.answers = undefined
+            appBlocks.push(ablock)
           })
-          let value = JSON.stringify(application)
           if (type === 'save' || (type === 'finish')) {
             // console.log('提交问题', form)
             this.isLoading = true
+            this.saveBlockCount = application.applicationTemplate.applicationBlocks.length
+            this.saveBlockIndex = 0
+            let ablocks = application.applicationTemplate.applicationBlocks
+            application.applicationTemplate.applicationBlocks = appBlocks
+            let value = JSON.stringify(application)
+            console.log('the length of Application', value.length)
             this.axios.post('/api/Services/CommerceService.asmx/SaveApplication', {application: value}).then(res => {
               if (res) {
                 console.log('修改', res)
-                this.$message({
-                  type: 'success',
-                  message: 'Operation Succeeded'
+                ablocks.forEach(aBlock => {
+                  aBlock.ApplicationTemplateID = res.data.applicationTemplate.ApplicationTemplateID
+                  this.saveApplicationBlock(aBlock)
                 })
                 this.$refs['applicationForm'].resetFields()
                 this.currentTemplates = []
@@ -485,7 +494,32 @@ export default {
           })
         }
       })
+    },
+    saveApplicationBlock: function (ablock) {
+      let value = JSON.stringify(ablock)
+      console.log('SaveApplicationBlock', ablock)
+      this.axios.post('/api/Services/CommerceService.asmx/SaveApplicationBlock', {applicationblock: value}).then(res => {
+        if (res) {
+          console.log('saveApplicationBlock', res)
+        }
+        this.saveBlockIndex++
+        if (this.saveBlockIndex === this.saveBlockCount) {
+          this.isLoading = false
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+        }
+      }).catch(err => {
+        console.log('修改出错', err)
+        this.$message({
+          type: 'error',
+          message: 'Operation failed'
+        })
+        this.isLoading = false
+      })
     }
+
   }
 }
 </script>

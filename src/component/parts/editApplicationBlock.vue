@@ -361,9 +361,9 @@ export default {
         let ca = cblock.answers[i]
         ca.StatusID = 0
         ca.hasAnswer = false
-        ca.AnswerDesc = ''
+        // ca.AnswerDesc = ''
         if (ca.IsRoute && ca.TypeID === 6) {
-          ca.checkvalue = 0
+          // ca.checkvalue = 0
         }
       }
       this.$emit('resetLeft')
@@ -372,7 +372,7 @@ export default {
       let cblock = this.applicationBlock
       let child = cblock.answers.find(a => a.DataSource === answer.QuestionDesc && a.QuestionID !== answer.QuestionID)
       if (child !== undefined) {
-        child.AnswerDesc = ''
+        // child.AnswerDesc = ''
         child.StatusID = 0
         if (child.IsRoute) this.resetLeftAnswer(child)
       }
@@ -422,10 +422,10 @@ export default {
       for (let i = currentAID + 1; i < cblock.answers.length; i++) {
         let ca = cblock.answers[i]
         ca.StatusID = 2
-        ca.AnswerDesc = ''
+        // ca.AnswerDesc = ''
         ca.isAnswer = false
         if (ca.TypeID === 6) {
-          ca.checkvalue = 0
+          // ca.checkvalue = 0
         }
       }
     },

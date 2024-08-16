@@ -5,7 +5,7 @@
       <el-col :span="6">&#12288;</el-col>
       <el-col :span="12">
         <el-form-item prop="Title">
-          <el-input v-model="coverLetterForm.Title" placeholder="Title"></el-input>
+          <el-input v-model="coverLetterForm.Title" disabled placeholder="Title"></el-input>
         </el-form-item>
       </el-col>
       <el-col :span="6">&#12288;</el-col>
@@ -125,13 +125,13 @@ export default {
       this.isLoadingBlockQuestions = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetBlockQuestionsByCoverLetter', {coverletterid: id}).then(res => {
         if (res) {
-          console.log('NewCoverLetterTemplates', res)
+          console.log('loadBlockQuestions', res)
           this.blockQuestions = res.data
           // if (!this.isLoading) this.matchAnswerBlockQuestion()
         }
         this.isLoadingBlockQuestions = false
       }).catch(err => {
-        console.log('Templates列表出错', err)
+        console.log('loadBlockQuestions error', err)
         this.isLoadingBlockQuestions = false
       })
     },
@@ -275,11 +275,12 @@ export default {
                 this.currentTemplates = []
                 this.AnsweredArr = []
                 this.totalQuestionNum = 1
+                let coverLetterId = res.data.CoverLetterID
                 // this.EffectiveDate = null
                 // this.AutoBindingAuthority = null
                 // this.PropertyBindingAuthority = null
                 // this.coverLetterFormVisible = false
-                this.$emit('close', res.data, type)
+                this.$emit('close', coverLetterId, type)
                 if (type === 'saveAndPrint') {
                   // this.showCoverLetter(res.data.CoverLetterID)
                   // this.view(res.data.CoverLetterID)

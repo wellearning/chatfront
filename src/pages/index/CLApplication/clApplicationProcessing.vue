@@ -23,7 +23,7 @@ Function: Show all commercial application list and do all operations on the list
           </el-form-item>
         </el-form>
       </div>
-      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoadingApplications || isLoadingProducers" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoadingApplications" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
@@ -35,6 +35,7 @@ Function: Show all commercial application list and do all operations on the list
                 <template slot-scope="scope">
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" :disabled="props.row.StatusID > 1" @click="showEditSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
                   <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
@@ -223,13 +224,13 @@ Function: Show all commercial application list and do all operations on the list
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row :gutter="20" class="subtitle">
+          <!--el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Outstanding Balance" prop="OutstandingBalance">
                 <el-input v-model="quotationBindForm.OutstandingBalance" type="number" placeholder="Outstanding Balance" title=""></el-input>
               </el-form-item>
             </el-col>
-          </el-row>
+          </el-row-->
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
@@ -247,7 +248,7 @@ Function: Show all commercial application list and do all operations on the list
       <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
       <!----------------------------------------------InsuranceCorpQuotation Processing 弹窗开始----------------------------------------------------->
       <el-dialog title="Insurance Corporation Quotation Processing" :visible.sync="quotationProcessingVisible" width="600px" center>
-        <el-form :model="quotationProcessingForm" ref="quotationBindForm" class="newMemo" :rules="quotationProcessingFormRules">
+        <el-form :model="quotationProcessingForm" ref="quotationProcessingForm" class="newMemo" :rules="quotationProcessingFormRules">
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Processing Type" prop="StatusID">
@@ -272,11 +273,16 @@ Function: Show all commercial application list and do all operations on the list
             </el-col>
           </el-row>
           <div class="newMemo-submit">
-            <el-button icon="el-icon-check" type="primary" @click="quotationProcess" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="checkQuotationProcessInput" :loading="isLoading">Confirm</el-button>
           </div>
         </el-form>
       </el-dialog>
       <!----------------------------------------------InsuranceCorpQuotation Processing弹窗结束----------------------------------------------------->
+      <!----------------------------------------------SubApplicationTemplate Edition 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="SubApplicationTemplate Edition" :visible.sync="subapplicationTemplateEditionVisible" width="984.56px" center>
+        <editSubApplicationTemplate ref="esat" :applicationTemplateId="currentBlockItem.ApplicationTemplateID" @hideEdition="hideEdition()"></editSubApplicationTemplate>
+      </el-dialog>
+      <!----------------------------------------------SubApplicationTemplate Edition弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -287,12 +293,14 @@ import ViewApplication from '@/component/window/viewApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
 import EditApplication from '@/component/parts/editApplication'
+import editSubApplicationTemplate from '@/component/parts/editSubApplicationTemplate'
 
 export default {
   components: {
     editApplicationBlock,
     ViewSheet,
     EditApplication,
+    editSubApplicationTemplate,
     ViewApplicationBlock,
     ViewApplication
   },
@@ -325,7 +333,6 @@ export default {
         {StatusID: 3, Name: 'Decline', Status: 'Declined'}
       ],
       currentInsuranceCorpID: null,
-      currentBlockItem: null,
       // 搜索
       searchForm: {
         name: null
@@ -341,6 +348,7 @@ export default {
       currentApplicationTemplate: null,
       currentApplicationBlockID: 0,
       currentBlockName: null,
+      currentBlockItem: {ApplicationTemplateID: null},
       currentApplicationBlock: null,
       pageSize: 10,
       pagerCount: 5,
@@ -381,7 +389,7 @@ export default {
         PolicyNumber: null,
         Premium: null,
         BillWayID: null,
-        OutstandingBalance: null,
+        OutstandingBalance: 0,
         QuestionnaireID: 0
       },
       quotationBindFormRules: {
@@ -460,7 +468,8 @@ export default {
       // processing
       ProcessingTypeID: null,
       ProcessingTitle: '',
-      processingVisible: false
+      processingVisible: false,
+      subapplicationTemplateEditionVisible: false
     }
   },
   mounted: function () {
@@ -574,6 +583,18 @@ export default {
       // app.Status = astatus.Name
       let astatus = this.statusList.find(s => s.key === app.StatusID)
       app.Status = astatus.value
+    },
+    checkQuotationProcessInput: function () {
+      this.$refs['quotationProcessingForm'].validate((valid) => {
+        if (valid) {
+          this.quotationProcess()
+        } else {
+          this.$message({
+            type: 'error',
+            message: 'Format Error'
+          })
+        }
+      })
     },
     quotationProcess: function () {
       this.$confirm('Are you sure to process it?', 'Confirm', {
@@ -742,6 +763,10 @@ export default {
         this.isLoading = false
       })
     },
+    hideEdition: function () {
+      this.applicationFormVisible = false
+      this.subapplicationTemplateEditionVisible = false
+    },
     closeEditApplication: function (id, type) {
       this.editApplicationWindowVisible = false
       if (type === 'saveAndPrint') {
@@ -821,6 +846,13 @@ export default {
       let aBlock = blockItem.applicationBlock
       this.loadApplicationBlock(aTemplate, aBlock)
     },
+    showEditSubApplicationTemplate: function (blockItem) {
+      this.currentBlockItem = blockItem
+      this.subapplicationTemplateEditionVisible = true
+      if (this.$refs.esat !== undefined) {
+        this.$refs.esat.loadApplicationTemplate(blockItem.ApplicationTemplateID)
+      }
+    },
     loadApplication: function (app) {
       // if (app.applicationTemplate !== null) return
       let id = app.ApplicationID
@@ -891,6 +923,7 @@ export default {
                 ab.BlockName = templateBlock.BlockName
               })
               tb.applicationTemplates.forEach(at => {
+                at.TemplateID = tb.TemplateID
                 let childat = {
                   id: id++,
                   ApplicationTemplateID: at.ApplicationTemplateID,

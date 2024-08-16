@@ -26,17 +26,18 @@ Function: Show my commercial application list and do all operations on the list.
           </el-form-item>
         </el-form>
       </div>
-      <el-table height="500" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom"></el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
-          <template slot-scope="props">
+          <template v-slot="props">
             <el-table :data="props.row.blocks" row-key="id" default-expand-all :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
               <el-table-column prop="BlockName" label="Block Name" min-width="300"/>
               <el-table-column prop="Status" label="Status" min-width="100"/>
               <el-table-column label="Sub-Action" width="380">
-                <template slot-scope="scope">
+                <template v-slot="scope">
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" :disabled="props.row.StatusID > 1" @click="showEditSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
                   <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
@@ -48,16 +49,17 @@ Function: Show my commercial application list and do all operations on the list.
         <!--el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column-->
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="Action" width="480">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-delete" type="danger" v-if="scope.row.StatusID < 2 " @click="del(scope.row.ApplicationID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
             </el-button-group>
@@ -67,7 +69,7 @@ Function: Show my commercial application list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList" @current-change="handleCurrentChange">
       </el-pagination>
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
-      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1650px" center :before-close="closeEdit">
+      <el-dialog z-index="5" title="" :visible.sync="editApplicationWindowVisible" width="1284.56px" center :before-close="closeEdit">
         <EditApplication ref="eacl" :applicationid="currentApplicationID" :templateList="templatesList" @close="closeEditApplication"></EditApplication>
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
@@ -111,8 +113,12 @@ Function: Show my commercial application list and do all operations on the list.
       <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
         <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
       </el-dialog>
-      <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
-
+      <!----------------------------------------------BaseInfo Edition弹窗结束----------------------------------------------------->
+      <!----------------------------------------------SubApplicationTemplate Edition 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="SubApplicationTemplate Edition" :visible.sync="subapplicationTemplateEditionVisible" width="984.56px" center>
+        <editSubApplicationTemplate ref="esat" :applicationTemplateId="currentBlockItem.ApplicationTemplateID" @hideEdition="hideEdition()"></editSubApplicationTemplate>
+      </el-dialog>
+      <!----------------------------------------------SubApplicationTemplate Edition弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -125,12 +131,14 @@ import EditApplicationBase from '@/component/parts/editApplicationBase'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
+import editSubApplicationTemplate from '@/component/parts/editSubApplicationTemplate'
 import ViewCSIO from '@/component/window/csio'
 export default {
   components: {
     ViewSheet,
     EditApplicationBase,
     editApplicationBlock,
+    editSubApplicationTemplate,
     ViewApplicationBlock,
     EditApplication,
     ViewApplication,
@@ -165,6 +173,7 @@ export default {
       currentApplicationTemplate: null,
       currentApplicationBlock: null,
       currentBlockName: '',
+      currentBlockItem: {ApplicationTemplateID: null},
       currentApplicationBlockID: 0,
       // 列表
       tempList: [],
@@ -220,7 +229,8 @@ export default {
       csioFormVisible: false,
       viewApplicationBlockVisible: false,
       viewApplicationVisible: false,
-      editApplicationBlockVisible: false
+      editApplicationBlockVisible: false,
+      subapplicationTemplateEditionVisible: false
     }
   },
   mounted: function () {
@@ -305,7 +315,7 @@ export default {
           let appBlock = res.data
           blockitem.applicationBlock = res.data
           blockitem.Status = appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))
-          this.setApplicationStatus()
+          // this.setApplicationStatus()
         }
         this.isLoading = false
         if (close) this.editApplicationBlockVisible = false
@@ -328,105 +338,132 @@ export default {
       }
     },
     showEditBlock: function (blockItem) {
+      /*
       this.setCurrent(blockItem.application)
       this.currentBlockItem = blockItem
       let aTemplate = blockItem.applicationTemplate
       let aBlock = blockItem.applicationBlock
       this.loadApplicationBlock(aTemplate, aBlock)
+       */
+      this.currentBlockItem = blockItem
+      let aTemplate = blockItem.applicationTemplate
+      if (aTemplate.blockQuestion === undefined) this.loadTemplateBlockQuestions(aTemplate)
+      let aBlock = blockItem.applicationBlock
+      this.loadApplicationBlock(aTemplate, aBlock)
+    },
+    showEditSubApplicationTemplate: function (blockItem) {
+      this.currentBlockItem = blockItem
+      this.subapplicationTemplateEditionVisible = true
+      if (this.$refs.esat !== undefined) {
+        this.$refs.esat.loadApplicationTemplate(blockItem.ApplicationTemplateID)
+      }
     },
     loadApplication: function (app) {
-      if (app.applicationTemplate !== null) return
+      // if (app.applicationTemplate !== null) return
       let id = app.ApplicationID
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
         if (res) {
+          console.log('GetApplicationFrame', res.data)
           app.applicationTemplate = res.data.applicationTemplate
-          // build application tree
-          app.blocks = []
-          let id = 0
-          app.applicationTemplate.templateBlocks.forEach(tb => {
-            if (tb.ChildTypeID === 0) {
-              let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
-              tb.applicationBlock = appBlock
-              tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
-              // appBlock.BlockName = tb.BlockName
-              // appBlock.id = id++
-              // appBlock.TypeID = 0
-              let blockItem = {
-                id: id++,
-                TypeID: 0,
-                BlockID: tb.BlockID,
-                BlockName: tb.BlockName,
-                Status: appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering')),
-                applicationBlock: appBlock,
-                application: app,
-                applicationTemplate: app.applicationTemplate
-              }
-              app.blocks.push(blockItem)
-              return
-            }
-            // tb.applicationBlocks = []
-            let appb = {
-              id: id++,
-              BlockID: tb.BlockID,
-              BlockName: tb.BlockName,
-              TypeID: 2,
-              ApplicationID: app.ApplicationID,
-              application: app,
-              applicationTemplate: app.applicationTemplate,
-              templateBlock: tb,
-              children: []
-            }
-            app.blocks.push(appb)
-            tb.applicationTemplates = []
-            app.applicationTemplate.applicationBlocks.forEach(ab => {
-              let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
-              if (templateBlock === undefined) return
-              // tb.applicationBlocks.push(ab)
-              let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
-              if (subatemplate === undefined) {
-                subatemplate = {
-                  BlockName: tb.BlockName,
-                  RepeatedID: ab.RepeatedID,
-                  applicationBlocks: []
+          if (app.applicationTemplate !== null) {
+            app.applicationTemplate.applicationBlocks = app.applicationTemplate.applicationBlocks.filter(ab => ab !== null)
+            // build application tree
+            app.blocks = []
+            app.blockCount = 0
+            let id = 0
+            app.applicationTemplate.templateBlocks.forEach(tb => {
+              if (tb.ChildTypeID === 0) {
+                let appBlock = app.applicationTemplate.applicationBlocks.find(ab => ab.TemplateBlockID === tb.TemplateBlockID)
+                if (appBlock !== undefined) {
+                  tb.applicationBlock = appBlock
+                  tb.applicationBlock.topTemplateBlockID = tb.applicationBlock.TemplateBlockID
                 }
-                tb.applicationTemplates.push(subatemplate)
-              }
-              subatemplate.applicationBlocks.push(ab)
-              ab.topTemplateBlockID = tb.TemplateBlockID
-              ab.BlockName = templateBlock.BlockName
-            })
-            tb.applicationTemplates.forEach(at => {
-              let childat = {
-                id: id++,
-                ApplicationID: app.ApplicationID,
-                BlockID: appb.BlockID,
-                RepeatedID: at.RepeatedID,
-                Parent: appb,
-                BlockName: at.BlockName + ':' + at.RepeatedID,
-                TypeID: 1,
-                application: app,
-                applicationTemplate: app.applicationTemplate,
-                children: []
-              }
-              appb.children.push(childat)
-              at.applicationBlocks.forEach(ab => {
-                let childab = {
+                let blockItem = {
                   id: id++,
                   TypeID: 0,
-                  BlockID: ab.BlockID,
-                  BlockName: ab.BlockName + ':' + at.RepeatedID,
-                  Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
-                  applicationBlock: ab,
-                  application: app,
+                  templateBlock: tb,
+                  BlockID: tb.BlockID,
+                  BlockName: tb.BlockName,
+                  Status: appBlock === undefined ? 'Not Answer' : (appBlock.StatusID === 0 ? 'Not Answer' : (appBlock.StatusID === 1 ? 'Answered' : (appBlock.StatusID === 2 ? 'Skipped' : 'Answering'))),
+                  applicationBlock: appBlock,
+                  app: app,
                   applicationTemplate: app.applicationTemplate
                 }
-                childat.children.push(childab)
+                app.blocks.push(blockItem)
+                app.blockCount = id
+                return
+              }
+              // tb.applicationBlocks = []
+              let appb = {
+                id: id++,
+                BlockID: tb.BlockID,
+                BlockName: tb.BlockName,
+                TypeID: 2,
+                ApplicationID: app.ApplicationID,
+                applicationTemplate: app.applicationTemplate,
+                templateBlock: tb,
+                app: app,
+                children: []
+              }
+              app.blocks.push(appb)
+              // fill in subApplicationTemplate
+              tb.applicationTemplates = app.applicationTemplate.children.filter(c => c.TemplateID === tb.BlockID)
+              app.applicationTemplate.applicationBlocks.forEach(ab => {
+                let templateBlock = tb.subTemplateBlocks.find(subtb => subtb.TemplateBlockID === ab.TemplateBlockID)
+                if (templateBlock === undefined) return
+                // tb.applicationBlocks.push(ab)
+                let subatemplate = tb.applicationTemplates.find(at => at.RepeatedID === ab.RepeatedID)
+                if (subatemplate === undefined) {
+                  subatemplate = {
+                    BlockName: tb.BlockName,
+                    RepeatedID: ab.RepeatedID,
+                    applicationBlocks: []
+                  }
+                  tb.applicationTemplates.push(subatemplate)
+                }
+                if (subatemplate.applicationBlocks === null) subatemplate.applicationBlocks = []
+                subatemplate.applicationBlocks.push(ab)
+                ab.topTemplateBlockID = tb.TemplateBlockID
+                ab.BlockName = templateBlock.BlockName
+              })
+              tb.applicationTemplates.forEach(at => {
+                at.TemplateID = tb.TemplateID
+                let childat = {
+                  id: id++,
+                  ApplicationTemplateID: at.ApplicationTemplateID,
+                  ApplicationID: app.ApplicationID,
+                  BlockID: appb.BlockID,
+                  TemplateBlockID: tb.TemplateBlockID,
+                  RepeatedID: at.RepeatedID,
+                  Parent: appb,
+                  BlockName: tb.BlockName + ':' + (at.RepeatedID + 1),
+                  TypeID: 1,
+                  QuestionnaireID: at.QuestionnaireID,
+                  app: app,
+                  applicationTemplate: app.applicationTemplate,
+                  children: []
+                }
+                appb.children.push(childat)
+                at.applicationBlocks.forEach(ab => {
+                  let childab = {
+                    id: id++,
+                    TypeID: 0,
+                    BlockID: ab.BlockID,
+                    BlockName: ab.BlockName + ':' + (at.RepeatedID + 1),
+                    Status: ab.StatusID === 0 ? 'Not Answer' : (ab.StatusID === 1 ? 'Answered' : (ab.StatusID === 2 ? 'Skipped' : 'Answering')),
+                    app: app,
+                    applicationBlock: ab,
+                    applicationTemplate: at
+                  }
+                  childat.children.push(childab)
+                })
               })
             })
-          })
-          this.loadTemplateBlockQuestions(app.applicationTemplate)
-          console.log('ApplicationFrame', app)
+            app.blockCount = id
+            this.loadTemplateBlockQuestions(app.applicationTemplate)
+          }
+          // console.log('ApplicationFrame', app)
         }
         this.isLoading = false
       }).catch(err => {
@@ -462,6 +499,9 @@ export default {
         if (res) {
           console.log('GetBlockQuestionsByTemplate_all', res)
           atemplate.blockQuestions = res.data
+          atemplate.children.forEach(c => {
+            c.blockQuestions = atemplate.blockQuestions
+          })
           // console.log('isLoadingTemplateBlockQuestions:', this.isLoadingTemplateBlockQuestions)
         }
         this.isLoadingTemplateBlockQuestions = false
@@ -472,6 +512,7 @@ export default {
     },
     matchBlockQuestions: function (aTemplate, aBlock) {
       console.log('applicationTemplate', aTemplate)
+      if (aTemplate.blockQuestions === undefined) return
       aBlock.answers.forEach(a => {
         if (a.IsRoute) {
           // console.log('answer.QuestionID:', a.QuestionID)
@@ -491,27 +532,29 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = blockItem.ApplicationID
+        let appid = blockItem.ApplicationID
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate', {applicationid: id, templateid: blockItem.BlockID}).then(res => {
+        this.axios.post('/api/Services/CommerceService.asmx/AddSubApplicationTemplate_1', {applicationid: appid, templateid: blockItem.BlockID}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('AddSubApplicationTemplate', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            let id = blockItem.children.length * 100
+            let subat = res.data
+            let id = blockItem.app.blockCount
             let atBlockItem = {
               id: id++,
+              ApplicationTemplateID: subat.ApplicationTemplateID,
               BlockID: blockItem.BlockID,
               BlockName: blockItem.BlockName + ':',
               TypeID: 1,
               children: []
             }
             blockItem.children.push(atBlockItem)
-            let repeatedid = 0
-            res.data.forEach(ab => {
-              repeatedid = ab.RepeatedID
+            let childIndex = 0
+            subat.applicationBlocks.forEach(ab => {
+              childIndex = ab.RepeatedID + 1
               // let templateblock = blockItem.applicationTemplate.templateBlocks.find(tb => tb.BlockID === ab.BlockID)
               let templateblock = blockItem.templateBlock.subTemplateBlocks.find(subtb => subtb.BlockID === ab.BlockID)
               let blockname = ''
@@ -521,15 +564,17 @@ export default {
                 ApplicationBlockID: ab.ApplicationBlockID,
                 applicationBlock: ab,
                 applicationTemplate: blockItem.applicationTemplate,
-                application: blockItem.application,
-                RepeatedID: repeatedid,
+                RepeatedID: ab.RepeatedID,
                 BlockID: ab.BlockID,
-                BlockName: blockname + ':' + ab.RepeatedID,
+                BlockName: blockname + ':' + childIndex,
+                Status: 'Not Answer',
                 TypeID: 0
               }
               atBlockItem.children.push(child)
             })
-            atBlockItem.BlockName += repeatedid
+            atBlockItem.BlockName += childIndex
+            blockItem.app.blockCount = id
+            this.showEditSubApplicationTemplate(atBlockItem)
           }
           this.isLoading = false
         }).catch(err => {
@@ -549,9 +594,15 @@ export default {
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
-        let id = blockItem.ApplicationID
+        let service = '/api/Services/CommerceService.asmx/RemoveApplicationTemplate'
+        let param = {id: blockItem.ApplicationTemplateID}
+        if (blockItem.ApplicationTemplateID === undefined) {
+          let id = blockItem.ApplicationID
+          service = '/api/Services/CommerceService.asmx/RemoveSubApplicationTemplate'
+          param = {applicationid: id, templateid: blockItem.BlockID, repeatedid: blockItem.RepeatedID}
+        }
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/RemoveSubApplicationTemplate', {applicationid: id, templateid: blockItem.BlockID, repeatedid: blockItem.RepeatedID}).then(res => {
+        this.axios.post(service, param).then(res => {
           if (res) {
             console.log('删除', res)
             this.$message({
@@ -607,6 +658,7 @@ export default {
     },
     hideEdition: function () {
       this.applicationFormVisible = false
+      this.subapplicationTemplateEditionVisible = false
     },
     closeEditApplication: function (id, type) {
       this.editApplicationWindowVisible = false
@@ -614,6 +666,7 @@ export default {
         this.showApplication(id)
       }
       // this.search(this.searchForm.name)
+      this.loadApplications(0)
     },
     // 关闭修改
     closeEdit: function (done) {

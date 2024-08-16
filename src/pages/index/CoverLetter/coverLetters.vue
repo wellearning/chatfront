@@ -71,10 +71,10 @@ Function: Show all cover letter list and do all operations on the list.
               <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button>
               <!--el-button icon="el-icon-delete" v-if="scope.row.StatusID >= 0 " type="danger" @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Delete</el-button-->
               <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.Status > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Edit</el-button>
-              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && !scope.row.UploadAudited" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
-              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 2) && scope.row.UploadAudited" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
-              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAuditNeeded && !scope.row.UWAudited" type="primary" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
-              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.Status === 2 && scope.row.UWAudited" type="success" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 3) && scope.row.UWAuditNeeded && !scope.row.UploadAudited" type="primary" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUploadAuditVisible && (scope.row.Status === 3) && scope.row.UploadAudited" type="success" @click="showUpload(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">UpAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && (scope.row.Status === 2 || scope.row.Status === 3) && scope.row.UWAuditNeeded && !scope.row.UWAudited" type="primary" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
+              <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && (scope.row.Status === 2 || scope.row.Status === 3) && scope.row.UWAudited" type="success" @click="showUwAudit(scope.row)" :loading="isLoading" size="small">UwAudit</el-button>
               <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && !scope.row.UWAuditNeeded " type="default" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to set UwAudit needed"></el-button>
               <el-button icon="el-icon-edit-outline" v-if="isUWAuditVisible && scope.row.UWAuditNeeded " type="success" @click="setUwAudit(scope.row)" :loading="isLoading" size="small" title="click to remove UwAudit needed"></el-button>
             </el-button-group>
@@ -332,6 +332,7 @@ export default {
     showEditCoverLetter: function (coverletter) {
       let id = coverletter.CoverLetterID
       this.currentCoverLetterID = id
+      this.currentCoverLetter = coverletter
       this.editAutoCoverLetterWindowVisible = true
       if (this.$refs.eacl !== undefined) {
         this.$refs.eacl.loadCoverLetter(id)

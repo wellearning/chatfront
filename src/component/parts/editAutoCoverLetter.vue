@@ -5,7 +5,7 @@
       <el-col :span="6">&#12288;</el-col>
       <el-col :span="12">
         <el-form-item prop="Title">
-          <el-input v-model="coverLetterForm.Title" placeholder="Title"></el-input>
+          <el-input v-model="coverLetterForm.Title" disabled placeholder="Title"></el-input>
         </el-form-item>
       </el-col>
       <el-col :span="6">&#12288;</el-col>
@@ -139,13 +139,13 @@ export default {
       this.isLoadingBlockQuestions = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetBlockQuestionsByCoverLetter', {coverletterid: id}).then(res => {
         if (res) {
-          console.log('NewCoverLetterTemplates', res)
+          console.log('loadBlockQuestions', res)
           this.blockQuestions = res.data
           // if (!this.isLoading) this.matchAnswerBlockQuestion()
         }
         this.isLoadingBlockQuestions = false
       }).catch(err => {
-        console.log('Templates列表出错', err)
+        console.log('loadBlockQuestions error', err)
         this.isLoadingBlockQuestions = false
       })
     },
@@ -153,13 +153,13 @@ export default {
       this.isLoadingChoiceOptions = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetChoiceOptionsByTemplate', {templateid: id}).then(res => {
         if (res) {
-          console.log('GetChoiceOptionsByTemplate', res)
+          console.log('loadChoiceOptions', res)
           this.choiceOptions = res.data
           // if (!this.isLoading) this.matchAnswerBlockQuestion()
         }
         this.isLoadingChoiceOptions = false
       }).catch(err => {
-        console.log('Templates列表出错', err)
+        console.log('loadChoiceOptions error', err)
         this.isLoadingBlockQuestions = false
       })
     },
@@ -212,7 +212,7 @@ export default {
       // this.initInsuranceCompany()
       this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterFrame', {coverletterid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('loadCoverLetter', res)
           this.coverLetterForm = res.data
           let effdate = moment(res.data.EffectiveDate)
           this.coverLetterForm.EffectiveDate = effdate
@@ -230,9 +230,9 @@ export default {
             // this.changeTemplates(this.coverLetterForm.Templates, 'Answer')
           })
         }
-        this.isLoading = false
+        // this.isLoading = false
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('loadCoverLetter error', err)
         this.isLoading = false
       })
     },
@@ -270,12 +270,12 @@ export default {
       this.isLoadingInsuranceCompany = true
       this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
         if (res) {
-          console.log('保险公司列表', res)
+          console.log('initInsuranceCompany', res)
           this.insuranceCompanyList = res.data
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
+        console.log('initInsuranceCompany error', err)
         this.isLoadingInsuranceCompany = false
       })
     },
@@ -283,12 +283,12 @@ export default {
       this.isLoadingProducer = true
       this.axios.post('/api/Services/baseservice.asmx/GetProducers', {}).then(res => {
         if (res) {
-          console.log('Producer列表', res)
+          console.log('initProducers', res)
           this.producerList = res.data
         }
         this.isLoadingProducer = false
       }).catch(err => {
-        console.log('producer列表出错', err)
+        console.log('initProducers error', err)
         this.isLoadingProducer = false
       })
     },
@@ -302,7 +302,10 @@ export default {
       this.$refs['coverLetterForm'].validate((valid) => {
         if (valid) {
           let coverletter = JSON.parse(JSON.stringify(this.coverLetterForm))
+          let blockCounts = 0
+          let cblocks = []
           coverletter.coverLetterTemplates.forEach(template => {
+            blockCounts += template.coverLetterBlocks.length
             template.coverLetterBlocks.forEach(block => {
               block.answers.forEach(answer => {
                 answer.blockQuestion = null
@@ -312,38 +315,43 @@ export default {
                   answer.optionAnswers = answer.optionAnswers.filter(oa => { return oa.IsChecked })
                 }
               })
+              cblocks.push(block)
             })
+            template.coverLetterBlocks = null
           })
           let value = JSON.stringify(coverletter)
           if (type === 'save' || (type === 'saveAndPrint')) {
             // console.log('提交问题', form)
-            this.isLoading = true
+            this.saveBlockIndex = 0
+            this.saveBlockCount = blockCounts
+            this.isLoadingSubmit = true
             this.axios.post('/api/Services/NewBusinessService.asmx/SaveCoverLetter', {coverLetter: value}).then(res => {
               if (res) {
                 console.log('修改', res)
-                this.$message({
-                  type: 'success',
-                  message: 'Operation Succeeded'
+                cblocks.forEach(cBlock => {
+                  cBlock.CoverLetterTemplateID = res.data.coverLetterTemplates[0].CoverLetterTemplateID
+                  this.saveCoverLetterBlock(cBlock)
                 })
                 this.$refs['coverLetterForm'].resetFields()
                 this.currentTemplates = []
                 this.AnsweredArr = []
                 this.totalQuestionNum = 1
+                let coverLetterId = res.data.CoverLetterID
                 // this.EffectiveDate = null
                 // this.AutoBindingAuthority = null
                 // this.PropertyBindingAuthority = null
                 // this.coverLetterFormVisible = false
-                this.$emit('close', res.data, type)
+                this.$emit('close', coverLetterId, type)
                 if (type === 'saveAndPrint') {
                   // this.showCoverLetter(res.data.CoverLetterID)
                   // this.view(res.data.CoverLetterID)
                 }
               }
-              this.isLoading = false
+              // this.isLoadingSubmit = false
               // this.coverLetterForm = null
             }).catch(err => {
               console.log('修改出错', err)
-              this.isLoading = false
+              this.isLoadingSubmit = false
             })
           } else {
             this.$message({
@@ -357,6 +365,30 @@ export default {
             message: 'Format Error'
           })
         }
+      })
+    },
+    saveCoverLetterBlock: function (cblock) {
+      let value = JSON.stringify(cblock)
+      console.log('SaveCoverLetterBlock', cblock)
+      this.axios.post('/api/Services/NewBusinessService.asmx/SaveCoverLetterBlock', {coverletterblock: value}).then(res => {
+        if (res) {
+          console.log('SaveCoverLetterBlock', res)
+        }
+        this.saveBlockIndex++
+        if (this.saveBlockIndex === this.saveBlockCount) {
+          this.isLoading = false
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+        }
+      }).catch(err => {
+        console.log('修改出错', err)
+        this.$message({
+          type: 'error',
+          message: 'Operation failed'
+        })
+        this.isLoadingSubmit = false
       })
     }
 
