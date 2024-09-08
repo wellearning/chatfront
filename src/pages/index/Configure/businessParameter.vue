@@ -300,7 +300,7 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    this.loadBusinessParameters()
   },
   watch: {
     finishNum (val) {
@@ -338,20 +338,14 @@ export default {
         this.isLoading = false
       })
     },
-    // 查询
-    search: function (name) {
+    loadBusinessParameters: function () {
       this.isLoading = true
       this.axios.post('/api/Services/baseservice.asmx/GetBusinessParameters_all', {}).then(res => {
         if (res) {
           console.log('查询', res)
-          this.list = res.data
+          this.totalList = res.data
           this.listLength = this.list.length
-          if (name !== null) {
-            this.searchName = name
-            this.list = this.list.filter(item => item.Name.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-          }
-          this.total = this.list.length
-          this.currentPage = 1
+          this.search()
         }
         this.isLoading = false
       }).catch(err => {
@@ -359,11 +353,27 @@ export default {
         this.isLoading = false
       })
     },
-    // 重置查询
+    search: function () {
+      let query = this.searchForm.name
+      if (query === null || query === '') {
+        this.list = this.totalList
+      } else {
+        query = query.toLowerCase()
+        this.list = this.totalList.filter(r => r.Name.toLowerCase().indexOf(query) >= 0 ||
+          r.ParameterID === Number(query) ||
+          r.BusinessType.toLowerCase() === query ||
+          r.InsuranceType.toLowerCase() === query ||
+          r.ProcessingType.toLowerCase() === query
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      // this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null)
+      this.search()
     },
     // 隐藏权限弹窗
     closeListValue: function (done) {

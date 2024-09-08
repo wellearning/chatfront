@@ -40,7 +40,7 @@ Function: Show all personal line memo list and do all operations on the list.
         <el-table-column label="Corp" prop="CorpName" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="160" sortable="custom"></el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="250" sortable="custom"></el-table-column>
-        <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="StatusName" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="UWScore" prop="Score" min-width="100"></el-table-column>
         <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
         <!--el-table-column label="Print" prop="PrintTimes" min-width="100"></el-table-column-->
@@ -52,10 +52,10 @@ Function: Show all personal line memo list and do all operations on the list.
               <el-button icon="el-icon-edit" v-if="RoleName === 'Developer'" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.StatusID === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-              <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-delete" v-if="scope.row.Status !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -169,6 +169,7 @@ export default {
       templateList: [],
       // staffsList: [],
       insuranceCompanyList: [],
+      memoStatusList: [],
       // 搜索
       searchForm: {
         name: null
@@ -192,7 +193,7 @@ export default {
         InsuranceCorp: null,
         PolicyNumber: null,
         Author: null,
-        StatusID: 0,
+        // StatusID: 0,
         branch: {
           Name: null,
           Address: null,
@@ -235,8 +236,9 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null, 0)
+    this.loadMemoStatus()
     this.initInsuranceCompany()
+    this.search(null, 0)
   },
   methods: {
     sorttable: function (column) {
@@ -289,18 +291,31 @@ export default {
       }
       this.search(this.searchForm.name, 0)
     },
-    // Templates列表
+    // Templates
     initTemplates: function () {
       this.isLoadingTemplates = true
       this.axios.post('/api/Services/MemoService.asmx/SearchTemplates', {query: ''}).then(res => {
         if (res) {
-          console.log('Templates列表', res)
+          console.log('Templates', res)
           this.templateList = res.data
         }
         this.isLoadingTemplates = false
       }).catch(err => {
-        console.log('Templates列表出错', err)
+        console.log('Templates error', err)
         this.isLoadingTemplates = false
+      })
+    },
+    loadMemoStatus: function () {
+      this.isLoadingIMemoStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'MemoStatus'}).then(res => {
+        if (res) {
+          console.log('loadMemoStatus', res)
+          this.memoStatusList = res.data
+        }
+        this.isLoadingIMemoStatus = false
+      }).catch(err => {
+        console.log('loadMemoStatus error', err)
+        this.isLoadingIMemoStatus = false
       })
     },
 
@@ -309,12 +324,12 @@ export default {
       this.isLoadingInsuranceCompany = true
       this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
-          console.log('保险公司列表', res)
+          console.log('initInsuranceCompany', res)
           this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
+        console.log('initInsuranceCompany error', err)
         this.isLoadingInsuranceCompany = false
       })
     },
@@ -328,7 +343,7 @@ export default {
         this.isLoading = true
         this.axios.post('/api/Services/memoservice.asmx/RemoveMemo', {memoid: id}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('RemoveMemo', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
@@ -338,7 +353,7 @@ export default {
           }
           this.isLoading = false
         }).catch(err => {
-          console.log('删除出错', err)
+          console.log('RemoveMemo error', err)
           this.isLoading = false
         })
       }).catch(() => {
@@ -352,7 +367,6 @@ export default {
     search: function (name, start) {
       this.isLoading = true
       if (start === 0) this.list = []
-      // 后端不支持null查询，把null转换成''
       if (name === null) {
         this.searchName = ''
       } else {
@@ -360,12 +374,17 @@ export default {
       }
       this.axios.post('/api/Services/memoservice.asmx/SearchMemoes', {query: this.searchName, start: start}).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('SearchMemoes', res)
           if (res.data.length < this.pagerCount * this.pageSize) {
             this.isAll = true
           } else {
             this.isAll = false
           }
+          res.data.forEach(r => {
+            let status = this.memoStatusList.find(s => s.key === r.Status)
+            if (status !== undefined) r.StatusName = status.value
+            else r.StatusName = ''
+          })
           this.list = this.list.concat(res.data)
           this.total = this.list.length
           this.pageCount = Math.ceil(this.total / this.pageSize)
@@ -375,12 +394,12 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询出错', err)
+        console.log('SearchMemoes error', err)
         this.isLoading = false
       })
     },
     handleCurrentChange: function (val) {
-      console.log(`当前页: ${val}`)
+      console.log(`current page: ${val}`)
       if (val === this.pageCount && !this.isAll) {
         this.search(null, this.total)
       }
@@ -421,13 +440,13 @@ export default {
       }
     },
 
-    // 查阅弹窗
+    // show view window
     view: function (id) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
       this.axios.post('/api/Services/memoservice.asmx/GetMemo', {memoid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('GetMemo', res)
           this.viewFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.viewForm = res.data
@@ -439,7 +458,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('GetMemo error', err)
         this.isLoading = false
       })
     },
@@ -506,13 +525,13 @@ export default {
         this.$refs.vs.loadBusinessObj(memoid)
       }
     },
-    // Pink Slip弹窗
+    // Pink Slip window
     pinkSlip: function (id) {
       this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
       this.isLoading = true
       this.axios.post('/api/Services/memoservice.asmx/GetViewMemo', {memoid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('GetViewMemo', res)
           this.pinkSlipFormVisible = true
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             let memo = res.data
@@ -546,11 +565,11 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('GetViewMemo error', err)
         this.isLoading = false
       })
     },
-    // 关闭Pink Slip
+    // close Pink Slip
     closePinkSlip: function (done) {
       this.viewForm = {
         Title: null,

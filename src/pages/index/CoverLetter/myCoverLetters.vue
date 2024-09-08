@@ -45,15 +45,15 @@ Function: Show my cover letter list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
-        <el-table-column label="Action" width="320" fixed="right">
+        <el-table-column label="Action" width="350" fixed="right">
           <template slot-scope="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
-              <el-button icon="el-icon-edit" type="primary" @click="showEditBase(scope.row)" :loading="isLoading" size="small">EditBase</el-button>
-              <!--el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 2 " @click="voidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Void</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.CoverLetterID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button-->
-              <el-button icon="el-icon-delete" type="danger"  v-if="scope.row.StatusID < 2 " @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.Status < 2" @click="showEditCoverLetter(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.Status < 2" @click="showEditBase(scope.row)" :loading="isLoading" size="small">EditBase</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.Status < 2 " @click="voidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Void</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.Status === 5 " @click="unvoidCoverLetter(scope.row.CoverLetterID)" :loading="isLoading" size="small">Unvoid</el-button>
+              <!--el-button icon="el-icon-delete" type="danger"  v-if="scope.row.StatusID < 2 " @click="del(scope.row.CoverLetterID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button-->
             </el-button-group>
           </template>
         </el-table-column>
@@ -392,8 +392,8 @@ export default {
               message: 'Operation Succeeded'
             })
             let cl = this.list.find(item => item.CoverLetterID === id)
-            cl.StatusID = 5
-            cl.Status = 'Void'
+            cl.Status = 5
+            cl.StatusName = 'Void'
           }
           this.isLoading = false
         }).catch(err => {
@@ -422,8 +422,8 @@ export default {
               message: 'Operation Succeeded'
             })
             let cl = this.list.find(item => item.CoverLetterID === id)
-            cl.StatusID = Number(res.data)
-            if (cl.StatusID === 0) cl.Status = 'Draft'
+            cl.Status = Number(res.data)
+            if (cl.Status === 0) cl.StatusName = 'Draft'
             else cl.Status = 'Finished'
           }
           this.isLoading = false

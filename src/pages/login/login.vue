@@ -21,8 +21,12 @@ Function: Log in page of the system.
                   <el-input v-model.trim="loginForm.password" placeholder="Password" type="password" clearable></el-input>
                 </el-form-item>
                 <el-form-item  v-if="verifyCodeUsed" label prop="verifyCode">
-                  <el-input v-model.trim="loginForm.code" placeholder="Verify Code" clearable></el-input>
-                  <el-button class="" @click="sendVerifyCode()" >Send Verify Code</el-button>
+                  <el-col :span="16">
+                    <el-input v-model.trim="loginForm.code" placeholder="Verify Code" clearable></el-input>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-button class="" @click="sendVerifyCode()" >Send Verify Code</el-button>
+                  </el-col>
                 </el-form-item>
                 <el-form-item>
                   <el-button v-if="!verifyCodeUsed" class="loginBtn" type="primary" @click="login()" :loading="isLoading">Enter</el-button>
@@ -50,7 +54,7 @@ export default {
     //   }
     // }
     return {
-      verifyCodeUsed: false,
+      verifyCodeUsed: true,
       isLoading: false,
       loginForm: {
         username: '',
@@ -69,8 +73,12 @@ export default {
     }
   },
   methods: {
-    // 登录
     login: function () {
+      if (this.verifyCodeUsed) this.login_v()
+      else this.login_nv()
+    },
+    // 登录
+    login_nv: function () {
       this.$refs['loginForm'].validate(valid => {
         if (valid) {
           this.isLoading = true

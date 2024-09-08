@@ -520,7 +520,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询sheet出错', err)
+        console.log('loadSheet error', err)
         this.isLoading = false
       })
     },
@@ -543,7 +543,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('loadProducer出错', err)
+        console.log('loadProducer error', err)
         this.isLoading = false
       })
     },
@@ -591,7 +591,7 @@ export default {
       } else return
       this.axios.post(server, para).then(res => {
         if (res) {
-          console.log('查询Sheets', res)
+          console.log('loadSheets', res)
           this.sheets = res.data
           if (this.sheets.length === 1) {
             // this.sheetId = this.sheets[0].SheetID
@@ -606,7 +606,7 @@ export default {
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('查询Sheets出错', err)
+        console.log('loadSheets error', err)
         this.isLoading = false
       })
     },
@@ -633,7 +633,7 @@ export default {
           this.isLoading = false
         }
       }).catch(err => {
-        console.log('loadApplication出错', err)
+        console.log('loadApplication error', err)
         this.isLoading = false
       })
     },
@@ -655,7 +655,7 @@ export default {
           }
         }
       }).catch(err => {
-        console.log('GetApplicationBlock列表出错', err)
+        console.log('GetApplicationBlock error', err)
         this.loadCount++
         // if (this.loadCount === this.applicationTemplate.templateBlocks.length) this.loadBlockQuestions(atemplate)
       })
@@ -687,7 +687,7 @@ export default {
           console.log('create printRecord', res)
         }
       }).catch(err => {
-        console.log('查询单个出错', err)
+        console.log('CreatePrintRecord error', err)
       })
     }
 

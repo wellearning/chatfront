@@ -14,8 +14,8 @@
           <div class="viewMemo-subtitle head"><i style="width: unset;">{{viewForm.branch.Telphone}}</i></div>
         </el-col>
         <el-col :span="12">
-          <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.corpbroker.corp.Name}}</b></div>
-          <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.corpbroker.BrokerCode}}</b></div>
+          <div class="viewMemo-subtitle head"><i class="long">Insurance Company: </i><b>{{viewForm.CorpName}}</b></div>
+          <div class="viewMemo-subtitle head"><i class="long">Broker Code: </i><b>{{viewForm.BrokerCode}}</b></div>
           <div class="viewMemo-subtitle head"><i class="long">CoverLetterID: </i><b>{{viewForm.CoverLetterID}}</b></div>
         </el-col>
       </el-row>
@@ -166,6 +166,11 @@ export default {
           this.totalBlocks = 0
           this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
           this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+          let corp = this.insuranceCorps.find(c => c.InsuranceCorpID === res.data.InsuranceCorpID)
+          if (corp !== undefined) this.viewForm.CorpName = corp.ShortName
+          else this.viewForm.CorpName = ''
+          if (res.data.corpbroker === null) this.viewForm.BrokerCode = ''
+          else this.viewForm.BrokerCode = res.data.corpbroker.BrokerCode
           this.viewForm.coverLetterTemplates.forEach(ct => {
             this.totalBlocks += ct.coverLetterBlocks.length
             ct.coverLetterBlocks.forEach(cb => {

@@ -66,6 +66,12 @@ Function: Show branch report as administrator role.
         </el-table-column>
         <el-table-column label="Property Counts" prop="PropertyCounts" min-width="100" sortable="custom">
         </el-table-column>
+        <el-table-column label="UW Counts" prop="UWCounts" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="UW Score" prop="UWScore" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="100" sortable="custom">
+        </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
@@ -88,9 +94,17 @@ Function: Show branch report as administrator role.
             <a @click = "showProducer(scope.row)" style="color:darkblue" href="#" title="Double Click here to show the detail.">{{scope.row.ProducerName}}</a>
           </template>
         </el-table-column>
+        <el-table-column label="Counts" prop="Counts" min-width="100" sortable="custom">
+        </el-table-column>
         <el-table-column label="Vehicle Counts" prop="VehicleCounts" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Property Counts" prop="PropertyCounts" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="UW Counts" prop="UWCounts" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="UW Score" prop="UWScore" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Quality Score" prop="QualityScore" min-width="100" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=branchPageSize :pager-count=pagerCount :current-page.sync=branchcurrentPage layout="prev, pager, next" :total=branchtotal class="pageList">
@@ -121,11 +135,11 @@ Function: Show branch report as administrator role.
         <el-table-column label="Request Date" prop="RequestDate" min-width="120" sortable="custom">
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="Score" min-width="80" sortable="custom">
+        <el-table-column label="UW Score" prop="Score" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
+        <el-table-column label="Q-Score" prop="QualityScore" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Detail" prop="" min-width="80">
+        <el-table-column label="Detail" prop="" min-width="80">
           <template v-slot="scope" >
             <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showMemo(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
@@ -499,7 +513,7 @@ export default {
             })
           } else {
             this.list.forEach(r => {
-              r.Premium = r.NBPremium + r.RemarketPremium
+              // r.Premium = r.NBPremium + r.RemarketPremium
               r.Counts = r.VehicleCounts + r.PropertyCounts
             })
           }
@@ -551,9 +565,9 @@ export default {
           console.log('loadBranch', res)
           this.producers = res.data
           this.producers.forEach(function (c) {
-            c.nbPremium = '$' + c.NBPremium.toLocaleString()
-            c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
-            // c.nbPremium = c.NBPremium
+            // c.nbPremium = '$' + c.NBPremium.toLocaleString()
+            // c.remarketPremium = '$' + c.RemarketPremium.toLocaleString()
+            c.Counts = c.VehicleCounts + c.PropertyCounts
             // c.remarketPremium = c.RemarketPremium
           })
           this.branchtotal = this.producers.length
@@ -595,7 +609,7 @@ export default {
               let corp = this.insuranceCorpList.find(co => co.InsuranceCorpID === c.InsuranceCorpID)
               if (corp !== undefined) c.CorpName = corp.ShortName
               else c.CorpName = ''
-              let status = this.appStatusList.find(co => co.key === c.Status)
+              let status = this.memoStatusList.find(co => co.key === c.Status)
               if (status !== undefined) c.StatusName = status.value
               else c.StatusName = ''
               let type = this.appTypeList.find(co => co.key === c.TypeID)
@@ -650,7 +664,7 @@ export default {
               let corp = this.insuranceCorpList.find(ic => ic.InsuranceCorpID === c.InsuranceCorpID)
               if (corp === undefined) c.CorpName = ''
               else c.CorpName = corp.ShortName
-              let status = this.memoStatusList.find(co => co.key === c.StatusID)
+              let status = this.memoStatusList.find(co => co.key === c.Status)
               if (status !== undefined) c.StatusName = status.value
               else c.StatusName = ''
               let type = this.insuranceTypes.find(co => co.key === c.InsuranceTypeID)
@@ -671,7 +685,7 @@ export default {
     loadMemo: function () {
       let memoid = this.currentMemo.MemoID
       this.isLoadingMemo = true
-      this.axios.post('/api/Services/MemoService.asmx/GetMemoProperties_score', {memoid: memoid, processingtypeid: 1}).then(res => {
+      this.axios.post('/api/Services/MemoService.asmx/GetMemoProperties', {memoid: memoid, processingtypeid: 1}).then(res => {
         if (res) {
           console.log('loadMemo', res)
           this.memoproperties = res.data

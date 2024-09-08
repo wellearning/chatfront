@@ -76,8 +76,8 @@ Function: Create new personal line memo.
     </div>
     <EditMemoBody v-if="isAnswering" :memo="memoForm" :insuranceCorps="insuranceCompanyList"></EditMemoBody>
     <div class="newMemo-submit">
-      <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering">Save</el-button>
-      <el-button icon="el-icon-check" type="primary" @click="submit('saveAndPrint')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && memoForm.StatusID === 1">Save & Print</el-button>
+      <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && memoForm.StatusID !== 1">Save</el-button>
+      <el-button icon="el-icon-check" type="primary" @click="submit('saveAndPrint')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="isAnswering && memoForm.StatusID === 1">Finish</el-button>
     </div>
   </div>
 </template>
@@ -114,7 +114,7 @@ export default {
         PolicyNumber: null,
         memoTemplates: [],
         StatusID: 0,
-        RequestDate: moment(new Date()),
+        RequestDate: moment(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())),
         NameInsured: null,
         AddressInsured: null,
         StaffID: JSON.parse(this.$store.getters.getAccount).StaffID,
@@ -400,7 +400,7 @@ export default {
               }
               this.isLoading = false
             }).catch(err => {
-              console.log('保存出错', err)
+              console.log('save error', err)
               this.isLoading = false
             })
           } else {

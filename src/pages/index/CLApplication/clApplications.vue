@@ -79,7 +79,7 @@ Function: Show all commercial application list and do all operations on the list
               <el-button icon="el-icon-edit" v-if="scope.row.Status !== 8"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.Status !== 8" type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Form</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.Status !== 8 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
-              <el-button icon="el-icon-unlock" v-if="scope.row.Status === 8" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button>
+              <el-button icon="el-icon-unlock" v-if="scope.row.Status === 8" type="warning" @click="reinstateApplication(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
               <el-button icon="el-icon-circle-plus" type="primary" @click="duplicate(scope.row)"  size="small">Duplic</el-button>
               <el-button icon="el-icon-close" v-if="scope.row.Status !== 8 && scope.row.Status !== 6" type="danger" @click="showSetCancellation(scope.row)"  size="small">Cancel</el-button>
               <el-button icon="el-icon-view" type="primary" @click="showQuestionnaireObtain(scope.row)"  size="small">QObtain</el-button>
@@ -1054,23 +1054,26 @@ export default {
         })
       })
     },
-    reinstateApplication: function (id) {
+    reinstateApplication: function (policy) {
       this.$confirm('Are you sure to reinstate it?', 'Confirm', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         this.isLoading = true
-        this.axios.post('/api/Services/CommerceService.asmx/UnvoidApplication', {applicationid: id}).then(res => {
+        let id = policy.ApplicationID
+        this.axios.post('/api/Services/CommerceService.asmx/ReinstateApplication', {applicationid: id}).then(res => {
           if (res) {
-            console.log('删除', res)
+            console.log('reinstateApplication', res)
             this.$message({
               type: 'success',
               message: 'Operation Succeeded'
             })
-            this.totalList.remove(item => item.ApplicationID === id)
-            this.list.remove(item => item.ApplicationID === id)
-            console.log('reinstateApplication', this.list)
+            policy.Status = res.data
+            this.setPolicyStatus(policy)
+            // this.totalList.remove(item => item.ApplicationID === id)
+            // this.list.remove(item => item.ApplicationID === id)
+            // console.log('reinstateApplication', this.list)
             // let app = this.list.find(item => item.ApplicationID === id)
             // app.StatusID = res.data
             // this.setApplicationStatus(app)
@@ -1080,7 +1083,7 @@ export default {
           }
           this.isLoading = false
         }).catch(err => {
-          console.log('删除出错', err)
+          console.log('reinstateApplication error', err)
           this.isLoading = false
         })
       }).catch(() => {
@@ -1239,6 +1242,20 @@ export default {
         else if (a.BillWayID === 2) a.AgenDir = 'D'
         else a.AgenDir = ''
       })
+    },
+    setPolicyStatus: function (a) {
+      let status = this.statusList.find(s => s.key === a.Status)
+      let renewalStatus = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
+      if (status.value !== 'Bound') {
+        a.PolicyStatus = status.value
+      } else {
+        if (renewalStatus.value === 'Opened') {
+          let dateline = moment().add(2, 'M')
+          if (a.ExpiryDate < dateline) a.PolicyStatus = 'Open Renewal'
+          else a.PolicyStatus = 'NB'
+        } else if (renewalStatus.value === 'Pending') a.PolicyStatus = 'Pending Renewal'
+        else a.PolicyStatus = renewalStatus.value
+      }
     },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
@@ -1532,9 +1549,11 @@ export default {
           }
           this.isLoading = false
           this.setCancelVisible = false
-          let status = this.statusList.find(s => s.key === res.data)
-          if (status !== undefined) this.currentApplication.Status = status.value
-          else this.currentApplication.Status = ''
+          this.currentApplication.Status = res.data
+          this.setPolicyStatus(this.currentApplication)
+          // let status = this.statusList.find(s => s.key === res.data)
+          // if (status !== undefined) this.currentApplication.Status = status.value
+          // else this.currentApplication.Status = ''
         }).catch(err => {
           console.log('cancel error', err)
           this.isLoading = false

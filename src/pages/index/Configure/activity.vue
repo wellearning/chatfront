@@ -15,7 +15,7 @@ Function: Show all activity list and do all operations on the list.
     <div class="inPageContent">
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
         <el-table-column label="Activity ID" prop="ActivityID" width="100" fixed="left"></el-table-column>
-        <el-table-column label="Activity Name" prop="Name" min-width="300">
+        <el-table-column label="Activity Name" prop="Name" min-width="250">
         </el-table-column>
         <el-table-column label="Start time" prop="StartTime" min-width="150">
           <template v-slot:="scope">
@@ -27,15 +27,22 @@ Function: Show all activity list and do all operations on the list.
             <span>{{scope.row.EndTime.format('YYYY-MM-DD')}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="Introduction" prop="Introduce" min-width="300">
+        <el-table-column label="Introduction" prop="Introduce" min-width="250">
         </el-table-column>
-       <el-table-column label="Action" width="360" fixed="right">
+        <el-table-column label="Status" width="100">
+          <template v-slot="scope">
+            <el-tag v-if="scope.row.StatusID === 1" size="medium">Active</el-tag>
+            <el-tag v-else type="danger" size="medium">Inactive</el-tag>
+          </template>
+        </el-table-column>
+       <el-table-column label="Action" width="400" fixed="right">
           <template v-slot:="scope">
             <el-button-group>
               <el-button icon="el-icon-document" type="primary" @click="showAttendeeForm(scope.row)" :loading="isLoading" size="small">Attendees</el-button>
               <el-button icon="el-icon-document" type="primary" @click="showSponsorForm(scope.row)" :loading="isLoading" size="small">Sponsors</el-button>
               <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row)" :loading="isLoading" size="small">Edit</el-button>
               <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.ActivityID)" :loading="isLoading" size="small">Delete</el-button>
+              <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -251,6 +258,35 @@ export default {
     showEdit: function (activity) {
       this.addForm = activity
       this.addFormVisible = true
+    },
+    switchStatus: function (row) {
+      this.$confirm('Are you sure to switch status?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/baseservice.asmx/SwitchStatus', {itemtype: 'Activity', itemid: row.ActivityID}).then(res => {
+          if (res) {
+            console.log('switchStatus', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            row.StatusID = res.data
+            // this.search(this.searchStatus, this.searchName, this.currentPage)
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('switchStatus error', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
     },
     // 删除
     del: function (id) {
