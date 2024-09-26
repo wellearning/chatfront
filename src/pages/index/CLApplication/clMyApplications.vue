@@ -35,8 +35,8 @@ Function: Show my commercial application list and do all operations on the list.
               <el-table-column prop="Status" label="Status" min-width="100"/>
               <el-table-column label="Sub-Action" width="380">
                 <template v-slot="scope">
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 0 && scope.row.Status !== 'Skipped'" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
+                  <el-button v-if="scope.row.TypeID === 0 && scope.row.Status !== 'Skipped'" icon="el-icon-edit"  type="primary" :disabled="props.row.StatusID > 1" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" :disabled="props.row.StatusID > 1" @click="showEditSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Edit</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" :disabled="props.row.StatusID > 1" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
                   <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" :disabled="props.row.StatusID > 1" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>

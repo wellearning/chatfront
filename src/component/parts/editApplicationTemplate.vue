@@ -601,9 +601,17 @@ export default {
       // let children = this.applicationTemplate.templateBlocks
       let children = atemplate.applicationBlocks
       console.log('applicationBlocks', children)
+      let notanswer = true
+      let answered = true
       children.forEach(cb => {
-        if (cb.StatusID === 0 || cb.StatusID === 3) atemplate.StatusID = 0
+        if (!notanswer && !answered) return
+        if (notanswer && cb.StatusID !== 0) notanswer = false
+        if (answered && (cb.StatusID === 0 || cb.StatusID === 3)) answered = false
+        // if (cb.StatusID === 0 || cb.StatusID === 3) atemplate.StatusID = 0
       })
+      if (notanswer) atemplate.StatusID = 0
+      else if (answered) atemplate.StatusID = 1
+      else atemplate.StatusID = 3
       this.$emit('checkOver')
     }
   }

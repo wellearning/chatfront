@@ -422,7 +422,8 @@ export default {
             let td = {text: columns[i].Name, colspan: 1}
             tr.tds.push(td)
           }
-          let items = JSON.parse(answer.AnswerDesc)
+          let items = []
+          if (answer.AnswerDesc !== null) items = JSON.parse(answer.AnswerDesc)
           items.forEach(function (item) {
             let tr = {tds: []}
             table.trs.push(tr)

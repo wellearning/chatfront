@@ -21,10 +21,10 @@ Function: Log in page of the system.
                   <el-input v-model.trim="loginForm.password" placeholder="Password" type="password" clearable></el-input>
                 </el-form-item>
                 <el-form-item  v-if="verifyCodeUsed" label prop="verifyCode">
-                  <el-col :span="16">
+                  <el-col :xs="8" :sm="14" :md="14" :lg="16">
                     <el-input v-model.trim="loginForm.code" placeholder="Verify Code" clearable></el-input>
                   </el-col>
-                  <el-col :span="8">
+                  <el-col :xs="16" :sm="10" :md="10" :lg="8">
                     <el-button class="" @click="sendVerifyCode()" >Send Verify Code</el-button>
                   </el-col>
                 </el-form-item>
@@ -262,6 +262,14 @@ export default {
       })
     },
     login_v: function () {
+      if (this.loginForm.code === '') {
+        this.$message({
+          type: 'warning',
+          message: 'Please fill in verified code before click login button.',
+          duration: 2000
+        })
+        return
+      }
       this.$refs['loginForm'].validate(valid => {
         if (valid) {
           this.isLoading = true

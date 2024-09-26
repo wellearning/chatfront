@@ -346,7 +346,7 @@ export default {
         if (res) {
           console.log('InsuranceCorps', res)
           this.insuranceCorpList = res.data.filter(c => c.Province === null || c.Province === '' || c.Province === 'ON')
-          if (this.businessTypeId === 6) {
+          if (this.businessTypeId === 6 || this.businessTypeId === 7) {
             this.insuranceCorpList = res.data.filter(c => c.BusinessLineID === 3)
           } else {
             this.insuranceCorpList = res.data.filter(c => c.BusinessLineID !== 3)

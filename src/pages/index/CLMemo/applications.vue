@@ -40,6 +40,7 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="AppType" prop="AppType" min-width="100" sortable="custom"></el-table-column>
         <el-table-column label="InsCorp" prop="CorpName" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="130" sortable="custom">
           <template slot-scope="scope">
@@ -54,7 +55,7 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="A/D" prop="AgenDir" min-width="70" sortable="custom"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column>
         <!--el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column-->
-        <el-table-column label="Action" width="460">
+        <el-table-column label="Action" width="360">
           <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
@@ -101,6 +102,7 @@ export default {
       applicationFormVisible: false,
       producerList: [],
       statusList: [],
+      appTypes: [],
       insuranceCorpList: [],
       periods: [
         {name: 'All', value: 0},
@@ -133,6 +135,7 @@ export default {
   },
   mounted: function () {
     this.btypeId = Number(this.$route.params.id)
+    this.loadAppTypes()
     this.loadBusinessTypes(this.btypeId)
     this.loadProducers(0)
     this.loadApplicationStatus()
@@ -260,6 +263,19 @@ export default {
       this.total = this.list.length
       this.pageCount = Math.ceil(this.total / this.pageSize)
       this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
+    loadAppTypes: function () {
+      this.isLoadingInsuranceCorps = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'AppType'}).then(res => {
+        if (res) {
+          console.log('AppTypes', res)
+          this.appTypes = res.data
+        }
+        this.isLoadingInsuranceCorps = false
+      }).catch(err => {
+        console.log('AppTypes', err)
+        this.isLoadingInsuranceCorps = false
+      })
     },
     loadBusinessTypes: function (id) {
       this.isLoadingInsuranceCorps = true
@@ -390,6 +406,9 @@ export default {
         if (a.BillWayID === 1) a.AgenDir = 'A'
         else if (a.BillWayID === 2) a.AgenDir = 'D'
         else a.AgenDir = ''
+        let appType = this.appTypes.find(t => t.key === a.TypeID)
+        if (appType !== undefined) a.AppType = appType.value
+        else a.AppType = ''
       })
     },
     handleCurrentChange: function (val) {

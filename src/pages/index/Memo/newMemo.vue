@@ -44,7 +44,7 @@ Function: Create new personal line memo.
         <el-col :span="12">
           <el-form-item label="Insurance Company" prop="InsuranceCorpID">
             <el-select v-model="memoForm.InsuranceCorpID" placeholder="Insurance Company" no-data-text="No Record" filterable @change="changeInsuranceCompany()">
-              <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
+              <el-option v-for="item in insuranceCompanyList" :key="item.InsuranceCorpID" :label="item.ShortName" :value="item.InsuranceCorpID"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -329,7 +329,7 @@ export default {
         if (valid) {
           let memo = JSON.parse(JSON.stringify(this.memoForm))
           console.log('memo', memo)
-          memo.InsuranceTypeID = this.TemplateTypeID
+          memo.InsuranceTypeID = memo.TemplateType
           let sequenceno = 0
           memo.memoTemplates.forEach(template => {
             template.SequenceNo = sequenceno

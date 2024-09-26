@@ -58,9 +58,22 @@ Function: Provide receipt edition, include new edit delete and query.
       <!----------------------------------------------edit弹窗开始----------------------------------------------------->
       <el-dialog :title="editTitle" :visible.sync="editFormVisible" width="700px" center :before-close="closeEdit">
         <el-form :model="editForm" ref="editForm" :rules="editFormRules" class="form">
+          <el-form-item label="PolicyID" prop="BusinessID">
+            <el-input v-model="editForm.BusinessID" type="number" disabled></el-input>
+          </el-form-item>
           <el-form-item label="PolicyNumber" prop="BusinessID">
             <el-select v-model="editForm.BusinessID" placeholder="select a account" no-data-text="No Record" filterable>
               <el-option v-for="item in accountList" :key="item.BusinessID" :label="item.PolicyNumber" :value="item.BusinessID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="ClientCode" prop="BusinessID">
+            <el-select v-model="editForm.BusinessID" placeholder="select a account" no-data-text="No Record" filterable>
+              <el-option v-for="item in accountList" :key="item.BusinessID" :label="item.ClientCode" :value="item.BusinessID"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Applicant" prop="BusinessID">
+            <el-select v-model="editForm.BusinessID" placeholder="select a account" no-data-text="No Record" filterable>
+              <el-option v-for="item in accountList" :key="item.BusinessID" :label="item.Name" :value="item.BusinessID"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="TransactionType" prop="TypeID">
@@ -128,7 +141,7 @@ export default {
       },
       editFormRules: {
         BusinessID: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: true, message: 'Please Enter', trigger: 'blur' }
         ],
         TypeID: [
           { required: true, message: 'Please Select', trigger: 'blur' }

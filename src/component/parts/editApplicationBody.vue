@@ -418,6 +418,7 @@ export default {
       cb.answers.forEach(ca => {
         ca.StatusID = 2
       })
+      cb.StatusID = 2
     },
     skipTemplate: function (ct) {
       ct.applicationBlocks.forEach(cb => {

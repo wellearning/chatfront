@@ -76,8 +76,12 @@ router.beforeEach((to, from, next) => {
       if (registerRouteFresh) { // 防止死循环
         console.log('刷新后跳转')
         registerRouteFresh = false
-        router.addRoutes(translateTreeMain(JSON.parse(store.getters.getPermissionList)))
-        next({ ...to, replace: true }) //  hack方法，确保addRoutes已完成
+        let permissions = store.getters.getPermissionList
+        console.log('permissions:' + permissions)
+        if (permissions !== '') {
+          router.addRoutes(translateTreeMain(JSON.parse(store.getters.getPermissionList)))
+          next({ ...to, replace: true }) //  hack方法，确保addRoutes已完成
+        } else next({ path: '/login' })
       } else {
         console.log('普通跳转')
         next()
