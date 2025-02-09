@@ -74,17 +74,17 @@
           </el-table-column>
           <el-table-column label="Name" prop="Name" min-width="150" sortable="custom">
           </el-table-column>
-          <el-table-column label="P/L Premium" prop="PLPremium" class="" min-width="150" sortable="custom">
+          <el-table-column v-if="statisticTypes.includes(2)" label="P/L Premium" prop="PLPremium" class="" min-width="150" sortable="custom">
             <template slot-scope="scope" >
               <span>${{scope.row.PLPremium.toLocaleString()}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="C/L Premium" prop="CLPremium" min-width="150" sortable="custom">
+          <el-table-column v-if="statisticTypes.includes(4)" label="C/L Premium" prop="CLPremium" min-width="150" sortable="custom">
             <template slot-scope="scope" >
               <span>${{scope.row.CLPremium.toLocaleString()}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="IRCA Premium" prop="IRCAPremium" min-width="150" sortable="custom">
+          <el-table-column v-if="statisticTypes.includes(3)" label="IRCA Premium" prop="IRCAPremium" min-width="150" sortable="custom">
             <template slot-scope="scope" >
               <span>${{scope.row.IRCAPremium.toLocaleString()}}</span>
             </template>
@@ -183,6 +183,8 @@ export default {
       lng: 0,
       addressTypes: ['street_number', 'route', 'sublocality', 'locality', 'administrative_area_level_1', 'postal_code'],
       subPath: 'usefulFiles',
+      businessTypes: [],
+      statisticTypes: [],
       files: [],
       isLoading: false,
       isLoadingPL: false,
@@ -200,12 +202,26 @@ export default {
     }
   },
   mounted: function () {
+    this.loadBusinessTypes()
     this.loadSponsors()
     this.loadActivity()
     this.loadDownloadFiles()
     this.interval = setInterval(this.updateClock, 1000)
   },
   methods: {
+    loadBusinessTypes: function () {
+      this.isLoadingHelpData = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'BusinessType'}).then(res => {
+        if (res) {
+          console.log('BusinessTypes', res)
+          this.businessTypes = res.data
+        }
+        this.isLoadingHelpData = false
+      }).catch(err => {
+        console.log('BusinessTypes', err)
+        this.isLoadingHelpData = false
+      })
+    },
     updateClock: function () {
       this.date = moment()
       if (!this.rankListVisible) return
@@ -225,9 +241,11 @@ export default {
     },
     rank: function (name) {
       this.list.sort(this.by(name))
+      this.fillRank(name)
     },
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
+      this.fillRank(name)
     },
     customerFormat: function (percentage) {
       for (let i = 0; i < this.rankList.length; i++) {
@@ -241,20 +259,25 @@ export default {
       else return this.bronze.amount
        */
     },
-    fillRank: function () {
+    fillRank: function (name) {
       if (this.list.length === 0) return
       if (this.isLoadingCL || this.isLoadingPL || this.isLoadingIRCA) return
-      let startDate = moment([2024, 5])
-      let days = this.date.dayOfYear() - startDate.dayOfYear()
+      // let startDate = moment([2024, 5])
+      // let days = this.date.dayOfYear() - startDate.dayOfYear()
       // this.endDate = startDate.add(this.days, 'd')
-      this.rankdesc('TotalPremium')
+      // this.rankdesc('TotalPremium')
       let rankList = []
-      let topPremium = 600000 * days / 90 // this.list[0].TotalPremium
+      let count = this.pageSize
+      let topPremium = this.activity.TopValue// 600000 * days / 90 // this.list[0].TotalPremium
       this.list.forEach(a => {
+        if (rankList.length >= count) return
         let att = {
           name: a.Name,
           amount: a.TotalPremium,
           color: a.color
+        }
+        if (name !== undefined && a[name] !== undefined) {
+          att.amount = a[name]
         }
         att.percentage = att.amount / topPremium * 100
         rankList.push(att)
@@ -351,6 +374,8 @@ export default {
           if (res.data === null) return
           res.data.StartTime = moment(res.data.StartTime)
           res.data.EndTime = moment(res.data.EndTime)
+          if (res.data.StaticItems === null) res.data.businessTypes = []
+          else res.data.businessTypes = res.data.StaticItems.split(',')
           this.activity = res.data
           res.data.attendees.forEach(r => {
             r.ID = r.AttendeeID
@@ -366,7 +391,7 @@ export default {
               r[s.Name] = 0
             })
             r.children = []
-            this.loadAttendeeDetail(r)
+            if (res.data.AttendeeTypeID === 1) this.loadAttendeeDetail(r)
           })
           this.activity = res.data
           this.list = res.data.attendees
@@ -403,14 +428,33 @@ export default {
       })
     },
     loadStatistics: function (days) {
-      this.loadPLStatistic(days)
-      this.loadStatistic(days, 4)
-      this.loadStatistic(days, 3)
+      this.statisticTypes = []
+      let loadingCount = 0
+      this.activity.businessTypes.forEach(b => {
+        let btype = this.businessTypes.find(t => t.value === b)
+        if (btype !== undefined) {
+          this.statisticTypes.push(btype.key)
+          this.loadStatistic(days, btype.key)
+          loadingCount++
+        }
+      })
+      // this.loadPLStatistic(days)
+      // this.loadStatistic(days, 4)
+      // this.loadStatistic(days, 3)
       // this.loadCLStatistic(days)
       // this.loadIrcaStatistic(days)
       this.activity.sponsors.forEach(s => {
         this.loadSponsorStatistic(s)
+        loadingCount++
       })
+      this.loadingStatisticsCount = loadingCount
+    },
+    statisticsLoadFinished: function () {
+      if (this.loadingStatisticsCount === 0) {
+        let name = 'TotalPremium'
+        if (this.activity.DefaultRank !== undefined && this.activity.DefaultRank !== null) name = this.activity.DefaultRank
+        this.rankdesc(name)
+      }
     },
     loadPLStatistic: function (days) {
       this.isLoadingPL = true
@@ -431,14 +475,20 @@ export default {
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
           this.isLoadingPL = false
-          this.fillRank()
+          this.loadingStatisticsCount--
+          this.statisticsLoadFinished()
         }
       }).catch(err => {
         console.log('loadPLStatistic', err)
         this.isLoadingPL = false
+        this.loadingStatisticsCount--
       })
     },
     loadStatistic: function (days, businesstypeid) {
+      if (businesstypeid === 2) {
+        this.loadPLStatistic(days)
+        return
+      }
       this.isLoadingCL = true
       let service = '/api/Services/BaseService.asmx/GetActivityRecords'
       let param = {activityid: this.activity.ActivityID, businesstypeid: businesstypeid}
@@ -459,11 +509,13 @@ export default {
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
           this.isLoadingCL = false
-          this.fillRank()
+          this.loadingStatisticsCount--
+          this.statisticsLoadFinished()
         }
       }).catch(err => {
         console.log('loadStatistic', err)
-        this.isLoading = false
+        this.isLoadingCL = false
+        this.loadingStatisticsCount--
       })
     },
     loadCLStatistic: function (days) {
@@ -485,7 +537,7 @@ export default {
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
           this.isLoadingCL = false
-          this.fillRank()
+          this.loadingStatisticsCount--
         }
       }).catch(err => {
         console.log('loadCLStatistic', err)
@@ -511,7 +563,7 @@ export default {
             attendee.TotalPremium = attendee.PLPremium + attendee.CLPremium + attendee.IRCAPremium
           })
           this.isLoadingIRCA = false
-          this.fillRank()
+          this.loadingStatisticsCount--
         }
       }).catch(err => {
         console.log('loadIrcaStatistic', err)
@@ -527,13 +579,14 @@ export default {
             let attendee = this.list.find(a => a.AttendeeID === r.InstitutionID)
             attendee[sponsor.Name] = r.NBPremium// + r.RemarketPremium + r.RenewalPremium
           })
-          this.rankdesc('TotalPremium')
-          this.isLoading = false
         }
         this.isLoading = false
+        this.loadingStatisticsCount--
+        this.statisticsLoadFinished()
       }).catch(err => {
         console.log('loadSponsorStatistic', err)
         this.isLoading = false
+        this.loadingStatisticsCount--
       })
     },
     loadAttendeeDetail_: function (attendee) {
@@ -566,6 +619,7 @@ export default {
       })
     },
     loadAttendeeDetail: function (attendee) {
+      if (this.activity.AttendeeTypeID !== 1) return
       this.isLoading = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetActivityRecords_producer', {activityid: this.activity.ActivityID, attendeeid: attendee.AttendeeID}).then(res => {
         if (res) {

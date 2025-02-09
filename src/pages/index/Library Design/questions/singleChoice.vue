@@ -186,7 +186,7 @@ export default {
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
         Tips: [
-          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { max: 1024, message: 'Within 1024 Characters', trigger: 'blur' }
         ]
       },
       // 修改
@@ -208,7 +208,7 @@ export default {
           { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
         ],
         Tips: [
-          { max: 512, message: 'Within 512 Characters', trigger: 'blur' }
+          { max: 1024, message: 'Within 1024 Characters', trigger: 'blur' }
         ]
       },
       // 搜索

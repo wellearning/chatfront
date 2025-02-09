@@ -17,7 +17,7 @@ Function: Show my cover letter list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
@@ -292,7 +292,8 @@ export default {
       return moment(date).format('YYYY-MM-DD')
     },
     // 查询
-    search: function (name) {
+    search: function () {
+      let name = this.searchForm.name
       this.isLoading = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetMyCoverLetters', {query: name}).then(res => {
         if (res) {
@@ -455,6 +456,7 @@ export default {
             this.coverLetterForm = res.data
             this.coverLetterForm.EffectiveDate = moment(res.data.EffectiveDate)
             this.coverLetterForm.RequestDate = moment(res.data.RequestDate)
+            this.coverLetterForm.UWDate = moment(res.data.UWDate)
             this.coverLetterForm.Templates = res.data.coverLetterTemplates.map(item => { return item.TemplateID })
             this.changeTemplates(this.coverLetterForm.Templates, 'Answer')
             this.initTemplates()
@@ -483,6 +485,7 @@ export default {
             this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+            this.viewForm.UWDate = moment(res.data.UWDate).format('YYYY-MM-DD')
             // this.printObj.popTitle = this.viewForm.Title // + '( ' + this.viewForm.Author + ')'
           })
         }

@@ -1,12 +1,12 @@
 <template>
   <div class="answer">
     <div class="choiceQuestion">
-      <div class="question">{{answer.QuestionDesc}}</div>
-      <div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div>
+      <div class="question" :title="answer.Tips">{{answer.QuestionDesc}}</div>
+      <!--div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div-->
       <div class="choice">
         <el-checkbox-group v-bind:disabled="disabled" v-model="answer.checklist" @change="changeVal">
           <el-checkbox v-for="item in answer.optionAnswers" v-model="item.IsChecked" :label="item.ChoiceOptionID" :key="item.ChoiceOptionID" @change="checkClick()">
-            <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
+            <span class="choiceTitle" :title="item.Tips">{{item.Content}}<!--i class="choiceTips">{{item.Tips}}</i--></span>
             <span v-if="disabled && item.NeedAddition" style="text-decoration:underline">{{part.Part}}&nbsp;&nbsp;</span>
             <el-input v-else-if="item.NeedAddition" class="additionContent" v-model="item.Addition"  size="mini"  @keydown.native.tab="changeVal()" @input="changeVal"></el-input>
             <div v-if="disabled && item.IsChecked">
@@ -19,10 +19,10 @@
               <pre class="answerMemo" v-if="item.ChildQuestionTypeID === 2" style="word-wrap: break-word">
                 {{item.childAnswer.QuestionDesc}}
               </pre>
-              <div class="answerMemo" v-if="item.ChildQuestionTypeID === 3">
+              <div class="answerMemo" v-if="item.ChildQuestionTypeID === 3" :title="item.childAnswer.Tips">
                 <span class="">{{item.childAnswer.QuestionDesc}}</span>
                 <span class="" style="text-decoration:underline">{{item.childAnswer.AnswerDesc}}</span>
-                <div class="questionTips">{{item.childAnswer.Tips}}</div>
+                <!--div class="questionTips">{{item.childAnswer.Tips}}</div-->
               </div>
               <div class="answerMemo" v-if="item.ChildQuestionTypeID === 4">
                 <div class="question" style="word-wrap: break-word; width:800px;" >{{item.childAnswer.QuestionDesc}}</div>
@@ -46,12 +46,12 @@
               <pre class="answerMemo" v-if="item.ChildQuestionTypeID === 2" style="word-wrap: break-word">
                 {{item.childAnswer.QuestionDesc}}
               </pre>
-              <div class="answerMemo" v-if="item.ChildQuestionTypeID === 3">
+              <div class="answerMemo" v-if="item.ChildQuestionTypeID === 3" :title="item.childAnswer.Tips">
                 <span class="">{{item.childAnswer.QuestionDesc}}</span>
                 <el-input v-if="item.childAnswer.InputType === 'text'" class="additionContent" v-model="item.childQuestion.answer.AnswerDesc" size="mini" placeholder="Text" style="width: 300px;"></el-input>
                 <el-date-picker v-else-if="item.childAnswer.InputType === 'date'" class="additionContent" v-model="item.childQuestion.answer.AnswerDesc" type="date" size="mini" placeholder="yyyy-mm-dd"></el-date-picker>
                 <el-input v-else-if="item.childAnswer.InputType === 'number'" class="additionContent" v-model="item.childQuestion.answer.AnswerDesc" size="mini" placeholder="Number"></el-input>
-                <div class="questionTips">{{item.childAnswer.Tips}}</div>
+                <!--div class="questionTips">{{item.childAnswer.Tips}}</div-->
               </div>
               <div class="answerMemo" v-if="item.ChildQuestionTypeID === 4">
                 <div class="question" style="">{{item.childAnswer.QuestionDesc}}</div>

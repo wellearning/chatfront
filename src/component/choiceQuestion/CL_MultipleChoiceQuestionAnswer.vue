@@ -1,12 +1,12 @@
 <template>
   <div class="answer">
     <div class="choiceQuestion">
-      <div class="question">{{answer.QuestionDesc}}</div>
-      <div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div>
+      <div class="question" :title="answer.Tips">{{answer.QuestionDesc}}</div>
+      <!--div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div-->
       <div class="choice">
         <el-checkbox-group v-bind:disabled="disabled" v-model="answer.checklist" @change="changeVal">
           <el-checkbox v-for="item in answer.optionAnswers" v-model="item.IsChecked" :label="item.ChoiceOptionID" :key="item.ChoiceOptionID" @change="checkClick()">
-            <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
+            <span class="choiceTitle" :title="item.Tips">{{item.Content}}</span>
             <span v-if="disabled && item.NeedAddition" style="text-decoration:underline">{{part.Part}}&nbsp;&nbsp;</span>
             <el-input v-else-if="item.NeedAddition" class="additionContent" v-model="item.Addition"  size="mini" @input="changeVal"></el-input>
             <div v-if="disabled && item.IsChecked">

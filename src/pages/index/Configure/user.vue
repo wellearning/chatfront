@@ -58,7 +58,7 @@ Function: Show all user list and do all operations on the list.
                 </template>
               </el-table-column>
               <el-table-column label="PCode" prop="ProducerCode" min-width="110" sortable="custom"></el-table-column>
-              <el-table-column label="Role" prop="role.Name" min-width="110"></el-table-column>
+              <el-table-column label="Role" prop="RoleName" min-width="110"></el-table-column>
               <el-table-column label="Action" width="300" fixed="right">
                 <template slot-scope="scope">
                   <el-tooltip class="item" effect="dark" :content="scope.row.StatusID === 2 ? 'Set Active' : 'Set Inactive'" placement="top-end">
@@ -147,10 +147,19 @@ Function: Show all user list and do all operations on the list.
           <el-form-item label="Name" prop="Name">
             <el-input v-model.trim="editForm.Name" clearable></el-input>
           </el-form-item>
+          <el-form-item label="Title" prop="Title">
+            <el-input v-model.trim="editForm.Title" clearable></el-input>
+          </el-form-item>
           <el-form-item label="Email" prop="Email">
             <el-input v-model="editForm.Email" clearable></el-input>
           </el-form-item>
-          <el-form-item label="Mobile" prop="Mobile">
+          <el-form-item label="EmailPassword" prop="EmailPWD">
+            <el-input v-model="editForm.EmailPWD" show-password clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Direct" prop="Direct">
+            <el-input v-model="editForm.Direct" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Cell" prop="Mobile">
             <el-input v-model="editForm.Mobile" clearable></el-input>
           </el-form-item>
           <el-form-item label="ProducerCode" prop="ProducerCode">
@@ -249,6 +258,7 @@ export default {
         role: null,
         Mobile: null,
         Email: null,
+        EmailPWD: null,
         ProducerCode: null,
         ProducerLevel: 1,
         StatusID: 1
@@ -295,11 +305,14 @@ export default {
       editForm: {
         StaffID: null,
         Name: null,
+        Title: null,
         InstitutionID: null,
         institution: null,
         role: null,
+        Direct: null,
         Mobile: null,
         Email: null,
+        EmailPWD: null,
         ProducerCode: null,
         ProducerLevel: 1,
         StatusID: 1
@@ -755,12 +768,12 @@ export default {
       this.isLoadingInsuranceCompany = true
       this.axios.post('/api/Services/baseservice.asmx/GetInstitutionStaffRelations', {}).then(res => {
         if (res) {
-          console.log('statusList', res)
+          console.log('loadInstitutionStaffs', res)
           this.institutionStaffs = res.data
         }
         this.isLoadingInsuranceCompany = false
       }).catch(err => {
-        console.log('保险公司列表出错', err)
+        console.log('loadInstitutionStaffs error', err)
         this.isLoadingInsuranceCompany = false
       })
     },

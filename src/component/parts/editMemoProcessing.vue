@@ -34,7 +34,7 @@
   </el-form>
   <div class="newMemo-submit">
     <el-button icon="el-icon-check" type="primary" @click="save(false)" :loading="isLoading ">Save</el-button>
-    <el-button v-if="memo.StatusID === processingtypeid || processingtypeid === 3" icon="el-icon-check" type="primary" @click="save(true)" :loading="isLoading ">Finish</el-button>
+    <el-button v-if="memo.Status === 1 || processingtypeid === 3" icon="el-icon-check" type="primary" @click="save(true)" :loading="isLoading ">Finish</el-button>
   </div>
 </div>
 </template>

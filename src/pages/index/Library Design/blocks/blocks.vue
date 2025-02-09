@@ -65,7 +65,7 @@ Function: Show block list and all operations on the list.
           <div v-for="(item, index) in addForm.blockQuestions" :key="index" class="choice">
             <el-form-item class="marginLeft10">
               <el-input v-model="item.Label" class="labelInput" size="small" placeholder="Label"></el-input>
-              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID + '. ' + item.question.Description}}</span>
+              <span><b class="blockQuestionB">[{{questionTypeList.find(it => it.id === item.question.TypeID).name}}]</b>{{item.question.QuestionID+ item.question.InputType+ '. ' + item.question.Description}}</span>
             </el-form-item>
             <el-form-item class="marginLeft20">
               <el-checkbox v-model="item.IsRoute">Is Route</el-checkbox>
@@ -75,7 +75,7 @@ Function: Show block list and all operations on the list.
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'number' || item.question.InputType === 'date'))">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType.indexOf('list') >= 0 ||item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>
@@ -172,7 +172,7 @@ Function: Show block list and all operations on the list.
             <div v-else>
               <div v-if="routesForm.question.TypeID === 3">
                 <el-row :gutter="10">
-                  <el-col v-if="routesForm.question.InputType==='list'|| routesForm.question.InputType==='children'" :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
+                  <el-col v-if="routesForm.question.InputType.indexOf('list') >= 0" :xs="14" :sm="14" :md="14" :lg="14" :xl="14">
                     <el-select v-model="item.Operand" placeholder="Please Select Option" no-data-text="No Record" filterable size="small">
                       <el-option v-for="it in routesForm.question.options" :key="it.ItemID" :label="it.Name" :value="it.Name"></el-option>
                     </el-select>
@@ -269,7 +269,7 @@ Function: Show block list and all operations on the list.
               <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
             </el-form-item>
           </div>
-          <div v-else-if="routesForm.question.TypeID === 3 && (routesForm.question.InputType==='list'|| routesForm.question.InputType==='children'||routesForm.question.InputType === 'number' || routesForm.question.InputType === 'date')">
+          <div v-else-if="routesForm.question.TypeID === 3 && (routesForm.question.InputType.indexOf('list') >= 0 || routesForm.question.InputType==='children'||routesForm.question.InputType === 'number' || routesForm.question.InputType === 'date')">
             <el-form-item class="confirmBtn">
               <el-button icon="el-icon-plus" type="primary" @click="addOperator()" :loading="isLoading || isLoadingInsuranceCompany" plain size="small" class="questionRightBtnSingle"></el-button>
             </el-form-item>
@@ -304,7 +304,7 @@ Function: Show block list and all operations on the list.
                 <el-radio :label="1">
                   <span>Base On Question</span>
                 </el-radio>
-                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType === 'list' || item.question.InputType === 'children' ||item.question.InputType === 'number' || item.question.InputType === 'date'))">
+                <el-radio :label="2" v-if="item.question.TypeID === 6 || (item.question.TypeID === 3 && (item.question.InputType.indexOf('list') >= 0 || item.question.InputType === 'children' ||item.question.InputType === 'number' || item.question.InputType === 'date'))">
                   <span>Base On Answer</span>
                 </el-radio>
               </el-radio-group>
@@ -355,7 +355,7 @@ export default {
       templatesDetailVisible: false,
       routeLevels: [{id: 0, name: 'Question'}, {id: 1, name: 'Block'}],
       routeTypeList: [{id: 1, name: 'Base On Question'}, {id: 2, name: 'Base On Answer'}],
-      blockTypes: [{id: 1, name: 'Normal'}, {id: 2, name: 'Direction'}, {id: 3, name: 'Questionnaire'}],
+      blockTypes: [{id: 1, name: 'Normal'}, {id: 2, name: 'Direction'}, {id: 3, name: 'Questionnaire'}, {id: 4, name: 'CSIO'}],
       isLoadingInsuranceCompany: false,
       currentQuestionType: null,
       currentQuestion: null,
@@ -449,6 +449,10 @@ export default {
       // this.isLoadingDataSource = true
       let service = '/api/Services/baseservice.asmx/GetDataItems'
       let param = { datatype: question.DataSource }
+      if (question.InputType === 'sublist') {
+        service = '/api/Services/baseservice.asmx/GetSubDataItems'
+        param = { questionid: question.QuestionID }
+      }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('loadDataSource', res)
@@ -710,7 +714,7 @@ export default {
         this.routesFormBeforeEdit = JSON.parse(JSON.stringify(blockQuestion))
         this.currentIndex = index
         if (blockQuestion.question.TypeID === 3) {
-          if (blockQuestion.question.InputType === 'list') this.loadDataSource(blockQuestion.question)
+          if (blockQuestion.question.InputType.indexOf('list') >= 0) this.loadDataSource(blockQuestion.question)
           else if (blockQuestion.question.InputType === 'children') this.loadChildren(blockQuestion.question)
         }
       })

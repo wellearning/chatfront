@@ -13,7 +13,7 @@ Function: Show all personal line memo list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @keyup.enter.native="search()"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
@@ -52,10 +52,11 @@ Function: Show all personal line memo list and do all operations on the list.
               <el-button icon="el-icon-edit" v-if="RoleName === 'Developer'" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.Status !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-              <el-button icon="el-icon-edit" v-if="scope.row.Status === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
-              <el-button icon="el-icon-delete" v-if="scope.row.Status !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 0" type="primary" @click="showSheet(scope.row.MemoID, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 0" type="primary" @click="showSheet(scope.row.MemoID, 1)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Notes</el-button>
+              <el-button icon="el-icon-edit" v-if="processingRight && scope.row.Status === 1 " type="primary" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-edit" v-if="processingRight && scope.row.Status === 2 " type="success" @click="showUnderWriter(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">U/W</el-button>
+              <el-button icon="el-icon-delete" v-if="processingRight && scope.row.Status !== 2 " type="danger" @click="del(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Del</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -122,7 +123,7 @@ Function: Show all personal line memo list and do all operations on the list.
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
       <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="sheetFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1"></ViewSheet>
+        <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1" :sheetTypeId="sheetTypeId"></ViewSheet>
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
       <!----------------------------------------------修改弹窗开始----------------------------------------------------->
@@ -155,6 +156,7 @@ export default {
   data: function () {
     return {
       RoleName: JSON.parse(this.$store.getters.getAccount).RoleName,
+      processingRight: false,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       Author: JSON.parse(this.$store.getters.getAccount).Name,
       printObj: {
@@ -170,9 +172,10 @@ export default {
       // staffsList: [],
       insuranceCompanyList: [],
       memoStatusList: [],
+      sheetTypeId: 0,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       // 列表
@@ -236,11 +239,19 @@ export default {
     }
   },
   mounted: function () {
+    this.setProcessingRight()
     this.loadMemoStatus()
     this.initInsuranceCompany()
     this.search(null, 0)
   },
   methods: {
+    setProcessingRight: function () {
+      let typeid = JSON.parse(this.$store.getters.getAccount).institution.MemoProcessingType
+      if (this.RoleName.indexOf('Branch') < 0) this.processingRight = true
+      else {
+        if (typeid === 2) this.processingRight = true
+      }
+    },
     sorttable: function (column) {
       if (column.order === 'descending') this.rankdesc(column.prop)
       else this.rank(column.prop)
@@ -365,14 +376,11 @@ export default {
     },
     // 查询
     search: function (name, start) {
+      if (name === undefined || name === null) name = this.searchForm.name
+      if (start === undefined) start = 0
       this.isLoading = true
       if (start === 0) this.list = []
-      if (name === null) {
-        this.searchName = ''
-      } else {
-        this.searchName = name
-      }
-      this.axios.post('/api/Services/memoservice.asmx/SearchMemoes', {query: this.searchName, start: start}).then(res => {
+      this.axios.post('/api/Services/memoservice.asmx/SearchMemoes', {query: name, start: start}).then(res => {
         if (res) {
           console.log('SearchMemoes', res)
           if (res.data.length < this.pagerCount * this.pageSize) {
@@ -518,11 +526,12 @@ export default {
         this.$refs.co.loadMemo(memoid)
       }
     },
-    showSheet: function (memoid) {
+    showSheet: function (memoid, sheetTypeId) {
       this.currentMemoID = memoid
+      if (sheetTypeId !== undefined) this.sheetTypeId = sheetTypeId
       this.sheetFormVisible = true
       if (this.$refs.vs !== undefined) {
-        this.$refs.vs.loadBusinessObj(memoid)
+        this.$refs.vs.loadBusinessObj(memoid, sheetTypeId)
       }
     },
     // Pink Slip window

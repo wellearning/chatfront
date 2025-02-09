@@ -426,8 +426,13 @@ export default {
         if (valid) {
           this.isLoading = true
           for (let i = 0; i < this.addForm.options.length; i++) {
+            let option = this.addForm.options[i]
             this.addForm.options[i].SequenceNo = i + 1
+            option.questionList = null
+            option.childQuestion = null
           }
+          let value = JSON.stringify(this.addForm)
+          console.log('new multiplechoice', value)
           this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: JSON.stringify(this.addForm), btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('新增', res)
@@ -513,6 +518,7 @@ export default {
             option.childQuestion = null
           })
           let value = JSON.stringify(this.editForm)
+          console.log('update multipleChoice', value)
           this.axios.post('/api/Services/BaseService.asmx/SaveQuestion', {question: value, btypeid: this.btypeId}).then(res => {
             if (res) {
               console.log('修改', res)

@@ -13,17 +13,17 @@ Function: Show all commercial application list and do all operations on the list
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoadingTotal" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoadingTotal" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
-      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoadingApplications" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+      <el-table height="600" :data="currentlist" empty-text="No Record" @expand-change="loadApplication" :loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ApplicationID" width="60" fixed="left" sortable="custom">
         </el-table-column>
         <el-table-column width="20" type="expand" :loading="isLoading" >
@@ -107,7 +107,7 @@ Function: Show all commercial application list and do all operations on the list
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
       <!----------------------------------------------报价弹窗开始----------------------------------------------------->
-      <el-dialog v-if="currentApplication !== null" title="Request Quote" :visible.sync="quotationVisible" width="900px" center>
+      <el-dialog v-if="currentApplication !== null" :title="'Request Quotation: ' + currentApplication.ApplicationID" :visible.sync="quotationVisible" width="1000px" center :before-close="closeEdit">
         <el-form  class="newMemo">
           <el-row :gutter="20" class="subtitle">
             <el-col :span="18">
@@ -120,19 +120,20 @@ Function: Show all commercial application list and do all operations on the list
             <el-col :span="6">
               <div class="newMemo-submit">
                 <el-button icon="el-icon-check" type="primary" @click="saveQuotations()" :loading="isLoading">Request</el-button>
+                <el-button icon="el-icon-info" circle @click="showQuotationSuggestion()" :loading="isLoading"></el-button>
               </div>
             </el-col>
           </el-row>
         </el-form>
 
         <el-table
-          :data="currentApplication.quotations"
+          :data="currentApplication.quote === undefined ? [] : currentApplication.quote.quotations"
           tooltip-effect="dark"
           style="width: 100%">
           <el-table-column
             prop="CorpName"
             label="Insurance Corporation"
-            width="300">
+            width="250">
           </el-table-column>
           <el-table-column
             prop="Premium"
@@ -140,11 +141,16 @@ Function: Show all commercial application list and do all operations on the list
             width="100">
           </el-table-column>
           <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
-          <el-table-column label="Action" width="300">
+          <el-table-column label="Action" width="400">
             <template v-slot="scope">
-              <el-button icon="el-icon-view" type="primary" @click="showQuotationBind(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Bind</el-button>
-              <el-button icon="el-icon-view" type="primary" @click="showQuotationProcessing(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Action</el-button>
-              <el-button icon="el-icon-delete" type="danger" @click="delQuotation(scope.row.InsuranceCorpQuotationID)" :loading="isLoadingInsuranceCompany" size="small">Del</el-button>
+              <el-button-group>
+                <el-button icon="el-icon-view" type="primary" @click="showSendEmail(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Email</el-button>
+                <el-button icon="el-icon-view" type="primary" @click="showQuotationProcessing(scope.row, 2)" :loading="isLoadingInsuranceCompany" size="small">Quote</el-button>
+                <el-button v-if="roleName.indexOf('Branch') < 0" icon="el-icon-view" type="primary" @click="showQuotationBind(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Bind</el-button>
+                <!--el-button icon="el-icon-view" type="primary" @click="showQuotationProcessing(scope.row)" :loading="isLoadingInsuranceCompany" size="small">Action</el-button-->
+                <el-button icon="el-icon-delete" type="warning" @click="showQuotationProcessing(scope.row,3)" :loading="isLoadingInsuranceCompany" size="small">Decline</el-button>
+                <el-button icon="el-icon-delete" type="danger" @click="delQuotation(scope.row.InsuranceCorpQuotationID)" :loading="isLoadingInsuranceCompany" size="small">Del</el-button>
+              </el-button-group>
             </template>
           </el-table-column>
         </el-table>
@@ -217,6 +223,13 @@ Function: Show all commercial application list and do all operations on the list
           </el-row>
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
+              <el-form-item label="Sales Points" prop="SalesPoints">
+                <el-input v-model="quotationBindForm.SalesPoints" type="number" placeholder="Sales Points" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
               <el-form-item label="Agency/Director Bill" prop="BillWayID">
                 <el-select v-model="quotationBindForm.BillWayID" placeholder="Agency/Director" no-data-text="No Record" filterable >
                   <el-option v-for="item in billWays" :key="item.ID" :label="item.Name" :value="item.ID"></el-option>
@@ -247,9 +260,9 @@ Function: Show all commercial application list and do all operations on the list
       </el-dialog>
       <!----------------------------------------------InsuranceCorp Bind弹窗结束----------------------------------------------------->
       <!----------------------------------------------InsuranceCorpQuotation Processing 弹窗开始----------------------------------------------------->
-      <el-dialog title="Insurance Corporation Quotation Processing" :visible.sync="quotationProcessingVisible" width="600px" center>
+      <el-dialog title="Insurance Corporation Quotation Processing" :visible.sync="quotationProcessingVisible" width="800px" center :before-close="closeEdit">
         <el-form :model="quotationProcessingForm" ref="quotationProcessingForm" class="newMemo" :rules="quotationProcessingFormRules">
-          <el-row :gutter="20" class="subtitle">
+          <!--el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Processing Type" prop="StatusID">
                 <el-select v-model="quotationProcessingForm.StatusID" placeholder="Processing Type" no-data-text="No Record" filterable >
@@ -257,32 +270,106 @@ Function: Show all commercial application list and do all operations on the list
                 </el-select>
               </el-form-item>
             </el-col>
-          </el-row>
-          <el-row :gutter="20" class="subtitle">
+          </el-row-->
+          <el-row :gutter="20" v-if="quotationProcessingForm.Status === 2" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Premium" prop="Premium">
                 <el-input v-model="quotationProcessingForm.Premium" type="number" placeholder="Premium" title=""></el-input>
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row :gutter="20" class="subtitle">
+          <el-row :gutter="0" class="subtitle">
             <el-col :span="24">
-              <el-form-item label="Description" prop="Brief">
-                <el-input v-model="quotationProcessingForm.Brief" type="textarea" :rows="3" placeholder="Description" title=""></el-input>
+              <el-form-item :label="quotationProcessingForm.Status === 1? 'Email Body':'Description'" prop="Brief">
+                <el-input v-model="quotationProcessingForm.Brief" type="textarea" :rows="5" placeholder="Description" title=""></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <div class="newMemo-submit">
-            <el-button icon="el-icon-check" type="primary" @click="checkQuotationProcessInput" :loading="isLoading">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="checkQuotationProcessInput" :loading="isLoading">{{quotationProcessingForm.Status === 1? 'Send Email':'Confirm'}}</el-button>
           </div>
         </el-form>
       </el-dialog>
       <!----------------------------------------------InsuranceCorpQuotation Processing弹窗结束----------------------------------------------------->
+      <!----------------------------------------------InsuranceCorpQuotation Send Email 弹窗开始----------------------------------------------------->
+      <el-dialog :title="'Application to ' + quotationProcessingForm.CorpName" :visible.sync="quotationEmailVisible" width="1000px" center :before-close="closeEdit">
+        <!--el-form :model="quotationProcessingForm" ref="quotationProcessingForm" class="writeEmail" :rules="quotationProcessingFormRules">
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Mail to" prop="Mailto">
+                <el-input v-model="quotationProcessingForm.Mailto" type="text" placeholder="Mailto" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Subject" prop="Subject">
+                <el-input v-model="quotationProcessingForm.Subject" type="text" placeholder="Subject" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="0" class="subtitle">
+            <el-col :span="24">
+              <el-form-item label="Email Body" prop="Brief">
+                <el-input v-model="quotationProcessingForm.MailBody" type="textarea" :rows="10" placeholder="Body" title=""></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <div class="newMemo-submit">
+            <el-button icon="el-icon-check" type="primary" @click="checkQuotationProcessInput" :loading="isQuotationProcessing">Send Email</el-button>
+          </div>
+        </el-form-->
+        <sendEmail ref="se" :mail="quoteEmail" @hideEmailWindow="hideEmailWindow">
+        </sendEmail>
+      </el-dialog>
+      <!----------------------------------------------InsuranceCorpQuotation Send Email 弹窗结束----------------------------------------------------->
       <!----------------------------------------------SubApplicationTemplate Edition 弹窗开始----------------------------------------------------->
       <el-dialog z-index="5" title="SubApplicationTemplate Edition" :visible.sync="subapplicationTemplateEditionVisible" width="984.56px" center>
         <editSubApplicationTemplate ref="esat" :applicationTemplateId="currentBlockItem.ApplicationTemplateID" @hideEdition="hideEdition()"></editSubApplicationTemplate>
       </el-dialog>
       <!----------------------------------------------SubApplicationTemplate Edition弹窗结束----------------------------------------------------->
+      <!----------------------------------------------Quotation Suggestion 弹窗开始----------------------------------------------------->
+      <el-dialog :title="'Hit Ratio for '+currentApplication.Operating " :visible.sync="quotationSuggestionVisible" width="900px" center>
+        <div class="searchBox">
+          <el-main class="" >
+            <!--el-row :gutter="20" class="title" v-loading="">
+              <el-col :span="8" class="">Total Bound # in 90D: {{hitRatioSummary.bound90}}</el-col>
+              <el-col :span="8">Total Applied # in 90D: {{hitRatioSummary.applied90}}</el-col>
+              <el-col :span="8">Total Bound % in 90D: {{hitRatioSummary.ratio90}}%</el-col>
+              <el-col :span="8" class="">Total Bound # in 365D: {{hitRatioSummary.bound365}}</el-col>
+              <el-col :span="8">Total Applied # in 365D: {{hitRatioSummary.applied365}}</el-col>
+              <el-col :span="8">Total Bound % in 365D: {{hitRatioSummary.ratio365}}%</el-col>
+            </el-row-->
+            <el-row :gutter="20" class="title" v-loading="">
+              <el-col :span="6" class="">Bound # in 90D: {{hitRatioSummary.bound90}}</el-col>
+              <el-col :span="6">Bound % in 90D: {{hitRatioSummary.ratio90}}%</el-col>
+              <el-col :span="6" class="">Bound # in 365D: {{hitRatioSummary.bound365}}</el-col>
+              <el-col :span="6">Bound % in 365D: {{hitRatioSummary.ratio365}}%</el-col>
+            </el-row>
+          </el-main>
+        </div>
+        <el-table
+          :data="quotationSuggestions"
+          tooltip-effect="dark"
+          height="600px"
+          style="width: 100%"
+          @selection-change="handleSelectionChange" @sort-change="sorttableHit">
+          <el-table-column
+            type="selection"
+            min-width="50">
+          </el-table-column>
+          <el-table-column
+            prop="CorpName"
+            label="Insurance Company"
+            min-width="150" sortable="custom">
+          </el-table-column>
+          <el-table-column label="Bound # in 90D" prop="BoundCount0" min-width="120" sortable="custom"></el-table-column>
+          <el-table-column label="Bound % in 90D" prop="HitRatio0" min-width="120" sortable="custom"></el-table-column>
+          <el-table-column label="Bound # in 365D" prop="BoundCount1" min-width="120" sortable="custom"></el-table-column>
+          <el-table-column label="Bound % in 365D" prop="HitRatio1" min-width="120" sortable="custom"></el-table-column>
+        </el-table>
+      </el-dialog>
+      <!----------------------------------------------Quotation Suggestion弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -294,6 +381,7 @@ import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
 import EditApplication from '@/component/parts/editApplication'
 import editSubApplicationTemplate from '@/component/parts/editSubApplicationTemplate'
+import sendEmail from '@/component/window/sendEmail'
 
 export default {
   components: {
@@ -302,10 +390,12 @@ export default {
     EditApplication,
     editSubApplicationTemplate,
     ViewApplicationBlock,
-    ViewApplication
+    ViewApplication,
+    sendEmail
   },
   data: function () {
     return {
+      roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
       EffectiveDate: null,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       Author: JSON.parse(this.$store.getters.getAccount).Name,
@@ -315,12 +405,14 @@ export default {
       },
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
+      isLoadingTotal: false,
       isLoadingApplications: false,
       isLoadingTemplateBlockQuestions: false,
       isLoadingApplicationBlock: false,
       isLoadingApplicationQuotations: false,
       isLoadingProducers: false,
       isLoadingInsuranceCompany: false,
+      isQuotationProcessing: false,
       templateList: [],
       insuranceCorpList: [],
       producerList: [],
@@ -343,7 +435,19 @@ export default {
       list: [],
       currentlist: [],
       totalList: [],
-      currentApplication: null,
+      quotations: [],
+      quoteEmail: {
+        businessId: 0,
+        mailType: 1,
+        subject: null,
+        mailto: null
+      },
+      currentApplication: {
+        quote: {
+          quotations: []
+        },
+        unselectedCorps: []
+      },
       currentApplicationID: 0,
       currentApplicationTemplate: null,
       currentApplicationBlockID: 0,
@@ -357,18 +461,32 @@ export default {
       isAll: false,
       quotationVisible: false,
       quotationBindVisible: false,
+      quotationSuggestionVisible: false,
       quotationProcessingVisible: false,
+      quotationEmailVisible: false,
+      quotationSuggestions: null,
+      hitRatioSummary: {
+        bound90: 0,
+        applied90: 0,
+        ratio90: null,
+        bound365: 0,
+        applied365: 0,
+        ratio365: null
+      },
       quotationProcessingForm: {
         InsuranceCorpQuotationID: null,
         ApplicationID: 0,
         InsuranceCorpID: 0,
-        StatusID: null,
+        Status: 0,
+        emailStatus: 0,
+        StatusID: 0,
+        CorpName: '',
         Brief: null,
         Premium: null
       },
       quotationProcessingFormRules: {
         StatusID: [
-          { required: true, message: 'Please Select', trigger: 'blur' }
+          { required: false, message: 'Please Select', trigger: 'blur' }
         ],
         Brief: [
           { required: false, message: 'Please Enter', trigger: 'blur' },
@@ -388,6 +506,7 @@ export default {
         ClientCode: null,
         PolicyNumber: null,
         Premium: null,
+        SalesPoints: null,
         BillWayID: null,
         OutstandingBalance: 0,
         QuestionnaireID: 0
@@ -493,6 +612,16 @@ export default {
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
     },
+    sorttableHit: function (column) {
+      if (column.order === 'descending') this.rankdescHit(column.prop)
+      else this.rankHit(column.prop)
+    },
+    rankHit: function (name) {
+      this.quotationSuggestions.sort(this.by(name))
+    },
+    rankdescHit: function (name) {
+      this.quotationSuggestions.sort(this.bydesc(name))
+    },
     processType: function (app) {
       if (app.StatusID === 4) return 'success'
       else return 'primary'
@@ -506,19 +635,37 @@ export default {
       if (expdate.year() > 2020) this.quotationBindForm.ExpiryDate = expdate
       else this.quotationBindForm.ExpiryDate = null
       this.quotationBindForm.ProducerID = this.currentApplication.ProducerID
-      this.quotationBindForm.ClientCode = this.currentApplication.ClientCode
-      this.quotationBindForm.PolicyNumber = this.currentApplication.PolicyNumber
+      // this.quotationBindForm.ClientCode = this.currentApplication.ClientCode
+      this.quotationBindForm.PolicyNumber = quotation.PolicyNumber// this.currentApplication.PolicyNumber
       if (this.currentApplication.TypeID > 0) this.quotationBindForm.TypeID = this.currentApplication.TypeID
       else this.quotationBindForm.TypeID = 1
       this.quotationBindForm.LeadFromCorpID = this.currentApplication.LeadFromCorpID
+      this.quotationBindForm.ClientCode = quotation.ClientCode
       this.quotationBindForm.Premium = quotation.Premium
+      this.quotationBindForm.SalesPoints = quotation.SalesPoints
       this.quotationBindForm.OutstandingBalance = this.currentApplication.OutstandingBalance
       this.quotationBindVisible = true
     },
-    showQuotationProcessing: function (quotation) {
+    showSendEmail: function (quotation) {
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === quotation.InsuranceCorpID)
+      let quote = this.currentApplication.quote
+      let operating = quote.Operating === null ? '' : quote.Operating
+      // let subject = 'Quote request to ' + quotation.CorpName + '|' + operating + ' - ' + this.currentApplication.NameInsured
+      let subject = 'Quote request | ' + this.currentApplication.NameInsured + ' | ' + operating
+      this.quotationProcessingForm.CorpName = corp.ShortName
+      if (this.$refs.se !== undefined) {
+        this.$refs.se.setEmail(quotation.InsuranceCorpQuotationID, subject, corp.Email)
+      } else {
+        this.quoteEmail.businessId = quotation.InsuranceCorpQuotationID
+        this.quoteEmail.subject = subject
+        this.quoteEmail.mailto = corp.Email
+      }
+      this.quotationEmailVisible = true
+    },
+    showQuotationProcessing: function (quotation, statusid) {
       console.log('quotation', quotation)
       this.quotationProcessingForm = quotation
-      this.quotationProcessingForm.StatusID = null
+      this.quotationProcessingForm.Status = statusid
       this.quotationProcessingVisible = true
       /*
       this.quotationBindForm.InsuranceCorpQuotationID = quotation.InsuranceCorpQuotationID
@@ -550,10 +697,14 @@ export default {
                 this.setApplicationStatus(this.currentApplication)
                 this.currentApplication.EffectiveDate = this.quotationBindForm.EffectiveDate
                 this.currentApplication.Premium = this.quotationBindForm.Premium
-                let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
-                quotation.StatusID = 4
+                let quotation = this.currentApplication.quote.quotations.find(q => q.InsuranceCorpQuotationID === id)
+                quotation.Status = 4
                 quotation.StatusName = 'Bound'
                 quotation.Premium = this.quotationBindForm.Premium
+                quotation.SalesPoints = this.quotationBindForm.SalesPoints
+                quotation.PolicyNumber = this.quotationBindForm.PolicyNumber
+                quotation.ClientCode = this.quotationBindForm.ClientCode
+                quotation.BillWayID = this.quotationBindForm.BillWayID
               }
               this.isLoadingApplicationQuotations = false
               this.quotationBindVisible = false
@@ -603,7 +754,8 @@ export default {
         type: 'warning'
       }).then(() => {
         let id = this.quotationProcessingForm.InsuranceCorpQuotationID
-        this.isLoadingApplicationQuotations = true
+        this.isQuotationProcessing = true
+        this.quotationProcessingForm.StatusID = this.quotationProcessingForm.Status + 10 * this.quotationProcessingForm.emailStatus
         let value = JSON.stringify(this.quotationProcessingForm)
         console.log('quotationProcessingForm', value)
         this.axios.post('/api/Services/CommerceService.asmx/QuotationProcess', {jsonvalue: value}).then(res => {
@@ -614,18 +766,18 @@ export default {
               message: 'Operation Succeeded'
             })
             let appStatusID = res.data
-            let quotation = this.currentApplication.quotations.find(q => q.InsuranceCorpQuotationID === id)
-            quotation.StatusID = this.quotationProcessingForm.StatusID
-            let qstatus = this.quotationProcessings.find(s => s.StatusID === quotation.StatusID)
+            let quotation = this.currentApplication.quote.quotations.find(q => q.InsuranceCorpQuotationID === id)
+            quotation.Status = this.quotationProcessingForm.Status
+            let qstatus = this.quotationProcessings.find(s => s.StatusID === quotation.Status)
             quotation.StatusName = qstatus.Status
             this.currentApplication.StatusID = appStatusID
             this.setApplicationStatus(this.currentApplication)
           }
-          this.isLoadingApplicationQuotations = false
+          this.isQuotationProcessing = false
           this.quotationProcessingVisible = false
         }).catch(err => {
-          console.log('删除出错', err)
-          this.isLoadingApplicationQuotations = false
+          console.log('quotationProcess error', err)
+          this.isQuotationProcessing = false
         })
       }).catch(() => {
         this.$message({
@@ -635,7 +787,7 @@ export default {
       })
     },
     resetQuotations: function (app) {
-      app.unselectedCorps = this.insuranceCorpList.filter(c => app.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
+      app.unselectedCorps = this.insuranceCorpList.filter(c => app.quote.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
       this.multipleSelection = []
     },
     showQuotation: function (application) {
@@ -648,14 +800,95 @@ export default {
       this.axios.post('/api/Services/CommerceService.asmx/GetQuotations', {applicationid: app.ApplicationID}).then(res => {
         if (res) {
           console.log('GetQuotations', res.data)
-          app.quotations = res.data
-          app.unselectedCorps = this.insuranceCorpList.filter(c => app.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
+          res.data.quotations.forEach(q => {
+            q.QuoteTime = moment(q.QuoteTime)
+            let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === q.InsuranceCorpID)
+            q.CorpName = corp.ShortName === '' ? corp.Name : corp.ShortName
+          })
+          app.quote = res.data
+          app.unselectedCorps = this.insuranceCorpList.filter(c => app.quote.quotations.find(q => q.InsuranceCorpID === c.InsuranceCorpID) === undefined)
           console.log('selectables', app.unselectedCorps)
           this.isLoadingApplicationQuotations = false
           this.quotationVisible = true
         }
       }).catch(err => {
         console.log('GetQuotations列表出错', err)
+        this.isLoadingApplicationQuotations = false
+      })
+    },
+    handleSelectionChange: function (val) {
+      let ids = []
+      val.forEach(item => {
+        ids.push(item.InsuranceCorpID)
+      })
+      this.multipleSelection = ids
+    },
+    showQuotationSuggestion: function () {
+      let app = this.currentApplication
+      this.loadQuotationSuggestions(app)
+    },
+    loadQuotationSuggestions: function (app) {
+      // this.isLoadingApplicationQuotations = true
+      this.axios.post('/api/Services/CommerceService.asmx/GetQuotationSuggestions', {applicationid: app.ApplicationID}).then(res => {
+        if (res) {
+          console.log('GetQuotationSuggestions', res.data)
+          if (res.data.OperatingID === 0) {
+            this.isLoadingApplicationQuotations = false
+            this.$message({
+              type: 'info',
+              message: 'No suggestion available.'
+            })
+            return
+          }
+          app.Operating = res.data.Operating
+          /*
+          res.data.forEach(r => {
+            let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === r.InsuranceCorpID)
+            if (corp !== undefined) r.CorpName = corp.ShortName
+            r.QuotedRate = Math.floor(r.QuotedCount * 100 / r.AppliedCount)
+            r.BoundRate = Math.floor(r.BoundCount * 100 / r.AppliedCount)
+          })
+          res.data.sort(this.bydesc('BoundRate'))
+          this.quotationSuggestions = res.data
+           */
+          let data = []
+          let totalBound90 = 0
+          let totalApplied90 = 0
+          let totalBound365 = 0
+          let totalApplied365 = 0
+          this.insuranceCorpList.forEach(c => {
+            if (c.InsuranceCorpID === 0) return
+            let data0 = res.data.StatisticsList[0].find(r => r.InsuranceCorpID === c.InsuranceCorpID)
+            let data1 = res.data.StatisticsList[1].find(r => r.InsuranceCorpID === c.InsuranceCorpID)
+            let item = {
+              InsuranceCorpID: c.InsuranceCorpID,
+              CorpName: c.ShortName === '' ? c.Name : c.ShortName,
+              AppliedCount0: data0 === undefined ? 0 : data0.AppliedCount,
+              BoundCount0: data0 === undefined ? 0 : data0.BoundCount,
+              AppliedCount1: data1 === undefined ? 0 : data1.AppliedCount,
+              BoundCount1: data1 === undefined ? 0 : data1.BoundCount
+            }
+            item.HitRatio0 = item.AppliedCount0 === 0 ? null : Math.floor(item.BoundCount0 / item.AppliedCount0 * 100)
+            item.HitRatio1 = item.AppliedCount1 === 0 ? null : Math.floor(item.BoundCount1 / item.AppliedCount1 * 100)
+            data.push(item)
+            totalBound90 += item.BoundCount0
+            totalApplied90 += item.AppliedCount0
+            totalBound365 += item.BoundCount1
+            totalApplied365 += item.AppliedCount1
+          })
+          this.hitRatioSummary.bound90 = totalBound90
+          this.hitRatioSummary.applied90 = totalApplied90
+          this.hitRatioSummary.bound365 = totalBound365
+          this.hitRatioSummary.applied365 = totalApplied365
+          this.hitRatioSummary.ratio90 = totalApplied90 === 0 ? '' : Math.floor(100 * totalBound90 / totalApplied90)
+          this.hitRatioSummary.ratio365 = totalApplied365 === 0 ? '' : Math.floor(100 * totalBound365 / totalApplied365)
+          this.quotationSuggestions = data
+          console.log('Hit Ratio Data', data)
+          // this.isLoadingApplicationQuotations = false
+          this.quotationSuggestionVisible = true
+        }
+      }).catch(err => {
+        console.log('GetQuotationSuggestions', err)
         this.isLoadingApplicationQuotations = false
       })
     },
@@ -671,9 +904,17 @@ export default {
       this.axios.post('/api/Services/CommerceService.asmx/ApplyQuotations', {applicationid: appid, corpids: corpids}).then(res => {
         if (res) {
           console.log('修改', res)
+          res.data.forEach(q => {
+            q.QuoteTime = moment(q.QuoteTime)
+          })
           let app = this.currentApplication
-          if (app.quotations === undefined) app.quotations = []
-          app.quotations = app.quotations.concat(res.data)
+          if (app.quote === undefined) {
+            app.quote = {
+              ApplicationID: app.ApplicationID,
+              quotations: []
+            }
+          }
+          app.quote.quotations = app.quote.quotations.concat(res.data)
           this.resetQuotations(app)
           if (app.StatusID === 1) {
             app.StatusID = 2
@@ -712,7 +953,7 @@ export default {
             })
             this.currentApplication.StatusID = res.data
             this.setApplicationStatus(this.currentApplication)
-            this.currentApplication.quotations = this.currentApplication.quotations.filter(item => item.InsuranceCorpQuotationID !== id)
+            this.currentApplication.quote.quotations = this.currentApplication.quote.quotations.filter(item => item.InsuranceCorpQuotationID !== id)
             this.resetQuotations(this.currentApplication)
           }
           this.isLoadingApplicationQuotations = false
@@ -766,6 +1007,17 @@ export default {
     hideEdition: function () {
       this.applicationFormVisible = false
       this.subapplicationTemplateEditionVisible = false
+    },
+    hideEmailWindow: function (quotationid) {
+      this.quotationEmailVisible = false
+      let quotation = this.currentApplication.quote.quotations.find(q => q.InsuranceCorpQuotationID === quotationid)
+      if (quotation !== undefined) {
+        if (quotation.Status === 0) {
+          quotation.Status = 1
+          quotation.emailStatus = 1
+          quotation.StatusName = 'Submitted'
+        }
+      }
     },
     closeEditApplication: function (id, type) {
       this.editApplicationWindowVisible = false
@@ -1266,14 +1518,22 @@ export default {
       })
     },
     loadApplications: function (start) {
-      this.isLoadingApplications = true
-      if (start === 0) this.totalList = []
+      // this.isLoadingApplications = true
+      if (start === 0) {
+        this.totalList = []
+        this.isLoadingTotal = true
+        this.isLoaing = true
+      }
       this.axios.post('/api/Services/CommerceService.asmx/GetProcessings', {start: start}).then(res => {
         if (res) {
           console.log('Applications查询', res)
           if (start === 0) {
             this.total = res.count
             this.totalList = res.data
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoading = false
           } else {
             this.totalList = this.totalList.concat(res.data)
           }
@@ -1294,13 +1554,15 @@ export default {
             })
             this.list = this.totalList
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.pageCount = Math.ceil(this.total / this.pageSize)
-            this.isLoadingApplications = false
+            // this.pageCount = Math.ceil(this.total / this.pageSize)
+            // this.isLoadingApplications = false
+            this.isLoadingTotal = false
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
         console.log('查询出错', err)
-        this.isLoadingApplications = false
+        this.isLoading = false
+        this.isLoadingTotal = false
       })
     },
     attachInfo: function (a) {
@@ -1319,23 +1581,23 @@ export default {
         if (a.StaffID === a.ProducerID) a.Author = a.Producer
         else {
           let author = this.producerList.find(p => p.StaffID === a.StaffID)
-          if (producer !== undefined) a.Author = author.Name
+          if (author !== undefined) a.Author = author.Name
           else a.Author = ''
         }
       }
     },
     // 查询
     search: function () {
-      let query = this.searchForm.name
+      let query = this.searchForm.name.toLowerCase().trim()
       if (query === '') {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
-          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
-          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
+          (r.Producer !== null && r.Producer.toLowerCase().indexOf(query) >= 0) ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.toLowerCase().indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.toLowerCase().indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
@@ -1400,8 +1662,8 @@ export default {
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      // this.search(null, 0)
+      this.searchForm.name = ''
+      this.search()
     },
     // UW弹窗
     showUnderWriter: function (application) {

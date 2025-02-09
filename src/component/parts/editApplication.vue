@@ -366,7 +366,7 @@ export default {
           let application = JSON.parse(JSON.stringify(this.applicationForm))
           application.InsuranceTypeID = this.TemplateTypeID
           application.RequestDate = moment(application.RequestDate)
-          // application.DateOfBirth = moment(application.DateOfBirth)
+          application.BindTime = moment(application.BindTime)
           if (this.EffectiveDate !== null) application.EffectiveDate = this.EffectiveDate
           else application.EffectiveDate = moment(new Date(2000, 1, 1))
           let sequenceno = 0

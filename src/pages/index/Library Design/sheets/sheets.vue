@@ -63,7 +63,7 @@ Function: Show sheet list and do all operations on the list.
       </el-dialog>
       <!----------------------------------------------修改弹窗结束----------------------------------------------------->
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog title="Add New Form" :visible.sync="addFormVisible" width="1184px" center :before-close="closeAdd">
+      <el-dialog title="Add New Form" :visible.sync="addFormVisible" width="1184.56px" center :before-close="closeAdd">
         <EditSheet ref="as" :sheetId="0" :templateId="templateId" :businessTypeId="btypeId" @close="closeAdd"></EditSheet>
       </el-dialog>
       <!----------------------------------------------新增弹窗结束----------------------------------------------------->

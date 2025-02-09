@@ -6,13 +6,13 @@
       <div v-if="answer.StatusID === 1">
         <div class="answerMemo" v-if="answer.TypeID === 1 && answer.StatusID === 1">
           <div class="typeTitle">
-            <span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span>
+            <!--span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span-->
             {{answer.QuestionDesc}}
           </div>
         </div>
         <div class="answerMemo" v-else-if="answer.TypeID === 2 && answer.StatusID === 1">
           <div class="typeReminder">
-            <span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span>
+            <!--span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span-->
             {{answer.QuestionDesc}}
           </div>
         </div>
@@ -463,8 +463,10 @@ export default {
               else {
                 let ca = cblock.answers[i + skipsteps]
                 ca.StatusID = 1
-                if (ca.hasAnswer) this.showNextQuestion(ca)
-                if (ca.InputType === 'computed') {
+                if (ca.TypeID === 1 || ca.TypeID === 2) {
+                  this.showNextQuestion(ca)
+                } else if (ca.hasAnswer) this.showNextQuestion(ca)
+                else if (ca.InputType === 'computed') {
                   this.computeAttribute(ca)
                   this.showNextQuestion(ca)
                 }

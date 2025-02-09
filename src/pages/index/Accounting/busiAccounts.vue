@@ -212,7 +212,7 @@ export default {
       this.isLoadingRecord = true
       this.axios.post('/api/Services/baseservice.asmx/GetAccountTransactionRecords', {accountid: account.BusiAccountID}).then(res => {
         if (res) {
-          console.log('loadTransactionTypes', res)
+          console.log('loadTransactionRecords', res)
           account.records = res.data
           let balance = 0
           account.records.forEach(r => {
@@ -236,7 +236,7 @@ export default {
         }
         this.isLoadingRecord = false
       }).catch(err => {
-        console.log('loadTransactionTypes', err)
+        console.log('loadTransactionRecords', err)
         this.isLoadingRecord = false
       })
     },

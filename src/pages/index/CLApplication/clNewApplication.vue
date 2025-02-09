@@ -19,7 +19,7 @@ Function: Create new commercial application.
           <el-col :span="6">&#12288;</el-col>
         </el-row>
         <el-row :gutter="20" class="subtitle">
-          <el-col :span="7">
+          <el-col :span="6">
             <el-form-item label="Effective Date" prop="EffectiveDate">
               <el-date-picker v-model="EffectiveDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
             </el-form-item>
@@ -40,8 +40,8 @@ Function: Create new commercial application.
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="6">
-            <el-form-item label="ApplicationType" prop="TemplateID">
+          <el-col :span="7">
+            <el-form-item label="ApplicationTemplate" prop="TemplateID">
               <el-select v-model="applicationForm.TemplateID" placeholder="Application Type" no-data-text="No Record" filterable @change="changeTemplates()">
                 <el-option v-for="item in templateList" :key="item.TemplateID" :label="item.Title" :value="item.TemplateID"></el-option>
               </el-select>
@@ -430,6 +430,7 @@ export default {
           let application = JSON.parse(JSON.stringify(this.applicationForm))
           if (this.EffectiveDate !== null) application.EffectiveDate = this.EffectiveDate
           if (application.DateOfBirth === null) application.DateOfBirth = new Date(2000, 1, 1)
+          application.BindTime = moment(application.BindTime)
           application.InsuranceTypeID = this.TemplateTypeID
           application.BusinessTypeID = 4
           let sequenceno = 0

@@ -24,10 +24,10 @@ Function: Show all cover letter list and do all operations on the list.
             </el-select>
           </el-form-item>
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" clearable @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -117,6 +117,7 @@ export default {
   data: function () {
     return {
       roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
+      processingRight: false,
       isUploadAuditVisible: false,
       isUWAuditVisible: false,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
@@ -135,7 +136,7 @@ export default {
       insuranceCompanyList: [],
       // 搜索
       searchForm: {
-        name: null,
+        name: '',
         periodDates: '',
         period: 1
       },
@@ -179,6 +180,13 @@ export default {
     // this.loadCoverLetters(0)
   },
   methods: {
+    setProcessingRight: function () {
+      let typeid = JSON.parse(this.$store.getters.getAccount).institution.CoverLetterProcessingType
+      if (this.roleName.indexOf('Branch') < 0) this.processingRight = true
+      else {
+        if (typeid === 2) this.processingRight = true
+      }
+    },
     sorttable: function (column) {
       if (column.order === 'descending') this.rankdesc(column.prop)
       else this.rank(column.prop)
@@ -243,7 +251,7 @@ export default {
     },
     loadProducers: function (start) {
       this.isLoadingProducers = true
-      this.axios.post('/api/Services/baseservice.asmx/GetAllProducers', {start: start}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
           if (start === 0) {
@@ -343,7 +351,7 @@ export default {
       if (type === 'saveAndPrint') {
         this.showCoverLetter(this.currentCoverLetter)
       }
-      this.search(this.searchForm.name, 0)
+      this.loadCoverLetters(0)
     },
     closeEdit: function (done) {
       this.$confirm('Are you sure to close it?', 'Confirm', {
@@ -458,16 +466,17 @@ export default {
     // 查询
     search: function () {
       let query = this.searchForm.name
-      if (query === '') {
+      if (query === null || query === '') {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        query = query.toLowerCase().trim()
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
           r.CoverLetterID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
-          r.CorpName.indexOf(query) >= 0 ||
+          r.Producer.toLowerCase().indexOf(query) >= 0 ||
+          r.NameInsured.toLowerCase().indexOf(query) >= 0 ||
+          r.CorpName.toLowerCase().indexOf(query) >= 0 ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
-          r.ClientCode.indexOf(query) >= 0
+          r.ClientCode.toLowerCase().indexOf(query) >= 0
         )
       }
       this.total = this.list.length
@@ -532,6 +541,7 @@ export default {
             this.viewForm.InsuranceCorp = this.insuranceCompanyList.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             this.viewForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.viewForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+            this.viewForm.UWDate = moment(res.data.UWDate).format('YYYY-MM-DD')
             this.printObj.popTitle = this.viewForm.Title // + '( ' + this.viewForm.Author + ')'
           })
         }

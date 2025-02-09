@@ -36,16 +36,21 @@
           <div class="viewMemo-subtitle head" style="margin-left:30px;"><span>{{sheet.title}}</span></div>
         </el-col>
       </el-row>
-      <el-row :gutter="20" style="margin-top:40px; margin-left:24px; margin-right:64px; font-size:14px; font-weight: normal;">
+      <el-row :gutter="20" style="margin-top:20px; margin-left:26px;font-weight:normal; font-size:14px; text-align: left">
         <el-col :span="24">
-          <div id="sheet" style="margin-bottom:100px;">
+          <div v-if="sheet.TypeID === 0">{{'Broker: ' + producer.Name + ', Email: ' + producer.Email}}</div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20" style="margin-top:4px; margin-left:24px; margin-right:64px; font-size:14px; font-weight: normal;">
+        <el-col :span="24">
+          <div id="sheet" style="margin-bottom:100px;font-family: Corbel">
           </div>
         </el-col>
       </el-row>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col>
-          <span>{{producer.Name}} {{businessObjId}}</span><br />
-          <b>Printed by {{Author}} on {{printDate}}</b>
+          <!--b>{{'Broker: ' + producer.Name + ', Email: ' + producer.Email}}, {{'AppID: ' + businessObjId}}</b><br /-->
+          <span>{{'AppID: ' + businessObjId}}， Printed by {{Author}} on {{printDate}}</span>
         </el-col>
       </el-row>
     </div>
@@ -72,6 +77,7 @@ export default {
       currentSheetId: null,
       producer: {StaffID: 0, Name: ''},
       templateId: 0,
+      typeID: 0,
       sheet: {
         title: '',
         tables: [
@@ -159,6 +165,9 @@ export default {
       type: Number
     },
     businessTypeId: {
+      type: Number
+    },
+    sheetTypeId: {
       type: Number
     }
   },
@@ -255,16 +264,26 @@ export default {
               value = this.dateFormat(answer.AnswerDesc)
             } else value = answer.AnswerDesc
           } else if (answer.TypeID === 5) {
-            let partAnswer = answer.partAnswers.find(p => p.IsFillin)
-            if (partAnswer !== undefined) {
-              if (partAnswer.InputType === 'money') value = '$' + Number(partAnswer.Part).toLocaleString()
-              else value = partAnswer.Part
-            } else value = ''
+            if (outputway === 'Orig') {
+              value = ''
+              answer.partAnswers.forEach(p => {
+                value += ' ' + this.parseFillinPart(p)
+              })
+            } else {
+              let partAnswer = answer.partAnswers.find(p => p.IsFillin)
+              if (partAnswer !== undefined) {
+                value = this.parseFillinPart(partAnswer)
+                // if (partAnswer.InputType === 'money') value = '$' + Number(partAnswer.Part).toLocaleString()
+                // else value = partAnswer.Part
+              } else value = ''
+            }
           } else if (answer.TypeID === 6) {
             let optionAnswer = answer.optionAnswers.find(oa => oa.IsChecked)
             if (optionAnswer === undefined) optionAnswer = {Content: '', Outputs: '', Addition: ''}
+            if (optionAnswer.Addition === null) optionAnswer.Addition = ''
             if (outputway === 'Ans') value = optionAnswer.Content
             else if (outputway === 'Out') {
+              if (optionAnswer.Outputs === null) optionAnswer.Outputs = ''
               value = optionAnswer.Outputs.replace('{addition}', optionAnswer.Addition)
             } else if (outputway === 'Addi') {
               if (optionAnswer.Addition === null || optionAnswer.Addition === '') value = optionAnswer.Content
@@ -312,6 +331,17 @@ export default {
         text = text.replace(ma, value)
       }
       return text
+    },
+    parseFillinPart: function (p) {
+      let value = ''
+      if (p.IsFillin) {
+        if (p.InputType === 'money') value = '$' + Number(p.Part).toLocaleString()
+        else if (p.InputType === 'date') value = moment(p.Part).format('MMM Do YYYY')
+        else value = p.Part
+      } else {
+        value = '<span style="font-weight: normal;">' + p.Part + '</span>'
+      }
+      return value
     },
     parseSheet: function (sheet) {
       if (this.businessObj === null) return sheet
@@ -475,6 +505,7 @@ export default {
       $sheet.children().remove()
       let autoPageDepart = this.autoPageDepart
       sheet.tables.forEach(function (table) {
+        if (table === null) return
         let sheetheight = $sheetDom.height()
         // $sheet.append($('<div>' + sheetheight + '</div>'))
         let $div = $('<div style="margin-bottom: 20px"></div>')
@@ -484,6 +515,9 @@ export default {
           $div.append($title)
         }
         let $table = $('<table border="1"  style="font-weight: normal;  font-size: 16px; word-break: keep-all; width: 730pt; min-height: 25px; line-height: 36px; text-align: left; border-collapse: collapse;">')
+        if (sheet.TypeID === 1) {
+          $table = $('<table border="0"  style="font-weight: normal;  font-size: 16px; word-break: keep-all; width: 730pt; min-height: 25px; line-height: 36px; text-align: left; border-collapse: collapse;">')
+        }
         $div.append($table)
         table.trs.forEach(function (tr) {
           let $tr = $('<tr></tr>')
@@ -517,6 +551,7 @@ export default {
           console.log('sheet', res)
           let sheetContent = JSON.parse(res.data.Content)
           this.sheet = this.parseSheet(sheetContent)
+          this.sheet.TypeID = res.data.TypeID
           if (this.loadArrayCount === 0) this.createSheet()
         }
         this.isLoading = false
@@ -548,9 +583,10 @@ export default {
         this.isLoading = false
       })
     },
-    loadBusinessObj: function (id) {
+    loadBusinessObj: function (id, sheetTypeId) {
       this.isLoading = true
       $('#sheet').children().remove()
+      if (sheetTypeId !== undefined) this.sheetTypeId = sheetTypeId
       this.sheet.title = ''
       this.sheetSelectedVisible = false
       // this.sheetVisible = false
@@ -581,11 +617,11 @@ export default {
     },
     loadSheets: function (id) {
       this.isLoading = true
-      let server = '/api/Services/memoService.asmx/GetSheets'
-      let para = {memoid: id}
+      let server = ''
+      let para = null
       if (this.businessTypeId === 1) {
-        server = '/api/Services/memoService.asmx/GetSheets'
-        para = {memoid: id}
+        server = '/api/Services/memoService.asmx/GetSheetsByType'
+        para = {memoid: id, sheettypeid: this.sheetTypeId}
       } else if (this.businessTypeId === 4) {
         server = '/api/Services/CommerceService.asmx/GetApplicationSheets'
         para = {applicationid: id}
@@ -599,6 +635,7 @@ export default {
             this.currentSheetId = this.sheets[0].SheetID
             let s = JSON.parse(this.sheets[0].Content)
             this.sheet = this.parseSheet(s)
+            this.sheet.TypeID = this.sheets[0].TypeID
             this.sheetVisible = true
             this.createSheet(s)
           } else if (this.sheets.length > 1) {
@@ -639,7 +676,7 @@ export default {
       })
     },
     loadApplicationBlock: function (aBlock, id) {
-      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBlock', {id: aBlock.ApplicationBlockID}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/GetApplicationBlock_net', {id: aBlock.ApplicationBlockID}).then(res => {
         if (res) {
           console.log('GetApplicationBlock', res)
           aBlock.answers = res.data.answers

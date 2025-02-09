@@ -54,7 +54,7 @@ export default {
     //   }
     // }
     return {
-      verifyCodeUsed: true,
+      verifyCodeUsed: false,
       isLoading: false,
       loginForm: {
         username: '',

@@ -103,8 +103,9 @@ export default {
         routeLevel = routes[0].RouteLevel
       } else if (question.RouteTypeID === 2 && answer.TypeID === 3) { // baseOnAnswer property
         for (let i = 0; i < routes.length; i++) {
+          routeLevel = routes[i].RouteLevel
           // 变量转换为具体值，定义OperandCurrent，避免修改EffectiveDate时，无法再次匹配到{EffectiveDate}
-          let Operand = this.parseOperand(routes[i].Operand, sign)
+          let Operand = routes[i].Operand // this.parseOperand(routes[i].Operand, sign)
           // 日期型property把operand和value转成时间戳
           if (sign === 'date') {
             Operand = moment(Operand).valueOf()
@@ -113,6 +114,7 @@ export default {
           if (isNaN(Operand)) { // true代表非数字，字符串比较
             if (routes[i].Operator === '=' && value === Operand) {
               skipNumber = routes[i].MoveStep
+              routeLevel = routes[i].RouteLevel
               break
             } else {
               skipNumber = 1
@@ -136,7 +138,6 @@ export default {
             } else {
               skipNumber = 1
             }
-            routeLevel = routes[i].RouteLevel
           }
         }
       } else if (answer.IsRoute && question.RouteTypeID === 2 && answer.TypeID === 6) { // baseOnAnswer singleChoice

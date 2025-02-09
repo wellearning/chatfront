@@ -16,10 +16,10 @@ Function: Show my commercial application list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @change="search()" @keyup.enter.native="search()"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Reset</el-button>
@@ -144,7 +144,7 @@ export default {
       isLoading: false,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       pinkSlipFormVisible: false,
@@ -668,6 +668,7 @@ export default {
       this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
     },
     // 查询
+    /*
     search: function (name) {
       if (name === undefined) name = ''
       this.isLoading = true
@@ -675,12 +676,6 @@ export default {
         if (res) {
           console.log('查询', res)
           this.list = res.data
-          /*
-            if (name !== null) {
-              this.searchName = name
-              this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-            }
-            */
           this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
           this.total = this.list.length
           this.currentPage = 1
@@ -691,11 +686,31 @@ export default {
         this.isLoading = false
       })
     },
+*/
+    search: function () {
+      let query = this.searchForm.name.toLowerCase().trim()
+      if (query === '') {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+          r.ApplicationID === Number(query) ||
+          (r.Producer !== null && r.Producer.toLowerCase().indexOf(query) >= 0) ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.toLowerCase().indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.toLowerCase().indexOf(query) >= 0) ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentPage = 1
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null)
+      this.search()
     },
     // 删除
     del: function (id) {

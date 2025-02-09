@@ -13,13 +13,13 @@ Function: Show the needed processing cover letter list and do the processing job
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @change="search()" @keyup.enter.native="search()"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoadingTotal" size="small">Go</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoadingTotal" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -93,18 +93,21 @@ export default {
         popTitle: ''
       },
       isLoading: false,
+      isLoadingTotal: false,
       // isLoadingStaffs: false,
       isLoadingInsuranceCompany: false,
       // staffsList: [],
       insuranceCompanyList: [],
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       // 列表
       tempList: [],
       list: [],
+      totalList: [],
+      totalCount: 0,
       currentCoverLetter: null,
       currentCoverLetterID: 0,
       pageSize: 20,
@@ -121,7 +124,10 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null, 0)
+    this.loadInsuranceCorps()
+    this.loadProducers(0)
+    this.loadCoverLetterStatuses()
+    // this.loadCoverLetters(0)
   },
   methods: {
     sorttable: function (column) {
@@ -183,7 +189,7 @@ export default {
       }
     },
     reinstate: function (coverletter) {
-      this.isLoading = true
+      this.isLoadingProcess = true
       this.axios.post('/api/Services/NewBusinessService.asmx/ReinstateCoverLetter', {coverletterid: coverletter.CoverLetterID}).then(res => {
         if (res) {
           coverletter.Status = res.data.Status
@@ -194,10 +200,10 @@ export default {
             message: 'Operation Succeeded'
           })
         }
-        this.isLoading = false
+        this.isLoadingProcess = false
       }).catch(err => {
         console.log('修改出错', err)
-        this.isLoading = false
+        this.isLoadingProcess = false
       })
     },
     beforeCloseProcessing: function (done) {
@@ -218,17 +224,91 @@ export default {
         this.$refs.enbp.close()
       }
     },
+    loadCoverLetters: function (start) {
+      if (start === 0) {
+        this.totalList = []
+        this.isLoading = true
+        this.isLoadingTotal = true
+      }
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProcessings', {start: start}).then(res => {
+        if (res) {
+          console.log('CoverLetters', res)
+          res.data.forEach(c => this.attachInfo(c))
+          if (start === 0) {
+            this.totalCount = res.count
+            // this.list = res.data
+            this.totalList = res.data
+            this.isLoading = false
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (start < 500) {
+            this.list = this.totalList
+            this.total = this.list.length
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+          } else this.isLoadingTotal = false
+          if (this.totalList.length === this.totalCount) {
+            // this.totalList.forEach(a => {
+            // this.attachInfo(a)
+            // })
+            // this.list = this.totalList
+            // this.pageCount = Math.ceil(this.total / this.pageSize)
+            // this.isLoadingTotal = false
+          } else this.loadCoverLetters(this.totalList.length)
+        }
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+        this.isLoadingTotal = false
+      })
+    },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.Name
+      else a.CorpName = ''
+      // let status = this.statusList.find(s => s.key === a.StatusID)
+      // if (status !== undefined) a.Status = status.value
+      // else a.Status = ''
+      if (!this.isLoadingProducers) {
+        let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+        if (producer !== undefined) a.Producer = producer.Name
+        else a.Producer = ''
+        if (a.StaffID === a.ProducerID) a.Author = a.Producer
+        else {
+          let author = this.producerList.find(p => p.StaffID === a.StaffID)
+          if (producer !== undefined) a.Author = author.Name
+          else a.Author = ''
+        }
+      }
+    },
     // 查询
+    search: function () {
+      let query = this.searchForm.name
+      if (query === null || query === '') {
+        this.list = this.totalList
+      } else {
+        query = query.toLowerCase().trim()
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
+          r.CoverLetterID === Number(query) ||
+          r.Producer.toLowerCase().indexOf(query) >= 0 ||
+          r.NameInsured.toLowerCase().indexOf(query) >= 0 ||
+          r.CorpName.toLowerCase().indexOf(query) >= 0 ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ClientCode.toLowerCase().indexOf(query) >= 0
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+    },
+    /*
     search: function (name, start) {
+      if (start === undefined) start = 0
+      if (name === undefined || name === null) name = this.searchForm.name
       this.isLoading = true
       if (start === 0) this.list = []
-      // 后端不支持null查询，把null转换成''
-      if (name === null) {
-        this.searchName = ''
-      } else {
-        this.searchName = name
-      }
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProcessingCoverLetters', {query: this.searchName, start: start}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProcessingCoverLetters', {query: name, start: start}).then(res => {
         if (res) {
           console.log('查询', res)
           if (res.data.length < this.pagerCount * this.pageSize) {
@@ -250,17 +330,84 @@ export default {
         this.isLoading = false
       })
     },
+     */
+    loadInsuranceCorps: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
+        if (res) {
+          console.log('insuranceCorps', res)
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('loadInsuranceCorps', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadCoverLetterStatuses: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'CoverLetterStatus'}).then(res => {
+        if (res) {
+          console.log('statusList', res)
+          this.statusList = res.data
+        }
+        this.isLoadingInsuranceCompany = false
+      }).catch(err => {
+        console.log('loadCoverLetterStatuses', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    loadProducers: function (start) {
+      this.isLoadingProducers = true
+      this.axios.post('/api/Services/baseservice.asmx/GetAllStaffs', {start: start}).then(res => {
+        if (res) {
+          console.log('producerList', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producerList = res.data
+          } else {
+            this.producerList = this.producerList.concat(res.data)
+          }
+          if (this.producerList.length >= this.producerCount) {
+            this.isLoadingProducers = false
+            this.loadCoverLetters(0)
+            /*
+            if (!this.isLoadingTotal) {
+              this.totalList.forEach(a => {
+                let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+                if (producer !== undefined) a.Producer = producer.Name
+                else a.Producer = ''
+                if (a.StaffID === a.ProducerID) a.Author = a.Producer
+                else {
+                  let author = this.producerList.find(p => p.StaffID === a.StaffID)
+                  if (producer !== undefined) a.Author = author.Name
+                  else a.Author = ''
+                }
+              })
+            }
+             */
+          } else {
+            this.loadProducers(this.producerList.length)
+          }
+        }
+      }).catch(err => {
+        console.log('producerList', err)
+        this.isLoadingProducers = false
+      })
+    },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
+      /*
       if (val === this.pageCount && !this.isAll) {
         this.search(null, this.total)
       }
+      */
     },
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null, 0)
+      this.search()
     }
   }
 }

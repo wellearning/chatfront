@@ -455,6 +455,21 @@ table tr td {
 .newMemo .subtitle .el-input, .newMemo .subtitle .el-select{
   width: 100%;
 }
+/* email开始 */
+.writeEmail .title .el-input__inner {
+  text-align: center;
+}
+.writeEmail .subtitle .el-form-item__label{
+  width: 15%;
+}
+.writeEmail .subtitle .el-form-item__content{
+  width: 80%;
+  float: left;
+}
+.writeEmail .subtitle .el-input, .writeEmail .subtitle .el-select{
+  width: 100%;
+}
+/* writeEmail */
 .el-select__tags{
   flex-wrap: unset;
   overflow: hidden;

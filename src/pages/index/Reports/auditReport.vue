@@ -232,7 +232,7 @@ export default {
         {'Name': 'Counts', 'Value': this.currentAudit.Counts},
         {'Name': 'Audit Counts', 'Value': this.currentAudit.AuditCounts},
         {'Name': 'Total Score', 'Value': this.currentAudit.QualityScore},
-        {'Name': 'Average Score', 'Value': this.currentAudit.AverageScore}
+        {'Name': 'Average Score', 'Value': this.currentAudit.f}
       ]
     },
     // 日期格式

@@ -520,7 +520,15 @@ export default {
       // let tb = this.applicationTemplate.templateBlocks.find(t => t.TemplateBlockID === ab.topTemplateBlockID)
       // tb.StatusID = 1
       ab.StatusID = 3
-      ab.answers[0].StatusID = 1
+      for (let i = 0; i < ab.answers.length; i++) {
+        let answer = ab.answers[i]
+        if (answer.TypeID === 1 || answer.TypeID === 2) answer.StatusID = 1
+        else {
+          answer.StatusID = 1
+          break
+        }
+      }
+      // ab.answers[0].StatusID = 1
     },
     showNextBlock: function (child) {
       let tblist = this.applicationTemplate.applicationBlocks

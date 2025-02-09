@@ -159,6 +159,7 @@ export default {
           this.coverLetterForm = res.data
           this.coverLetterForm.RequestDate = moment(res.data.RequestDate)
           this.coverLetterForm.EffectiveDate = moment(res.data.EffectiveDate)
+          this.coverLetterForm.UWDate = moment(res.data.UWDate)
         }
         this.isLoadingCoverLetter = false
       }).catch(err => {
@@ -172,6 +173,7 @@ export default {
       this.coverLetterForm.NameInsured = coverLetter.NameInsured
       this.coverLetterForm.ClientCode = coverLetter.ClientCode
       this.coverLetterForm.EffectiveDate = coverLetter.EffectiveDate
+      this.coverLetterForm.UWDate = coverLetter.UWDate
       this.coverLetterForm.PremiumOnApp = coverLetter.PremiumOnApp
     },
     setCoverLetter: function (letter) {
@@ -180,6 +182,7 @@ export default {
       letter.ClientCode = this.coverLetterForm.ClientCode
       letter.EffectiveDate = this.coverLetterForm.EffectiveDate
       letter.RequestDate = this.coverLetterForm.RequestDate
+      letter.UWDate = this.coverLetterForm.UWDate
       letter.PremiumOnApp = this.coverLetterForm.PremiumOnApp
     },
 

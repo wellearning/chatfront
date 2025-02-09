@@ -119,6 +119,9 @@ Function: Show all insurance company list and do all operations on the list.
               </el-radio>
             </el-radio-group>
           </el-form-item>
+          <el-form-item label="Email" prop="Email">
+            <el-input v-model="addForm.Email" clearable></el-input>
+          </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
           </el-form-item>
@@ -175,6 +178,9 @@ Function: Show all insurance company list and do all operations on the list.
                 <span>{{item.value}}</span>
               </el-radio>
             </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Email" prop="Email">
+            <el-input v-model="editForm.Email" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
@@ -237,6 +243,7 @@ export default {
         ParentID: 0,
         Province: null,
         Address: null,
+        Email: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
         HomeMinimum: null,
@@ -284,6 +291,7 @@ export default {
         ParentID: 0,
         Province: null,
         Address: null,
+        Email: null,
         AutoBindingAuthority: null,
         PropertyBindingAuthority: null,
         HomeMinimum: null,

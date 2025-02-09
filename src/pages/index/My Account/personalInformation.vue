@@ -27,10 +27,19 @@ Function: Show personal information.
         <el-form-item label="Name" prop="Name">
           <el-input v-model.trim="editForm.Name" clearable></el-input>
         </el-form-item>
+        <el-form-item label="Title" prop="Title">
+          <el-input v-model.trim="editForm.Title" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="Designation" prop="Designation">
+          <el-input v-model.trim="editForm.Designation" clearable></el-input>
+        </el-form-item>
         <el-form-item label="Email" prop="Email">
           <el-input v-model="editForm.Email" clearable></el-input>
         </el-form-item>
-        <el-form-item label="Mobile" prop="Mobile">
+        <el-form-item label="Direct" prop="Direct">
+          <el-input v-model="editForm.Direct" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="Cell" prop="Mobile">
           <el-input v-model="editForm.Mobile" clearable></el-input>
         </el-form-item>
         <el-form-item label="ProducerCode" prop="ProducerCode">
@@ -78,8 +87,11 @@ export default {
       editForm: {
         StaffID: null,
         Name: null,
+        Title: null,
+        Designation: null,
         institution: null,
         role: null,
+        Direct: null,
         Mobile: null,
         Email: null,
         ProducerCode: null,
@@ -97,7 +109,7 @@ export default {
           { required: true, message: 'Please Select', trigger: 'blur' }
         ],
         Mobile: [
-          { required: true, message: 'Please Enter', trigger: 'blur' },
+          { required: false, message: 'Please Enter', trigger: 'blur' },
           { max: 20, message: 'Within 20 Characters', trigger: 'blur' }
         ],
         Email: [

@@ -52,6 +52,11 @@ Function: Show all the processing record list and download the records.
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
+        <el-table-column label="ReviewDate" min-width="120">
+          <template v-slot="scope">
+            <span>{{dateFormat(scope.row.UWDate)}}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="Score" prop="Score" min-width="70"></el-table-column>
         <el-table-column label="Producer" prop="Producer" min-width="100"></el-table-column>
         <el-table-column label="User" prop="User" min-width="100"></el-table-column>
@@ -178,6 +183,7 @@ export default {
     // 日期格式
     dateFormat (date) {
       if (date === undefined) return ''
+      else if (date === '' || date === null) return ''
       else return moment(date).format('YYYY-MM-DD')
     },
     exportExcel: function () {

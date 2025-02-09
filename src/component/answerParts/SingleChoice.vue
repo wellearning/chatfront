@@ -1,12 +1,12 @@
 <template>
   <div class="answer">
     <div class="choiceQuestion">
-      <div class="question">{{answer.QuestionDesc}}</div>
-      <div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div>
+      <div class="question" :title="answer.Tips">{{answer.QuestionDesc}}</div>
+      <!--div class="questionTips" v-if="answer.Tips !==  null">{{answer.Tips}}</div-->
       <div class="choice">
         <el-radio-group v-model="answer.checkvalue" v-bind:disabled="disabled" @change="resetAdditionContent">
           <el-radio v-for="item in answer.optionAnswers" :label="item.ChoiceOptionID" :key="item.ChoiceOptionID">
-            <span class="choiceTitle">{{item.Content}}<i class="choiceTips">{{item.Tips}}</i></span>
+            <span class="choiceTitle" :title="item.Tips">{{item.Content}}<!--i class="choiceTips">{{item.Tips}}</i--></span>
             <span v-if="disabled && item.NeedAddition && answer.checkvalue === item.ChoiceOptionID" style="text-decoration:underline">{{answer.Addition}}&nbsp;&nbsp;</span>
             <span v-else-if="disabled && item.NeedAddition" style="text-decoration:underline"></span>
             <el-input v-else-if="item.NeedAddition && answer.checkvalue === item.ChoiceOptionID" class="additionContent" v-model="item.Addition" size="mini"  @keydown.native.tab="changeVal()" @change="changeVal()"></el-input>

@@ -42,7 +42,7 @@ Function: Show all activity list and do all operations on the list.
               <el-button icon="el-icon-document" type="primary" @click="showSponsorForm(scope.row)" :loading="isLoading" size="small">Sponsors</el-button>
               <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row)" :loading="isLoading" size="small">Edit</el-button>
               <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.ActivityID)" :loading="isLoading" size="small">Delete</el-button>
-              <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row)" :loading="isLoading || isLoadingOrganization || isLoadingRole" size="small"></el-button>
+              <el-button :icon="scope.row.StatusID === 2 ? 'el-icon-open' : 'el-icon-turn-off'" :type="scope.row.StatusID === 2 ? 'success' : 'danger'" @click="switchStatus(scope.row)" :loading="isLoading " size="small"></el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -55,6 +55,11 @@ Function: Show all activity list and do all operations on the list.
           <el-form-item label="Activity Name" prop="name">
             <el-input v-model="addForm.Name" clearable></el-input>
           </el-form-item>
+          <el-form-item label="AttendeeType" prop="AttendeeTypeID">
+            <el-select v-model="addForm.AttendeeTypeID" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in objectTypes" :key="item.key" :label="item.value" :value="item.key"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="Start Time" prop="StartTime">
             <el-date-picker v-model="addForm.StartTime" clearable></el-date-picker>
           </el-form-item>
@@ -63,6 +68,20 @@ Function: Show all activity list and do all operations on the list.
           </el-form-item>
           <el-form-item label="Introduction" prop="name">
             <el-input type="textarea" :rows="3" v-model="addForm.Introduce" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Statistics"  prop="checkedChildren" class="">
+            <el-checkbox-group v-model="addForm.checkedChildren" >
+              <el-checkbox v-for="item in businessTypes" :label="item.value" :key="item.value"></el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="TopValue" prop="name">
+            <el-input v-model="addForm.TopValue" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Default Rank" prop="name">
+            <!--el-input v-model="addForm.DefaultRank" clearable></el-input-->
+            <el-select v-model="addForm.DefaultRank" placeholder="Block" no-data-text="No Record" filterable>
+              <el-option v-for="item in rankItems" :key="item" :label="item" :value="item"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading">Confirm</el-button>
@@ -91,6 +110,7 @@ Function: Show all activity list and do all operations on the list.
           <el-form-item class="confirmBtn smallLine">
             <el-button icon="el-icon-plus" type="primary" plain size="small" @click="selectAttendee()" :loading="isLoading">Select</el-button>
             <el-button icon="el-icon-minus" type="primary" plain size="small" @click="removeAttendee()" :loading="isLoading">Remove</el-button>
+            <el-button icon="el-icon-plus" type="primary" plain size="small" @click="addAllProducers()" :loading="isLoading">Add all producers</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -142,6 +162,7 @@ export default {
       attendeeFormVisible: false,
       sponsorFormVisible: false,
       currentAttendees: null,
+      businessTypes: [],
       objectTypes: [],
       // 新增
       addFormVisible: false,
@@ -151,7 +172,10 @@ export default {
         SponsorTypeID: 2,
         StartTime: null,
         EndTime: null,
-        Introduce: null
+        Introduce: null,
+        TopValue: 10000,
+        DefaultRank: 'TotalPremium',
+        checkedChildren: ['PolicyChange', 'NewBusiness']
       },
       addFormRules: {
         Name: [
@@ -164,6 +188,8 @@ export default {
         selectedIDs: [],
         checkedChildren: []
       },
+      producers: [],
+      producerCount: 0,
       attendees: [],
       selectedChildren: [],
       children: [],
@@ -174,12 +200,15 @@ export default {
       },
       sponsors: [],
       selectedSponsors: [],
-      selectableSponsors: []
+      selectableSponsors: [],
+      rankItems: ['TotalPremium']
     }
   },
   mounted: function () {
     this.loadObjectTypes()
-    this.loadAttendees()
+    this.loadBusinessTypes()
+    this.loadGroups()
+    this.loadProducers(0)
     this.loadSponsors()
     this.search()
   },
@@ -197,18 +226,67 @@ export default {
         this.isLoadingHelpData = false
       })
     },
-    loadAttendees: function () {
+    loadBusinessTypes: function () {
+      this.isLoadingHelpData = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'BusinessType'}).then(res => {
+        if (res) {
+          console.log('BusinessTypes', res)
+          this.businessTypes = res.data
+        }
+        this.isLoadingHelpData = false
+      }).catch(err => {
+        console.log('BusinessTypes', err)
+        this.isLoadingHelpData = false
+      })
+    },
+    loadAttendees: function (activity) {
+      this.attendees = []
+      if (activity.AttendeeTypeID === 1) {
+        this.groups.forEach(g => {
+          let child = {
+            AttendeeID: g.InstitutionID,
+            Name: g.Name
+          }
+          this.attendees.push(child)
+        })
+      } else if (activity.AttendeeTypeID === 3) {
+        this.producers.forEach(g => {
+          let child = {
+            AttendeeID: g.StaffID,
+            Name: g.Name
+          }
+          this.attendees.push(child)
+        })
+      }
+    },
+    loadProducers: function (start) {
+      this.isLoadingProducers = true
+      this.axios.post('/api/Services/baseservice.asmx/GetNormalStaffs', {start: start}).then(res => {
+        if (res) {
+          console.log('producers', res)
+          if (start === 0) {
+            this.producerCount = res.count
+            this.producers = res.data
+          } else {
+            this.producers = this.producers.concat(res.data)
+          }
+          if (this.producers.length < this.producerCount) {
+            this.loadProducers(this.producers.length)
+          } else {
+            this.isLoadingProducers = false
+          }
+        }
+      }).catch(err => {
+        console.log('producers', err)
+        this.isLoadingProducers = false
+      })
+    },
+    loadGroups: function () {
       this.isLoadingStaffs = true
       this.axios.post('/api/Services/baseservice.asmx/GetGroups', {}).then(res => {
         if (res) {
           console.log('attendees', res)
-          res.data.forEach(g => {
-            let child = {
-              AttendeeID: g.InstitutionID,
-              Name: g.Name
-            }
-            this.attendees.push(child)
-          })
+          this.groups = res.data
         }
       }).catch(err => {
         console.log('attendees', err)
@@ -243,6 +321,8 @@ export default {
           res.data.forEach(a => {
             a.StartTime = moment(a.StartTime)
             a.EndTime = moment(a.EndTime)
+            if (a.StaticItems === null) a.checkedChildren = []
+            else a.checkedChildren = a.StaticItems.split(',')
           })
           this.list = res.data
           this.total = this.list.length
@@ -256,8 +336,19 @@ export default {
     },
     // 显示修改
     showEdit: function (activity) {
-      this.addForm = activity
+      // activity.checkedChildren = []
+      this.addForm = JSON.parse(JSON.stringify(activity))
+      // this.addForm.checkedChildren = []
       this.addFormVisible = true
+      if (activity.sponsors !== null) this.fillRankItems(activity)
+      else this.loadActivitySponsors(activity, this.fillRankItems)
+    },
+    fillRankItems: function (activity) {
+      let rankItems = ['TotalPremium']
+      activity.sponsors.forEach(s => {
+        rankItems.push(s.Name)
+      })
+      this.rankItems = rankItems
     },
     switchStatus: function (row) {
       this.$confirm('Are you sure to switch status?', 'Confirm', {
@@ -366,6 +457,7 @@ export default {
         Introduce: '',
         AttendeeTypeID: 1,
         SponsorTypeID: 2,
+        checkedChildren: ['PolicyChange', 'NewBusiness'],
         IsNew: true
       }
       this.addForm = item
@@ -389,6 +481,7 @@ export default {
           this.isLoading = true
           this.addForm.StartTime = moment(this.addForm.StartTime)
           this.addForm.EndTime = moment(this.addForm.EndTime)
+          this.addForm.StaticItems = this.addForm.checkedChildren.join(',')
           this.axios.post('/api/Services/baseservice.asmx/SaveActivity', {activity: JSON.stringify(this.addForm)}).then(res => {
             if (res) {
               console.log('新增', res)
@@ -400,7 +493,12 @@ export default {
               this.addFormVisible = false
               res.data.StartTime = moment(res.data.StartTime)
               res.data.EndTime = moment(res.data.EndTime)
+              res.data.checkedChildren = res.data.StaticItems.split(',')
               if (this.addForm.IsNew) this.list.push(res.data)
+              else {
+                let id = this.list.findIndex(a => a.ActivityID === res.data.ActivityID)
+                this.list[id] = res.data
+              }
               this.total = this.list.length
             }
             this.isLoading = false
@@ -417,25 +515,29 @@ export default {
       })
     },
     showAttendeeForm: function (activity) {
+      this.loadAttendees(activity)
       this.currentActivity = activity
       this.attendeeForm.selectedIDs = []
       this.isLoadingAttendees = true
       this.axios.post('/api/Services/baseservice.asmx/GetActivityAttendees', {activityid: activity.ActivityID}).then(res => {
         if (res) {
-          console.log('GetInstitutionAttendees', res)
-          this.selectedChildren = []
-          res.data.forEach(is => {
-            let atte = this.attendees.find(s => s.AttendeeID === is.AttendeeID)
-            if (atte !== undefined) this.selectedChildren.push(atte)
-          })
-          this.children = this.attendees.filter(s => !this.selectedChildren.includes(s))
+          console.log('GetAttendees', res)
+          this.fillAttenddees(res.data)
           this.isLoadingAttendees = false
           this.attendeeFormVisible = true
         }
       }).catch(err => {
-        console.log('staffList', err)
+        console.log('GetAttendees', err)
         this.isLoadingAttendees = false
       })
+    },
+    fillAttenddees: function (selected) {
+      this.selectedChildren = []
+      selected.forEach(is => {
+        let atte = this.attendees.find(s => s.AttendeeID === is.AttendeeID)
+        if (atte !== undefined) this.selectedChildren.push(atte)
+      })
+      this.children = this.attendees.filter(s => !this.selectedChildren.includes(s))
     },
     closeAttendee: function (done) {
       this.$confirm('Are you sure to close it?', 'Confirm', {
@@ -445,6 +547,25 @@ export default {
       }).then(() => {
         done()
       }).catch(() => {})
+    },
+    addAllProducers: function () {
+      let inst = this.currentActivity
+      let parentid = inst.ActivityID
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/AddActivityAttendees_allProducers', {activityid: parentid}).then(res => {
+        if (res) {
+          console.log('add all staffs', res)
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          this.fillAttenddees(res.data)
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('Fail to remove staff', err)
+        this.isLoading = false
+      })
     },
     selectAttendee: function () {
       let childids = this.attendeeForm.selectedIDs
@@ -502,6 +623,20 @@ export default {
         this.isLoading = false
       })
     },
+    loadActivitySponsors: function (activity, callback) {
+      this.isLoadingSponsors = true
+      this.axios.post('/api/Services/baseservice.asmx/GetActivitySponsors', {activityid: activity.ActivityID}).then(res => {
+        if (res) {
+          console.log('GetActivitySponsors', res)
+          activity.sponsors = res.data
+          this.isLoadingSponsors = false
+          if (callback !== undefined) callback(activity)
+        }
+      }).catch(err => {
+        console.log('GetActivitySponsors', err)
+        this.isLoadingSponsors = false
+      })
+    },
     showSponsorForm: function (activity) {
       this.currentActivity = activity
       this.sponsorForm.selectedIDs = []
@@ -515,6 +650,7 @@ export default {
             if (atte !== undefined) this.selectedSponsors.push(atte)
           })
           this.selectableSponsors = this.sponsors.filter(s => !this.selectedSponsors.includes(s))
+          activity.sponsors = res.data
           this.isLoadingSponsors = false
           this.sponsorFormVisible = true
         }

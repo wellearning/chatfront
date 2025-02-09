@@ -2,7 +2,7 @@
   <div class="answer">
     <div class="fillInQuestion">
       <div class="question">
-        <span>{{answer.AnswerDesc}}&nbsp;&nbsp;</span>
+        <span :title="answer.Tips">{{answer.AnswerDesc}}&nbsp;&nbsp;</span>
         <span v-for="item in answer.partAnswers" :key="item.FillinPartID" class="part"><!--排序.slice().sort((a,b) => { return a.SequenceNo - b.SequenceNo })-->
           <!--<i :class="{'nextLine' : item.isNextLine}"></i>-->
           <template v-if="item.IsFillin === false">{{item.Part}}</template>
@@ -15,7 +15,7 @@
           </template>
         </span>
       </div>
-      <div class="questionTips">{{answer.Tips}}</div>
+      <!--div class="questionTips">{{answer.Tips}}</div-->
     </div>
   </div>
 </template>

@@ -7,7 +7,17 @@
             <!--span>{{sheetContent.title}}</span-->
             <el-form class="" label-width="10px" label-position="center" size="large">
               <el-form-item>
-                <el-col :span="12">
+                <el-col :span="2">
+                  <el-radio-group left v-model="TypeID">
+                    <el-radio :label="0">
+                      <span>Normal</span>
+                    </el-radio>
+                    <el-radio :label="1">
+                      <span>Notes</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-col>
+                <el-col :span="10">
                   <el-input v-model="sheetContent.title" placeholder="Title of the form"   clearable></el-input>
                 </el-col>
                 <el-col :span="6">
@@ -134,6 +144,7 @@ export default {
       currentQuestionId: 0,
       currentQuestion: null,
       outputType: 2,
+      TypeID: 0,
       sheet: {},
       sheetContent: {
         title: 'COMMERCIAL ACCOUNT SUMMARY',
@@ -331,6 +342,7 @@ export default {
       this.axios.post('/api/Services/baseservice.asmx/GetSheet', {sheetid: id}).then(res => {
         if (res) {
           console.log('SheetContent', res)
+          this.TypeID = res.data.TypeID
           let content = JSON.parse(res.data.Content)
           content.tables.forEach(function (table) {
             table.trs.forEach(function (tr) {
@@ -370,6 +382,7 @@ export default {
     saveSheet: function () {
       this.isLoading = true
       let value = this.sheet
+      value.TypeID = this.TypeID
       console.log('sheet', value)
       value.Title = this.sheetContent.title
       value.Content = JSON.stringify(this.sheetContent)

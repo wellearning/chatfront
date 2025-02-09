@@ -1,6 +1,6 @@
 <template>
   <div class="answer">
-    <div class="propertyQuestion">
+    <div class="propertyQuestion" :title="answer.Tips">
       <span class="question">{{answer.QuestionDesc}}</span>
       <span v-if="disabled" style="text-decoration:underline">{{answer.AnswerDesc}}&nbsp;&nbsp;</span>
       <el-input v-else-if="answer.InputType === 'text'" class="additionContent" v-model="answer.AnswerDesc" size="mini" @keydown.native.tab="changeVal()"  @change="changeVal()"  placeholder="Text" style="width: 300px;"></el-input>
@@ -8,8 +8,8 @@
       <el-input v-else-if="answer.InputType === 'number'" class="additionContent" v-model="answer.AnswerDesc" type="number" size="mini" @keydown.native.tab="changeVal()" @change="changeVal(answer.AnswerDesc, 'number')" placeholder="Number"></el-input>
       <el-input v-else-if="answer.InputType === 'money'" class="additionContent" v-model="currencyValue" type="text" size="mini" @focus="setNumeric" @blur="setCurrency" @keydown.native.tab="changeVal()" @change="changeVal(answer.AnswerDesc, 'number')" placeholder="Currency"></el-input>
       <el-input v-else-if="answer.InputType === 'computed'" class="additionContent" v-model="answer.AnswerDesc" type="text" size="mini" readonly placeholder=""></el-input>
-      <el-select v-else-if="answer.InputType === 'list'" style="width:300px" class="additionContent" v-model="answer.AnswerDesc" ref="name" size="mini" @focus="loadDataSource(answer)" @keydown.native.tab="changeVal()" @change="changeVal(answer, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
-        <el-option class="questionOption" v-for="item in dataList" :key="item.ItemValue" :label="item.Name" :value="item.ItemValue"></el-option>
+      <el-select v-else-if="answer.InputType === 'list' || answer.InputType === 'sublist'" style="width:300px" class="additionContent" v-model="answer.AnswerDesc" ref="name" size="mini" @focus="loadDataSource(answer)" @keydown.native.tab="changeVal()" @change="changeVal(answer, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
+        <el-option class="questionOption" v-for="item in dataList" :key="item.Name" :label="item.Name" :value="item.Name"></el-option>
       </el-select>
       <el-select v-else-if="answer.InputType === 'children'" class="additionContent"  v-model="answer.AnswerDesc" ref="name" size="mini" @focus="loadChildren(answer)" @keydown.native.tab="changeVal()" @change="changeVal(answer.AnswerDesc, 'list')" placeholder="Please Select" no-data-text="No Data" filterable>
         <el-option class="questionOption" v-for="item in dataList" :key="item.Name" :label="item.Name" :value="item.Name"></el-option>
@@ -31,8 +31,8 @@
             </el-select>
             <el-input v-else-if="p.type === 'money'" class="additionContent" v-model="item[p.Name+'_c']" type="text" size="mini" style="width: 200px;" @blur="setItemCurrency(item,p)" @focus="setItemNumeric(item,p)"></el-input>
             <span v-else-if="p.type === 'moneyplus'">
-              <el-checkbox v-model="item[p.Name+'_p']" @change="moneyplusCheck(item, p)">{{p.ItemValue}}</el-checkbox>
               <el-input class="additionContent" v-model="item[p.Name+'_c']" type="text" size="mini" style="width: 200px;" @blur="setItemCurrency(item,p)"  @focus="setItemNumeric(item,p)"></el-input>
+              <el-checkbox v-model="item[p.Name+'_p']" @change="moneyplusCheck(item, p)">{{p.ItemValue}}</el-checkbox>
             </span>
             <el-input v-else class="additionContent" v-model="item[p.Name]" :type="p.type" size="mini" placeholder="" style="width: 300px;" @change="changeArray()"></el-input>
           </div>
@@ -53,7 +53,7 @@
         <el-checkbox v-model="enableEdit">need edit</el-checkbox>
       </div>
       <!--<el-input-number v-else-if="question.InputType === 'number'" class="additionContent" v-model="question.value" size="mini" @input="changeVal(question.value)" placeholder="Number"></el-input-number>-->
-      <div class="questionTips">{{answer.Tips}}</div>
+      <!--div class="questionTips">{{answer.Tips}}</div-->
     </div>
   </div>
 </template>
@@ -250,6 +250,9 @@ export default {
       if (answer.InputType === 'array') {
         service = '/api/Services/baseservice.asmx/GetObjectProperties'
         param = { parenttype: answer.DataSource }
+      } else if (answer.InputType === 'sublist') {
+        service = '/api/Services/baseservice.asmx/GetSubDataItems'
+        param = {questionid: answer.QuestionID}
       }
       // let question = answer.blockQuestion.question
       this.axios.post(service, param).then(res => {
@@ -260,7 +263,7 @@ export default {
             res.data.forEach(da => {
               if (da.children.length > 0) da.type = da.children[0].Name
               else da.type = 'text'
-              if (da.type === 'list') da.datasource = da.children.slice(1)
+              if (da.type === 'list' || da.type === 'sublist') da.datasource = da.children.slice(1)
               else if (da.type === 'money') {
                 this.answerItems.forEach(item => {
                   if (isNaN(item[da.Name])) {

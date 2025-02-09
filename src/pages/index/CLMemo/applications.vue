@@ -514,9 +514,13 @@ export default {
     },
     hideEdition: function () {
       if (this.currentApplication.IsNew) {
+        this.currentApplication.IsNew = false
         this.totalList.splice(0, 0, this.currentApplication)
         this.search()
       }
+      let appType = this.appTypes.find(t => t.key === this.currentApplication.TypeID)
+      if (appType !== undefined) this.currentApplication.AppType = appType.value
+      else this.currentApplication.AppType = ''
       this.applicationFormVisible = false
     }
 

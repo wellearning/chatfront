@@ -9,9 +9,19 @@ Function: Provide receipt edition, include new edit delete and query.
     <div class="inPageTitle">
       <span class="inPageNav">Receipt/Refund</span>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-plus" type="primary" @click="showAddReceipt()" :loading="isLoading">New</el-button>
+        <el-button icon="el-icon-plus" class="" type="primary" @click="showAddReceipt()" :loading="isLoading">New</el-button>
         <!--el-button icon="el-icon-plus" type="primary" @click="showAddRefund()" :loading="isLoading">New Refund</el-button-->
       </div>
+      <el-upload
+        class="rightBtnBox"
+        :headers="headerObj"
+        :data="dataObj"
+        action="/api/Services/basehandle.ashx"
+        multiple
+        :on-success="handleSuccess"
+        >
+        <el-button icon="el-icon-upload" type="primary">import</el-button>
+      </el-upload>
     </div>
     <div class="inPageContent">
       <div class="searchBox">
@@ -99,6 +109,7 @@ Function: Provide receipt edition, include new edit delete and query.
 
 <script>
 import moment from 'moment'
+import store from '../../../store'
 
 export default {
   data: function () {
@@ -117,6 +128,12 @@ export default {
       pagerCount: 5,
       currentPage: 1,
       total: 0,
+      dataObj: {
+        itemType: 'account'
+      },
+      headerObj: {
+        Authorization: JSON.parse(store.getters.getAccount).Token
+      },
       // 搜索
       searchForm: {
         name: ''
@@ -184,6 +201,33 @@ export default {
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
     },
+    handleSuccess: function (res, file, fileList) {
+      console.log('response', res.data)
+      if (res.code > 0) {
+        this.$message({
+          showClose: true,
+          type: 'warning',
+          message: res.message,
+          duration: 3000
+        })
+        return
+      }
+      let message = 'The file has been successfully imported.'
+      let duration = 6000
+      if (res.data.length > 0) {
+        message += 'There are some records failed. The list: ' + res.data.join(', ')
+        duration = 0
+      }
+      // 文件上传成功的回调
+      this.$message({
+        showClose: true,
+        type: 'success',
+        message: message,
+        duration: duration
+      })
+      this.loadRecords()
+    },
+
     loadTransactionTypes: function () {
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'TransactionType'}).then(res => {
         if (res) {

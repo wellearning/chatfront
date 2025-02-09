@@ -16,7 +16,7 @@ Function: Show my personal line memo list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @change="search()" @keyup.enter.native="search()"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
@@ -46,7 +46,7 @@ Function: Show my personal line memo list and do all operations on the list.
           <template slot-scope="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Form</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 0" type="primary" @click="showSheet(scope.row.MemoID, 0)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Form</el-button>
               <el-button icon="el-icon-edit" type="primary" @click="showEditMemo(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedPinkSlip" type="primary" @click="showPinkSlip(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Pink Slip</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.NeedCOI" type="primary" @click="showCOI(scope.row.MemoID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">COI</el-button>
@@ -79,7 +79,7 @@ Function: Show my personal line memo list and do all operations on the list.
       <!----------------------------------------------Pink Slip弹窗结束----------------------------------------------------->
       <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="sheetFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1"></ViewSheet>
+        <ViewSheet ref="vs" :businessObjId="currentMemoID" :businessTypeId="1" :sheetTypeId="sheetTypeId"></ViewSheet>
       </el-dialog>
       <!----------------------------------------------COI 弹窗结束----------------------------------------------------->
 
@@ -123,13 +123,14 @@ export default {
       isLoading: false,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       pinkSlipFormVisible: false,
       sheetFormVisible: false,
       currentMemoID: null,
       currentMemo: null,
+      sheetTypeId: 0,
       // 列表
       tempList: [],
       list: [],
@@ -293,6 +294,7 @@ export default {
     },
     // 查询
     search: function (name) {
+      if (name === undefined) name = this.searchForm.name
       this.isLoading = true
       this.axios.post('/api/Services/MemoService.asmx/GetMyMemoes', {query: name}).then(res => {
         if (res) {
@@ -317,7 +319,7 @@ export default {
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
       this.searchName = null
-      this.search(null)
+      this.search()
     },
     // 删除
     del: function (id) {
@@ -390,11 +392,12 @@ export default {
         this.$refs.ps.loadMemo(memoid)
       }
     },
-    showSheet: function (memoid) {
+    showSheet: function (memoid, sheetTypeId) {
       this.currentMemoID = memoid
+      if (sheetTypeId !== undefined) this.sheetTypeId = sheetTypeId
       this.sheetFormVisible = true
       if (this.$refs.vs !== undefined) {
-        this.$refs.vs.loadBusinessObj(memoid)
+        this.$refs.vs.loadBusinessObj(memoid, sheetTypeId)
       }
     },
     showCOI: function (memoid) {

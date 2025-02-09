@@ -66,6 +66,13 @@ Function: Show all organization list and do all operations on the list.
                     </el-radio>
                   </el-radio-group>
                 </el-form-item>
+                <el-form-item label="Application ProcessingType" prop="ApplicationProcessingType">
+                  <el-radio-group v-model="form.ApplicationProcessingType">
+                    <el-radio v-for="item in processingTypeList" :label="item.key" :key="item.key">
+                      <span>{{item.value}}</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
                 <el-form-item label="Name" prop="Name">
                   <el-input v-model="form.Name"></el-input>
                 </el-form-item>
@@ -168,6 +175,7 @@ export default {
         BusinessProcessingTypeID: 1,
         MemoProcessingType: 1,
         CoverletterProcessingType: 1,
+        ApplicationProcessingType: 1,
         Name: null,
         BranchCode: null,
         Telphone: null,
@@ -297,6 +305,7 @@ export default {
       this.form.BusinessProcessingTypeID = data.BusinessProcessingTypeID
       this.form.MemoProcessingType = data.MemoProcessingType
       this.form.CoverletterProcessingType = data.CoverletterProcessingType
+      this.form.ApplicationProcessingType = data.ApplicationProcessingType
       this.form.Name = data.Name
       this.form.BranchCode = data.BranchCode
       this.form.Telphone = data.Telphone

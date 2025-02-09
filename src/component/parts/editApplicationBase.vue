@@ -79,6 +79,13 @@
         </el-row>
         <el-row :gutter="20" class="subtitle">
           <el-col :span="24">
+            <el-form-item label="SalesPoints" prop="SalesPoints">
+              <el-input v-model="applicationForm.SalesPoints" type="number" placeholder="SalesPoints" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
             <el-form-item label="InsuranceCorp" prop="InsuranceCorpID">
               <el-select v-model="applicationForm.InsuranceCorpID" placeholder="Template" no-data-text="No Record" filterable >
                 <el-option v-for="item in insuranceCorpList" :key="item.InsuranceCorpID" :label="item.Name" :value="item.InsuranceCorpID"></el-option>
@@ -96,7 +103,7 @@
           </el-col>
         </el-row>
         <div v-if="businessTypeId !== 3 && businessTypeId !== 6">
-          <el-row :gutter="20" class="subtitle">
+          <!--el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="Renewal Questionnaire" prop="QuestionnaireID">
                 <el-select v-model="applicationForm.QuestionnaireID" placeholder="Questionnaire" no-data-text="No Record" filterable >
@@ -104,7 +111,7 @@
                 </el-select>
               </el-form-item>
             </el-col>
-          </el-row>
+          </el-row-->
           <el-row :gutter="20" class="subtitle">
             <el-col :span="24">
               <el-form-item label="ApplicationType" prop="TemplateID">
@@ -164,6 +171,13 @@
             </el-col>
           </el-row>
         </div>
+        <el-row :gutter="20" class="subtitle">
+          <el-col :span="24">
+            <el-form-item label="BindTime" prop="Email">
+              <el-input disabled v-model="BindTime" placeholder="BindTime" title=""></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <div class="newMemo-submit">
           <el-button icon="el-icon-check" type="primary" @click="saveApplication()" :loading="isLoading">Save</el-button>
         </div>
@@ -203,6 +217,7 @@ export default {
         ClientCode: null,
         PolicyNumber: null,
         Premium: null,
+        SalesPoints: null,
         QuestionnaireID: 0,
         TemplateID: 0,
         Address: null,
@@ -215,6 +230,7 @@ export default {
         BusCode: '',
         Industry: ''
       },
+      BindTime: null,
       applicationFormRules: {
         PolicyNumber: [
           { required: true, message: 'Please Enter', trigger: 'blur' },
@@ -264,7 +280,7 @@ export default {
   methods: {
     loadProducers: function (start) {
       this.isLoadingProducers = true
-      this.axios.post('/api/Services/baseservice.asmx/GetSelectableProducers', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetNormalStaffs', {start: start}).then(res => {
         if (res) {
           console.log('producerList', res)
           if (start === 0) {
@@ -384,6 +400,9 @@ export default {
           this.applicationForm.EffectiveDate = moment(res.data.EffectiveDate)
           this.applicationForm.ExpiryDate = moment(res.data.ExpiryDate)
           this.applicationForm.DateOfBirth = moment(res.data.DateOfBirth)
+          this.applicationForm.BindTime = moment(res.data.BindTime)
+          if (this.applicationForm.BindTime.year() < 2050) this.BindTime = moment(res.data.BindTime).format('YYYY/MM/DD hh:mm:ss')
+          else this.BindTime = null
         }
         this.isLoadingApplication = false
       }).catch(err => {

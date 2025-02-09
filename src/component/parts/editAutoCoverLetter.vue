@@ -225,6 +225,7 @@ export default {
             this.coverLetterForm.InsuranceCorp = this.insuranceCorps.find(item => item.InsuranceCorpID === res.data.InsuranceCorpID).Name
             // this.coverLetterForm.EffectiveDate = moment(res.data.EffectiveDate).format('YYYY-MM-DD')
             this.coverLetterForm.RequestDate = moment(res.data.RequestDate).format('YYYY-MM-DD')
+            this.coverLetterForm.UWDate = moment(res.data.UWDate).format('YYYY-MM-DD')
             // this.matchAnswerBlockQuestion()
             // this.coverLetterForm.Templates = res.data.coverLetterTemplates.map(item => { return item.TemplateID })
             // this.changeTemplates(this.coverLetterForm.Templates, 'Answer')

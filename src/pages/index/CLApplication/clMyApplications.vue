@@ -16,7 +16,7 @@ Function: Show my commercial application list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search()" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
@@ -45,12 +45,17 @@ Function: Show my commercial application list and do all operations on the list.
             </el-table>
           </template>
         </el-table-column>
-        <el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column>
+        <el-table-column label="Title" prop="Title" min-width="250" sortable="custom"></el-table-column>
         <!--el-table-column label="Producer" prop="Producer" min-width="100" sortable="custom"></el-table-column-->
-        <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="RequestDate" prop="RequestDate" min-width="150" sortable="custom">
+        <el-table-column label="Applicant" prop="NameInsured" min-width="150" sortable="custom"></el-table-column>
+        <el-table-column label="RequestDate" prop="RequestDate" min-width="120" sortable="custom">
           <template v-slot="scope">
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="120" sortable="custom">
+          <template v-slot="scope">
+            <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
@@ -58,7 +63,7 @@ Function: Show my commercial application list and do all operations on the list.
           <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 1" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 3" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-delete" type="danger" v-if="scope.row.StatusID < 2 " @click="del(scope.row.ApplicationID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
@@ -164,7 +169,7 @@ export default {
       isLoading: false,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       pinkSlipFormVisible: false,
@@ -738,16 +743,17 @@ export default {
     },
     // 查询
     search: function () {
-      let query = this.searchForm.name
+      let query = this.searchForm.name.toLowerCase().trim()
       if (query === '') {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
+          r.Producer.toLowerCase().indexOf(query) >= 0 ||
+          r.Status.toLowerCase().indexOf(query) >= 0 ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
-          r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
+          r.RequestDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
       }
       this.total = this.list.length

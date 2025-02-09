@@ -15,7 +15,7 @@ Function: Show my commercial application list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" size="small" clearable @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Go</el-button>
@@ -167,7 +167,7 @@ export default {
       isLoading: false,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       questionnaireFormVisible: false,
@@ -673,14 +673,15 @@ export default {
     },
     // 查询
     search: function () {
-      let query = this.searchForm.name
+      let query = this.searchForm.name.toLowerCase().trim()
       if (query === '') {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          r.NameInsured.indexOf(query) >= 0 ||
+          r.ClientCode.toLowerCase().indexOf(query) >= 0 ||
+          r.PolicyNumber.toLowerCase().indexOf(query) >= 0 ||
+          r.NameInsured.toLowerCase().indexOf(query) >= 0 ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
@@ -693,8 +694,7 @@ export default {
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null)
+      this.search()
     },
     // 删除
     del: function (id) {

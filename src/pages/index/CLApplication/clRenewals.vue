@@ -11,10 +11,13 @@ Function: Show all commercial application list and do all operations on the list
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" clearable @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Go</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -244,9 +247,9 @@ export default {
       questionnaires: [],
       renewalProcessings: [
         // {ID: 5, Name: 'Manually Send Questionnaire'},
-        // {ID: 6, Name: 'Questionnaire Obtain'},
-        {ID: 7, Name: 'NeedBinding'},
-        {ID: 10, Name: 'NeedAction'},
+        {ID: 7, Name: 'Need Binding'},
+        {ID: 10, Name: 'Need Update'},
+        {ID: 11, Name: 'Pending for UW review'},
         {ID: 8, Name: 'Renew'}
         // {ID: 9, Name: 'Cancel'}
       ],
@@ -259,7 +262,7 @@ export default {
       },
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       // 列表
@@ -382,6 +385,7 @@ export default {
       this.currentApplication = app
       this.renewalProcessingForm.ApplicationID = app.ApplicationID
       this.renewalProcessingForm.Premium = app.Premium
+      this.renewalProcessingForm.Brief = ''
       this.renewalProcessingForm.OutstandingBalance = app.OutstandingBalance
       this.renewalProcessingForm.EffectiveDate = moment(app.EffectiveDate)
       this.renewalProcessingForm.ExpiryDate = moment(app.ExpiryDate)
@@ -433,7 +437,7 @@ export default {
             } else if (typeid === 5) {
               let status = this.emailStatusList.find(s => s.key === 2)
               if (status !== undefined) this.currentApplication.QuestionnaireStatus = status.value
-            } else if (typeid === 6) {
+            } else if (typeid === 6) { // Obtained
               let status = this.emailStatusList.find(s => s.key === 3)
               if (status !== undefined) this.currentApplication.QuestionnaireStatus = status.value
             } else {
@@ -1029,17 +1033,17 @@ export default {
 
     // 查询
     search: function () {
-      let query = this.searchForm.name
+      let query = this.searchForm.name.toLowerCase().trim()
       if (query === '' || query === null) {
         this.list = this.totalList
       } else {
-        this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
-          r.Producer.indexOf(query) >= 0 ||
-          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
-          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
-          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
-          (r.QuestionnaireStatus.indexOf(query) >= 0) ||
+          (r.Producer !== null && r.Producer.toLowerCase().indexOf(query) >= 0) ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.toLowerCase().indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.toLowerCase().indexOf(query) >= 0) ||
+          (r.QuestionnaireStatus.toLowerCase().indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0
         )
@@ -1059,8 +1063,7 @@ export default {
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null, 0)
+      this.search()
     },
     // UW弹窗
     showUnderWriter: function (application) {

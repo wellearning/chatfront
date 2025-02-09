@@ -9,7 +9,10 @@ Function: Show manager report.
     <div class="inPageTitle">
       <a class="inPageNav" href="#" @click="showMain" style="color:darkblue" title="Click here to return to the main report.">Brokage Report</a>
       <div class="rightBtnBox">
-        <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isLoading" size="small">ToExcel</el-button>
+        <el-select v-model="searchForm.FigureID" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
+          <el-option v-for="item in reportItems" :key="item.key" :label="item.value" :value="item.key"></el-option>
+        </el-select>
+        <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isLoading" size="middle">ToExcel</el-button>
         <!--el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item>
             <el-button icon="el-icon-arrow-left" type="default" title="Prev Month" @click="prevMonth()" :loading="isLoading "></el-button>
@@ -56,8 +59,32 @@ Function: Show manager report.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
     </div>
+    <div v-else class="inPageContent">
+      <div class="searchBox">
+        <el-main class="" >
+        </el-main>
+      </div>
+      <el-table :data="hlist.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
+        <el-table-column label="Year" prop="Year" width="60" fixed="left" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Month" prop="Month" width="60" fixed="left" sortable="custom">
+        </el-table-column>
+        <el-table-column label="Chat" prop="Chat" min-width="150" sortable="custom">
+        </el-table-column>
+        <el-table-column label="BT" prop="BT" min-width="120" sortable="custom">
+        </el-table-column>
+        <el-table-column label="BU" prop="BU" min-width="120" sortable="custom">
+        </el-table-column>
+        <el-table-column label="AZ" prop="AZ" min-width="100" sortable="custom">
+        </el-table-column>
+        <el-table-column label="PSI" prop="PSI" min-width="120" sortable="custom">
+        </el-table-column>
+      </el-table>
+      <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
+      </el-pagination>
+    </div>
     <div>
-      <el-row>
+      <el-row v-if="managerVisible">
         <el-col :span="8">
           <v-chart :options="optionStaffCount"/>
         </el-col>
@@ -68,12 +95,31 @@ Function: Show manager report.
           <v-chart :options="optionCoverLetterCount"/>
         </el-col>
       </el-row>
-      <el-row>
+      <el-row v-if="managerVisible">
         <el-col :span="8">
           <v-chart :options="optionApplicationCount"/>
         </el-col>
         <el-col :span="8">
           <v-chart :options="optionIRCACount"/>
+        </el-col>
+      </el-row>
+      <el-row v-if="!managerVisible">
+        <el-col :span="8">
+          <v-chart :options="optionChat"/>
+        </el-col>
+        <el-col :span="8">
+          <v-chart :options="optionBT"/>
+        </el-col>
+        <el-col :span="8">
+          <v-chart :options="optionBU"/>
+        </el-col>
+      </el-row>
+      <el-row v-if="!managerVisible">
+        <el-col :span="8">
+          <v-chart :options="optionAZ"/>
+        </el-col>
+        <el-col :span="8">
+          <v-chart :options="optionPsi"/>
         </el-col>
       </el-row>
     </div>
@@ -97,6 +143,9 @@ export default {
         title: {
           text: 'Total Users'
         },
+        legend: {
+          data: ['total', 'active']
+        },
         xAxis: {
           type: 'category',
           data: ['Chat', 'Bti', 'BU', 'AZ', 'PSI']
@@ -106,12 +155,14 @@ export default {
         },
         series: [
           {
+            name: 'total',
             data: [],
-            type: 'bar'
+            type: 'line'
           },
           {
+            name: 'active',
             data: [],
-            type: 'bar'
+            type: 'line'
           }
         ]
       },
@@ -129,7 +180,7 @@ export default {
         series: [
           {
             data: [],
-            type: 'bar'
+            type: 'line'
           }
         ]
       },
@@ -187,15 +238,154 @@ export default {
           }
         ]
       },
+      optionChat: {
+        title: {
+          text: 'Chat'
+        },
+        xAxis: {
+          type: 'category',
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          }
+        ]
+      },
+      optionBT: {
+        title: {
+          text: 'Chat'
+        },
+        xAxis: {
+          type: 'category',
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          }
+        ]
+      },
+      optionBU: {
+        title: {
+          text: 'Chat'
+        },
+        xAxis: {
+          type: 'category',
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          }
+        ]
+      },
+      optionAZ: {
+        title: {
+          text: 'Chat'
+        },
+        xAxis: {
+          type: 'category',
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          }
+        ]
+      },
+      optionPsi: {
+        title: {
+          text: 'Chat'
+        },
+        xAxis: {
+          type: 'category',
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        yAxis: {
+          type: 'value'
+        },
+        series: [
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          },
+          {
+            data: [],
+            type: 'line'
+          }
+        ]
+      },
+
       isPost: false,
       totalNum: 0,
       finishNum: 0,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       htmlTitle: 'null', // pdf文件名
       isLoading: false,
+      reportItems: [
+        {key: 0, value: 'OverView'},
+        {key: 3, value: 'PLMemoCount'},
+        {key: 4, value: 'PLCoverLetterCount'},
+        {key: 5, value: 'CLApplicationCount'},
+        {key: 6, value: 'IRCACount'}
+      ],
       // 搜索
       searchForm: {
         name: null,
+        FigureID: 0,
         Year: 2022,
         Month: 1,
         years: [],
@@ -214,25 +404,11 @@ export default {
           {name: 'December', value: 12}]
       },
       // 列表
+      brokages: [],
       list: [],
-      yearSummary: {
-        NBCounts: 0,
-        NBPremium: 0,
-        RemarketCounts: 0,
-        RemarketPremium: 0,
-        RenewalCounts: 0,
-        RenewalPremium: 0
-      },
-      monthSummary: {
-        NBCounts: 0,
-        NBPremium: 0,
-        RemarketCounts: 0,
-        RemarketPremium: 0,
-        RenewalCounts: 0,
-        RenewalPremium: 0
-      },
+      hlist: [],
       managerVisible: true,
-      pageSize: 20,
+      pageSize: 12,
       pagerCount: 5,
       currentPage: 1,
       total: 0
@@ -313,10 +489,16 @@ export default {
       return moment(date).format('YYYY-MM-DD')
     },
     showMain: function () {
-      this.managerVisible = true
-      this.producerVisible = false
-      this.applicationVisible = false
-      this.loadBrokageData()
+      if (this.searchForm.FigureID === 0) {
+        this.managerVisible = true
+        this.producerVisible = false
+        this.applicationVisible = false
+        this.loadBrokageData()
+      } else {
+        this.managerVisible = false
+        this.producerVisible = true
+        this.loadBrokageHistory(this.searchForm.FirgureID)
+      }
     },
     // 查询
     loadBrokageData: function () {
@@ -353,6 +535,32 @@ export default {
           this.optionIRCACount.series[0].data = optiondata5
           this.list.sort(this.bydesc('TotalStaffCount'))
           this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadBrokageData error', err)
+        this.isLoading = false
+      })
+    },
+    // 查询Brokage历史数据
+    loadBrokageHistory: function (figureId) {
+      this.isLoading = true
+      let service = '/api/Services/BaseService.asmx/GetBrokageHistory'
+      let param = {figureid: figureId}
+
+      this.axios.post(service, param).then(res => {
+        if (res) {
+          console.log('查询', res)
+          res.data.forEach(r => {
+            r.Chat = r.Figures[0]
+            r.BT = r.Figures[1]
+            r.BU = r.Figures[2]
+            r.AZ = r.Figures[3]
+            r.PSI = r.Figures[4]
+          })
+          this.hlist = res.data
+          this.total = this.hlist.length
           this.currentPage = 1
         }
         this.isLoading = false

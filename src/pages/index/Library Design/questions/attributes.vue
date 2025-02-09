@@ -111,6 +111,19 @@ Function: Show attribute list and do all operations on the list.
               <el-option v-for="item in listDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'sublist'" label="Data Source" prop="DataSource" >
+            <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in listDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'sublist'" label="Parent Data Source" prop="ParentDataSource" >
+            <el-select v-model="editForm.ParentDataSource" placeholder="Data Type" size="small" class="" >
+              <el-option v-for="item in listDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="editForm.InputType === 'sublist'" label="ParentID" prop="ParentID" >
+            <el-input v-model="editForm.ParentID" clearable></el-input>
+          </el-form-item>
           <el-form-item v-if="editForm.InputType === 'checklist'" label="Data Source" prop="DataSource" >
             <el-select v-model="editForm.DataSource" placeholder="Data Type" size="small" class="" >
               <el-option v-for="item in checklistDataTypes" :key="item.ItemID" :label="item.Name" :value="item.Name"></el-option>
@@ -208,7 +221,8 @@ export default {
         {id: 9, name: 'checklist', value: 'checklist'},
         {id: 10, name: 'percent', value: 'percent'},
         {id: 11, name: 'computed', value: 'computed'},
-        {id: 12, name: 'address', value: 'address'}
+        {id: 12, name: 'address', value: 'address'},
+        {id: 14, name: 'sublist', value: 'sublist'}
       ],
       // 新增
       outputWayList: [{id: 1, name: 'Normal'}, {id: 3, name: 'None'}],
@@ -223,6 +237,8 @@ export default {
         StatusID: 1,
         InputType: 'text',
         DataSource: null,
+        ParentDataSource: null,
+        ParentID: 0,
         fillinParts: null,
         options: null
       },
@@ -243,6 +259,8 @@ export default {
         StatusID: 1,
         InputType: null,
         DataSource: null,
+        ParentDataSource: null,
+        ParentID: 0,
         fillinParts: null,
         options: null,
         IsNew: false
@@ -356,7 +374,7 @@ export default {
           console.log('数据类型列表', res)
           this.dataTypes = res.data
           this.objectDataTypes = res.data.filter(d => d.ItemValue === 'object')
-          this.listDataTypes = res.data.filter(d => d.ItemValue === 'list')
+          this.listDataTypes = res.data.filter(d => d.ItemValue === 'list' || d.ItemValue === 'children')
           this.checklistDataTypes = res.data.filter(d => d.ItemValue === 'checklist')
         }
         this.isLoadingDataTypes = false

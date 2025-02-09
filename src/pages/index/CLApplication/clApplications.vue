@@ -24,10 +24,13 @@ Function: Show all commercial application list and do all operations on the list
             </el-select>
           </el-form-item>
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Content" clearable></el-input>
+            <el-input v-model="searchForm.name" placeholder="Content" clearable @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name, 0)" :loading="isLoadingAll" size="small">Go</el-button>
+            <el-button icon="el-icon-search" type="primary" @click="search" :loading="isLoadingAll" size="small">Go</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -231,12 +234,12 @@ Function: Show all commercial application list and do all operations on the list
           <el-table-column label="ExpiryDate" prop="ExpiryDate" min-width="100"></el-table-column-->
           <el-table-column label="ObtainDate" prop="ObtainDate" min-width="100">
             <template v-slot:="scope">
-              <el-date-picker :disabled="!(scope.row.BusinessChangeRecordID === currentId)" v-model="scope.row.ObtainDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
+              <el-date-picker :readonly="!(scope.row.BusinessChangeRecordID === currentId)" v-model="scope.row.ObtainDate" type="date" placeholder="yyyy-mm-dd"></el-date-picker>
             </template>
           </el-table-column>
           <el-table-column label="Brief" prop="Brief" min-width="300">
             <template v-slot:="scope">
-              <el-input v-model="scope.row.Brief" :disabled="!(scope.row.BusinessChangeRecordID === currentId)"></el-input>
+              <el-input v-model="scope.row.Brief" :readonly="!(scope.row.BusinessChangeRecordID === currentId)"></el-input>
             </template>
           </el-table-column>
           <el-table-column label="Action" width="200" fixed="right">
@@ -319,7 +322,7 @@ export default {
       },
       // 搜索
       searchForm: {
-        name: null,
+        name: '',
         periodDates: '',
         period: 0
       },
@@ -601,7 +604,7 @@ export default {
             // ob.EffectiveDate = moment(ob.EffectiveDate).format('YYYY-MM-DD')
             // ob.ExpiryDate = moment(ob.ExpiryDate).format('YYYY-MM-DD')
             ob.BusinessChangeRecordID = r.BusinessChangeRecordID
-            ob.ObtainDate = moment(ob.ObtainDate).format('YYYY-MM-DD')
+            // ob.ObtainDate = moment(ob.ObtainDate).format('YYYY-MM-DD')
             app.obtainRecords.push(ob)
           })
           this.viewObtainVisible = true
@@ -1095,16 +1098,16 @@ export default {
     },
     // 查询
     search: function () {
-      let query = this.searchForm.name
+      let query = this.searchForm.name.toLowerCase().trim()
       if (query === '') {
         this.list = this.totalList
       } else {
         this.list = this.totalList.filter(r => r.Title.indexOf(query) >= 0 ||
           r.ApplicationID === Number(query) ||
-          (r.ClientCode !== null && r.ClientCode.indexOf(query) >= 0) ||
-          r.Producer.indexOf(query) >= 0 ||
-          (r.NameInsured !== null && r.NameInsured.indexOf(query) >= 0) ||
-          (r.PolicyNumber !== null && r.PolicyNumber.indexOf(query) >= 0) ||
+          (r.Producer !== null && r.Producer.toLowerCase().indexOf(query) >= 0) ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
+          (r.PolicyNumber !== null && r.PolicyNumber.toLowerCase().indexOf(query) >= 0) ||
+          (r.ClientCode !== null && r.ClientCode.toLowerCase().indexOf(query) >= 0) ||
           r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.ExpiryDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
           r.PolicyStatus.indexOf(query) >= 0
@@ -1267,8 +1270,8 @@ export default {
     // 重置查询
     resetSearch: function () {
       this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null, 0)
+      // this.searchForm.name = ''
+      this.search()
     },
     // UW弹窗
     showUnderWriter: function (application) {
@@ -1432,7 +1435,7 @@ export default {
     saveObtainRecord: function (record) {
       let id = record.BusinessChangeRecordID
       let value = {
-        ObtainDate: record.ObtainDate,
+        ObtainDate: moment(record.ObtainDate),
         Brief: record.Brief
       }
       let brief = JSON.stringify(value)
