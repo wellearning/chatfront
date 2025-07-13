@@ -41,6 +41,7 @@ Function: Show attribute list and do all operations on the list.
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary" @click="showEdit(scope.row.QuestionID)" :loading="isLoading" size="small">Edit</el-button>
             <el-button icon="el-icon-delete" type="danger" @click="del(scope.row.QuestionID)" :loading="isLoading" size="small">Delete</el-button>
+            <el-button icon="el-icon-edit" type="primary" @click="showMapping(scope.row)" :loading="isLoading" size="small">Mapping</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -181,6 +182,11 @@ Function: Show attribute list and do all operations on the list.
         <QuestionList ref="ql" :typeID="typeId" :typeName="typeName" :btypeID="btypeId"></QuestionList>
       </el-dialog>
       <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
+      <!----------------------------------------------QuestionMapping弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="mappingVisible" width="800px" center :before-close="closeMapping">
+        <Mapping ref="mpp" :Question="currentQuestion"></Mapping>
+      </el-dialog>
+      <!----------------------------------------------QuestionList弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -188,16 +194,19 @@ Function: Show attribute list and do all operations on the list.
 <script>
 import UsedBlockList from '@/component/window/usedBlockList'
 import QuestionList from '@/component/window/questionList'
+import Mapping from '@/component/window/questionMapping'
 
 export default {
   components: {
     UsedBlockList,
-    QuestionList
+    QuestionList,
+    Mapping
   },
   data: function () {
     return {
       isLoading: false,
       currentId: null,
+      currentQuestion: null,
       typeId: 3,
       currentRateIndex: null,
       currentAttributeIndex: null,
@@ -209,6 +218,7 @@ export default {
       rates: [],
       questionListVisible: false,
       blocksDetailVisible: false,
+      mappingVisible: false,
       inputTypeList: [
         {id: 1, name: 'text', value: 'text'},
         {id: 2, name: 'date', value: 'date'},
@@ -303,9 +313,9 @@ export default {
     this.btypeId = parseInt(this.$route.params.id)
     this.typeName = this.businessTypes[this.btypeId] + this.typeName
     this.loadRateTypes()
-    this.loadAttributes()
     this.loadDataTypes()
-    this.load(null)
+    this.loadAttributes()
+    this.loadQuestions(0)
   },
   methods: {
     addRate: function () {
@@ -324,6 +334,9 @@ export default {
     },
     closeQuestionList: function () {
       this.questionListVisible = false
+    },
+    closeMapping: function () {
+      this.mappingVisible = false
     },
     // show used block list
     showBlocksDetail: function (id) {
@@ -359,6 +372,10 @@ export default {
           console.log('Attributes', res)
           this.attributes = res.data.filter(q => q.InputType === 'number' || q.InputType === 'computed')
           this.listAttributes = res.data.filter(q => q.InputType === 'list')
+          // this.totalList = res.data
+          // this.list = this.totalList
+          // this.total = this.list.length
+          // this.currentPage = 1
         }
         this.isLoadingDataTypes = false
       }).catch(err => {
@@ -398,17 +415,65 @@ export default {
       this.pageCount = Math.ceil(this.total / this.pageSize)
     },
     // 查询
-    load: function () {
-      this.isLoading = true
-      this.axios.post('/api/Services/BaseService.asmx/GetQuestionsByTypeQuery', {typeid: 3, query: null, btypeid: this.btypeId}).then(res => {
+    load: function (start) {
+      // this.isLoading = true
+      if (start === 0) {
+        this.totalList = []
+        this.isLoading = true
+        // this.isLoadingAll = true
+      }
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestions', {typeid: 3, btypeid: this.btypeId, start: start}).then(res => {
         if (res) {
-          console.log('查询', res)
+          console.log('loadQuestion', res)
           this.totalList = res.data
           this.list = this.totalList
           this.total = this.list.length
           this.currentPage = 1
+          if (start === 0) {
+            this.total = res.count
+            this.totalList = res.data
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            // this.isLoading = false
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length >= this.total) {
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoading = false
+          } else this.load(this.totalList.length)
         }
+        // this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
         this.isLoading = false
+        // this.isLoadingAll = false
+      })
+    },
+    loadQuestions: function (start) {
+      this.isLoading = true
+      let id = 3
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestions', {typeid: id, btypeid: this.btypeId, start: start}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          if (start === 0) {
+            this.questionCount = res.count
+            this.totalList = res.data
+            this.total = res.count
+            this.currentPage = 1
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length < this.questionCount) {
+            this.loadQuestions(this.totalList.length)
+          } else {
+            this.list = this.totalList
+            this.isLoading = false
+          }
+        }
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoading = false
@@ -497,6 +562,13 @@ export default {
         console.log('查询单个出错', err)
         this.isLoading = false
       })
+    },
+    showMapping: function (question) {
+      this.currentQuestion = question
+      this.mappingVisible = true
+      if (this.$refs.mpp !== undefined) {
+        this.$refs.mpp.setQuestion(question)
+      }
     },
     // 关闭修改
     closeEdit: function (done) {

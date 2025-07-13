@@ -4,21 +4,21 @@
       <el-row :gutter="20" class="subtitle">
         <el-col :span="24">
           <el-form-item label="Mail to" prop="Mailto">
-            <el-input v-model="emailForm.Mailto" type="text" placeholder="Mailto" title=""></el-input>
+            <el-input v-model="emailForm.Mailto" type="text" placeholder="Mailto" title="" clearable></el-input>
           </el-form-item>
         </el-col>
       </el-row>
       <el-row :gutter="20" class="subtitle">
         <el-col :span="24">
           <el-form-item label="CC" prop="CC">
-            <el-input v-model="emailForm.CC" type="text" placeholder="CC" title=""></el-input>
+            <el-input v-model="emailForm.CC" type="text" placeholder="CC" title="" clearable></el-input>
           </el-form-item>
         </el-col>
       </el-row>
       <el-row :gutter="20" class="subtitle">
         <el-col :span="24">
           <el-form-item label="Subject" prop="Subject">
-            <el-input :span="20" v-model="emailForm.Subject" type="text" placeholder="Subject" title=""></el-input>
+            <el-input :span="20" v-model="emailForm.Subject" type="text" placeholder="Subject" title="" clearable></el-input>
             <el-checkbox :span="4" v-model="emailForm.ForceCreateAttach" >Force Create Form</el-checkbox>
           </el-form-item>
         </el-col>
@@ -45,7 +45,7 @@
       <el-row :gutter="0" class="subtitle">
         <el-col :span="24">
           <el-form-item label="Email Body" prop="MailBody">
-            <el-input v-model="emailForm.MailBody" type="textarea" :rows="10" placeholder="Body" title=""></el-input>
+            <el-input v-model="emailForm.MailBody" type="textarea" :rows="10" placeholder="Body" title="" clearable></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -85,6 +85,9 @@ export default {
   props: {
     mail: {
       type: Object
+    },
+    body: {
+      type: String
     }
   },
   mounted: function () {
@@ -92,6 +95,7 @@ export default {
     this.emailForm.EmailBusiTypeID = this.mail.mailType
     this.emailForm.Subject = this.mail.subject
     this.emailForm.Mailto = this.mail.mailto
+    this.emailForm.MailBody = this.body
   },
   methods: {
     handleSuccess: function (response, file, fileList) {
@@ -102,12 +106,12 @@ export default {
       })
       this.emailForm.Attaches.push(file.name)
     },
-    setEmail: function (businessId, subject, mailto) {
+    setEmail: function (businessId, subject, mailto, mailbody) {
       this.emailForm.BusinessID = businessId
       this.emailForm.Subject = subject
       this.emailForm.Mailto = mailto
       this.emailForm.Attaches = []
-      this.emailForm.MailBody = ''
+      this.emailForm.MailBody = mailbody
       this.$refs.upload.clearFiles()
     },
     send: function (way) {

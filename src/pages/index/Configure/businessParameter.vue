@@ -32,6 +32,7 @@ Function: Show all business parameter list and do all operations on the list.
         <el-table-column label="BusinessType" prop="BusinessType" min-width="100"></el-table-column>
         <el-table-column label="InsuranceType" prop="InsuranceType" min-width="100"></el-table-column>
         <el-table-column label="ProcessingType" prop="ProcessingType" min-width="100"></el-table-column>
+        <el-table-column label="Private" prop="Private" min-width="100"></el-table-column>
         <el-table-column label="Sequence" prop="SequenceNo" min-width="80"></el-table-column>
         <el-table-column label="UW Score" prop="Score" min-width="80"></el-table-column>
         <el-table-column label="Q-Score" prop="QualityScore" min-width="80"></el-table-column>
@@ -82,11 +83,15 @@ Function: Show all business parameter list and do all operations on the list.
           <el-form-item label="QualityScore" prop="QualityScore">
             <el-input v-model.number="addForm.QualityScore" clearable></el-input>
           </el-form-item>
+          <el-form-item label="SequenceNo" prop="SequenceNo">
+            <el-input v-model.number="addForm.SequenceNo" clearable></el-input>
+          </el-form-item>
           <el-form-item label="Remark" prop="Remark">
             <el-input v-model="addForm.Remark" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingOrganization">Confirm</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="add(true)" :loading="isLoading || isLoadingOrganization">Add Private</el-button>
+            <el-button v-if="RoleName === 'Developer'" icon="el-icon-check" type="primary" @click="add(false)" :loading="isLoading || isLoadingOrganization">Add Common</el-button>
           </el-form-item>
         </el-form>
       </el-dialog>
@@ -126,6 +131,9 @@ Function: Show all business parameter list and do all operations on the list.
           <el-form-item label="QualityScore" prop="QualityScore">
             <el-input v-model.number="editForm.QualityScore" clearable></el-input>
           </el-form-item>
+          <el-form-item label="SequenceNo" prop="SequenceNo">
+            <el-input v-model.number="editForm.SequenceNo" clearable></el-input>
+          </el-form-item>
           <el-form-item label="Remark" prop="Remark">
             <el-input v-model="editForm.Remark" clearable></el-input>
           </el-form-item>
@@ -141,12 +149,13 @@ Function: Show all business parameter list and do all operations on the list.
           <el-table-column label="ID" prop="ListValueID" width="100" fixed="left"></el-table-column>
           <el-table-column label="Name" prop="Name" min-width="100"></el-table-column>
           <el-table-column label="Value" prop="Value" min-width="100"></el-table-column>
+          <el-table-column label="Private" prop="Private" min-width="80"></el-table-column>
           <el-table-column label="UW Score" prop="Score" min-width="100"></el-table-column>
           <el-table-column label="Q-Score" prop="QualityScore" min-width="100"></el-table-column>
           <el-table-column label="Action" width="200" fixed="right">
             <template v-slot="scope">
-              <el-button icon="el-icon-edit" type="primary" @click="showListValueEdit(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
-              <el-button icon="el-icon-delete" type="danger" @click="delListValue(scope.row.ListValueID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.IsPrivate || RoleName === 'Developer'" type="primary" @click="showListValueEdit(scope.row)" :loading="isLoading || isLoadingOrganization" size="small">Edit</el-button>
+              <el-button icon="el-icon-delete" v-if="scope.row.IsPrivate || RoleName === 'Developer'" type="danger" @click="delListValue(scope.row.ListValueID)" :loading="isLoading || isLoadingOrganization" size="small">Delete</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -164,7 +173,8 @@ Function: Show all business parameter list and do all operations on the list.
             <el-input v-model.number="editListValueForm.QualityScore" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
-            <el-button icon="el-icon-check" type="primary" @click="addListValue()" :loading="isLoading || isLoadingOrganization">Add</el-button>
+            <el-button icon="el-icon-check" type="primary" @click="addListValue(true)" :loading="isLoading || isLoadingOrganization">AddPrivate</el-button>
+            <el-button v-if = "RoleName === 'Developer'" icon="el-icon-check" type="primary" @click="addListValue(false)" :loading="isLoading || isLoadingOrganization">AddCommon</el-button>
             <el-button icon="el-icon-check" type="primary" @click="editListValue()" :loading="isLoading || isLoadingOrganization">Update</el-button>
           </el-form-item>
         </el-form>
@@ -214,8 +224,8 @@ export default {
         ProcessingTypeID: 1,
         DataType: 'Text',
         Name: '',
-        DisplayName: null,
-        Remark: null,
+        DisplayName: '',
+        Remark: '',
         Score: 0,
         QualityScore: 0,
         SequenceNo: 0
@@ -454,6 +464,7 @@ export default {
               }
             }
             this.isLoading = false
+            this.loadBusinessParameters()
           }).catch(err => {
             console.log('修改出错', err)
             this.isLoading = false
@@ -482,12 +493,16 @@ export default {
       }).catch(() => {})
     },
     // 新增
-    add: function () {
+    add: function (isPrivate) {
       this.$refs['addForm'].validate((valid) => {
         if (valid) {
-          this.addForm.SequenceNo = this.listLength
+          // this.addForm.SequenceNo = this.listLength
           this.isLoading = true
-          this.axios.post('/api/Services/baseservice.asmx/SaveBusinessParameter', {parameter: JSON.stringify(this.addForm)}).then(res => {
+          if (isPrivate) this.addForm.IsPrivate = true
+          else this.addForm.IsPrivate = false
+          let service = '/api/Services/baseservice.asmx/SaveBusinessParameter'
+          // if (isPrivate) service = '/api/Services/baseservice.asmx/SavePrivateBusinessParameter'
+          this.axios.post(service, {parameter: JSON.stringify(this.addForm)}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({
@@ -504,6 +519,7 @@ export default {
               }
             }
             this.isLoading = false
+            this.loadBusinessParameters()
           }).catch(err => {
             console.log('新增出错', err)
             this.isLoading = false
@@ -595,11 +611,13 @@ export default {
       })
     },
     // 新增
-    addListValue: function () {
+    addListValue: function (isprivate) {
       this.$refs['editListValueForm'].validate((valid) => {
         if (valid) {
           this.editListValueForm.IsNew = true
           this.isLoading = true
+          if (isprivate) this.editListValueForm.IsPrivate = true
+          else this.editListValueForm.IsPrivate = true
           this.axios.post('/api/Services/baseservice.asmx/SaveListValue', {listvalue: JSON.stringify(this.editListValueForm)}).then(res => {
             if (res) {
               console.log('新增', res)

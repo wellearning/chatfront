@@ -52,7 +52,7 @@ Function: Show template list and do all operations on the list.
           </el-form-item>
           <el-form-item label="Type" prop="TypeID">
             <el-select v-model="addForm.TypeID" placeholder="" @change="showInsuranceCorp(addForm.TypeID)" no-data-text="No Record" filterable>
-              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              <el-option v-for="item in typeIdList" :key="item.key" :label="item.value" :value="item.key"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Status" prop="StatusID">
@@ -121,7 +121,7 @@ Function: Show template list and do all operations on the list.
           </el-form-item>
           <el-form-item label="Type" prop="TypeID">
             <el-select v-model="editForm.TypeID" placeholder="Type" @change="showInsuranceCorp(editForm.TypeID)" no-data-text="No Record" filterable>
-              <el-option v-for="item in typeIdList" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              <el-option v-for="item in typeIdList" :key="item.key" :label="item.value" :value="item.key"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="Status" prop="StatusID">
@@ -142,7 +142,7 @@ Function: Show template list and do all operations on the list.
               <el-option v-for="item in provinceList" :key="item.ItemID" :label="item.Name" :value="item.ItemID"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item v-if="btypeId === 2" label="ProducerLevel" prop="ProducerLevel" v-show="true">
+          <el-form-item v-if="btypeId === 2 || btypeId === 9" label="ProducerLevel" prop="ProducerLevel" v-show="true">
             <el-radio-group v-model="editForm.ProducerLevel">
               <el-radio v-for="item in producerLevels" :label="item.id" :key="item.id">
                 <span>{{item.name}}</span>
@@ -199,7 +199,7 @@ export default {
       blockList: [],
       currentBlock: null,
       currentTemplate: null,
-      typeIdList: [{id: 1, name: 'Vehicle Template'}, {id: 2, name: 'Property Template'}],
+      typeIdList: [{key: 1, value: 'Vehicle Template'}, {key: 2, value: 'Property Template'}],
       statusList: [{id: 0, name: 'Draft'}, {id: 1, name: 'Normal'}, {id: 2, name: 'Stopped'}],
       producerLevels: [{id: 0, name: 'Level 0'}, {id: 1, name: 'Level 1'}, {id: 2, name: 'Level 2'}],
       insuranceCorpList: [],
@@ -274,6 +274,7 @@ export default {
   mounted: function () {
     this.btypeId = Number(this.$route.params.id)
     // this.search(null)
+    this.initTemplateTypes()
     this.initBlock()
     this.initProvinceList()
     this.initInsuranceCorpList()
@@ -324,6 +325,22 @@ export default {
         this.isLoadingProvinceList = false
       }).catch(err => {
         console.log('查询出错', err)
+        this.isLoadingProvinceList = false
+      })
+    },
+    initTemplateTypes: function () {
+      this.isLoadingProvinceList = true
+      let service = '/api/Services/baseservice.asmx/GetEnumData'
+      let para = {enumtype: 'InsuranceType'}
+      if (this.btypeId === 4) para = {enumtype: 'TemplateType_CL'}
+      this.axios.post(service, para).then(res => {
+        if (res) {
+          console.log('typeIdList', res)
+          this.typeIdList = res.data
+        }
+        this.isLoadingProvinceList = false
+      }).catch(err => {
+        console.log('typeIdList error', err)
         this.isLoadingProvinceList = false
       })
     },
@@ -449,7 +466,7 @@ export default {
       this.addFormVisible = true
     },
     showInsuranceCorp: function (typeid) {
-      if (typeid === 1) this.insuranceCorpVisible = true
+      if (typeid === 1 && this.btypeId !== 4) this.insuranceCorpVisible = true
       else this.insuranceCorpVisible = false
     },
     // 隐藏新增弹窗

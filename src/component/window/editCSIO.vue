@@ -1,23 +1,67 @@
 <template>
   <div>
-    <div class="printDiv" >
-      <!--<el-button icon="el-icon-printer" type="primary" v-print="printObj" :loading="isLoading || isLoadingInsuranceCompany" size="small">Print</el-button>-->
-      <el-form  class="newMemo">
-        <el-row :gutter="20" class="subtitle">
-          <el-col :span="18">
-            <el-form-item label="COI" prop="CsioID">
-              <el-select v-model="csioId" placeholder="available csio" @change="selectChanged" no-data-text="No Record" filterable >
-                <el-option v-for="item in csioList" :key="item.CsioID" :label="item.Title" :value="item.CsioID"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="6">
-            <div class="newMemo-submit">
-              <el-button icon="el-icon-document" type="primary" @click="toPDF('csio', new Date())" size="small">Print</el-button>
-            </div>
-          </el-col>
-        </el-row>
-      </el-form>
+    <div class="editSheet" id="sheetDom">
+      <el-row :gutter="20" style="margin-top:5px; margin-left:52px; font-family: Corbel; font-size: 20px; font-weight:bold; text-align: center">
+        <el-col :span="24">
+          <div class="viewMemo-subtitle head" style="margin-left:20px;">
+            <!--span>{{sheetContent.title}}</span-->
+            <el-form class="" label-width="10px" label-position="center" size="large">
+              <el-form-item>
+                <el-col :span="4">
+                  <el-select v-model="csioTypeId" value-key="key" placeholder="coi type" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+                    <el-option class="" v-for="item in csioTypes" :key="item.key" :label="item.value" :value="item.key"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :span="16">
+                  <el-input v-model="title" label="Title" placeholder="title of csio form" clearable></el-input>
+                </el-col>
+              </el-form-item>
+              <el-form-item>
+                <el-col :span="4">
+                  <el-select v-model="questionTypeId" value-key="key" @change="loadQuestions(0)" placeholder="question type" size="small" class="questionType questionRightBtnGroup" no-data-text="No Record" filterable>
+                    <el-option class="" v-for="item in questionTypes" :key="item.key" :label="item.value" :value="item.key"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :span="10">
+                  <el-select v-model="currentQuestion" value-key="QuestionID" placeholder="Question" size="small" style="width: 100%" no-data-text="No Record" filterable>
+                    <el-option class="questionOption" v-for="item in questions" :key="item.QuestionID" :label="item.QuestionID + '. ' + item.Description" :value="item"></el-option>
+                  </el-select>
+                </el-col>
+                <el-col :span="10">
+                  <el-radio-group v-model="outputType" @change="addQ">
+                    <el-radio :label="1">
+                      <span>Que</span>
+                    </el-radio>
+                    <el-radio :label="2">
+                      <span>Ans</span>
+                    </el-radio>
+                    <el-radio :label="3">
+                      <span>Out</span>
+                    </el-radio>
+                    <el-radio :label="4">
+                      <span>Addi</span>
+                    </el-radio>
+                    <el-radio :label="5">
+                      <span>Orig</span>
+                    </el-radio>
+                  </el-radio-group>
+                </el-col>
+              </el-form-item>
+              <el-form-item>
+                <el-col :span="18">
+                  <el-input v-model="expression" name="expression" placeholder="expression" clearable></el-input>
+                </el-col>
+                <el-col :span="3">
+                  <el-button icon="el-icon-plus" type="primary" @click="addQ()">Add</el-button>
+                </el-col>
+                <el-col :span="3">
+                  <el-button type="primary" @click="saveSheet()" :loading="isLoading">Save</el-button>
+                </el-col>
+              </el-form-item>
+            </el-form>
+          </div>
+        </el-col>
+      </el-row>
     </div>
     <div v-if="csioTypeId === 0" class="viewCSIO" id="csioDom">
       <table>
@@ -48,8 +92,8 @@
         </thead>
         <tbody>
         <tr>
-          <td colspan="14" style="font-family: 'Roboto Thin';line-height: 14px;letter-spacing:0px; text-align: center;font-size: 1.0rem;">This certificate is issued as a matter of information only and confers no rights upon the certificate holder and imposes no liability on the insurer.
-            This certificate does not amend, extend or alter the coverage afforded by the policies below.</td>
+          <td colspan="14" style="font-family: 'Roboto Thin';line-height: 14px;letter-spacing:0px; text-align: center;font-size: 1.0rem;">This certificate is issued as a matter of information only and conffers no rights upon the certificate holder and imposes no liability on the issurer.
+            This certificate does not amend, extend or alter the coverage afforded by the policies blow.</td>
         </tr>
         <tr>
           <td class="label">1.</td>
@@ -124,18 +168,17 @@
         </tr>
         <tr style="letter-spacing: 0px;">
           <td rowspan="9" colspan="3" style="line-height: 20px;"><div style="font-weight: bolder; text-align: center;">COMMERCIAL GENERAL LIABILITY</div>
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.CLAIMS_MADE" /> CLAIMS MADE <span style="padding:0 5px;font-weight:bolder;">OR</span>
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.OCCURRENCE"/> OCCURRENCE
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.Operations" /> PRODUCTS AND/OR COMPLETED OPERATIONS
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.Employers"/> EMPLOYER'S LIABILITY
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.Cross" /> CROSS LIABILITY
+            <input type="checkbox" /> CLAIMS MADE <span style="padding:0 5px;font-weight:bolder;">OR</span>  <input type="checkbox" /> OCCURRENCE
+            <input type="checkbox" /> PRODUCTS AND/OR COMPLETED OPERATIONS
+            <input type="checkbox"/> EMPLOYER'S LIABILITY
+            <input type="checkbox" /> CROSS LIABILITY
+            <br>
+            <input type="text" v-model="csio.part4.generalLiability.liabilities"/>
+            <input type="checkbox" /> WAIVER OF SUBROGATION
             <br>
             <br>
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.WAIVER" /> WAIVER OF SUBROGATION
-            <br>
-            <br>
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.TENANTS"/> TENANTS LEGAL LIABILITY
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.POLLUTION"/> POLLUTION LIABILITY EXTENSION
+            <input type="checkbox"/> TENANTS LEGAL LIABILITY
+            <input type="checkbox"/> POLLUTION LIABILITY EXTENSION
             <input type="checkbox" /><br>
             <input type="checkbox" />
           </td>
@@ -162,7 +205,7 @@
           <td><input type="text" v-model="csio.part4.generalLiability.limitOfLiability.operationsAggregate.amount"/></td>
         </tr>
         <tr>
-          <td colspan="2" style="line-height: 12px;"><input type="checkbox" v-model="csio.part4.generalLiability.limitOfLiability.personalInsury" /> PERSONAL INSUARY LIABILITY
+          <td colspan="2" style="line-height: 12px;"><input type="checkbox" /> PERSONAL INSUARY LIABILITY
             OR
             <input type="checkbox" /> PERSONAL AND ADVERTISING INSURAY
             LIABILITY</td>
@@ -196,7 +239,7 @@
         </tr>
         <tr>
           <td colspan="3">
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.NONOWNED" /> NON-OWNED AUTOMOBILES
+            <input type="checkbox" /> NON-OWNED AUTOMOBILES
           </td>
           <td colspan="3"></td>
           <td colspan="2"></td>
@@ -207,7 +250,7 @@
         </tr>
         <tr>
           <td colspan="3">
-            <input type="checkbox" v-model="csio.part4.generalLiability.liability.HIRED"/> HIRED AUTOMOBILES
+            <input type="checkbox" /> HIRED AUTOMOBILES
           </td>
           <td colspan="3"></td>
           <td colspan="2"></td>
@@ -218,9 +261,9 @@
         </tr>
         <tr style="letter-spacing: 0px;">
           <td rowspan="4" colspan="3"><div style="font-weight: bolder; text-align: left;">AUTOMOBILE LIABILITY</div>
-            <input type="checkbox" v-model="csio.part4.automobileLiability.liability.DESCRIBED" /> DESCRIBED AUTOMOBILES
-            <input type="checkbox" v-model="csio.part4.automobileLiability.liability.ALLOWED"/> ALLOWED AUTOMOBILES
-            <input type="checkbox" v-model="csio.part4.automobileLiability.liability.LEASED"/> LEASED AUTOMOBILES**
+            <input type="checkbox" /> DESCRIBED AUTOMOBILES
+            <input type="checkbox"/> ALLOWED AUTOMOBILES
+            <input type="checkbox"/> LEASED AUTOMOBILES**
             **ALL AUTOMOBILES LEASED IN EXCESS OF
             30 DAYS WHERE THE INSURED IS REQUIRED
             TO PROVIDE INSURANCE
@@ -251,8 +294,8 @@
         </tr>
         <tr style="letter-spacing: 0px;">
           <td rowspan="3" colspan="3"><div style="font-weight: bolder; text-align: left;">EXCESS LIABILITY</div>
-            <input type="checkbox" v-model="csio.part4.excessLiability.liability.UmbrellaForm"/> UMBRELLA FORM
-            <input type="checkbox" v-model="csio.part4.excessLiability.liability.OtherType"/>
+            <input type="checkbox" /> UMBRELLA FORM
+            <input type="checkbox" />
           </td>
           <td rowspan="3" colspan="3"></td>
           <td rowspan="3" colspan="2"></td>
@@ -341,6 +384,10 @@
         <tr style="padding:0px;">
           <td colspan="2" style="height:12px;border-right: 0px;">ISSUER</td>
           <td colspan="5" style="border-left: 0px;"><input type="text" v-model="csio.part8.issuer"/></td>
+          <!--td rowspan="2" colspan="7">CONTACT NUMBER(S)
+            TYPE <input type="text" v-model="csio.part8.type1" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csio.part8.no1" style="border:0px;width:80px;"/>TYPE <input type="text" v-model="csio.part8.type2" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csio.part8.no2" style="border:0px;width:80px;"/>
+            TYPE <input type="text" v-model="csio.part8.type3" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csio.part8.no3" style="border:0px;width:80px;"/>TYPE <input type="text" v-model="csio.part8.type4" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csio.part8.no4" style="border:0px;width:80px;"/>
+          </td-->
           <td rowspan="2" colspan="7">CONTACT NUMBER(S)
             Representitive: <input type="text" v-model="csio.part8.type1" style="width:160px;"/>   Email: <input type="text" v-model="csio.part8.no1" style="width:160px;"/>
             Company: <input type="text" v-model="csio.part8.type3" style="width:160px;"/>   Email: <input type="text" v-model="csio.part8.no3" style="width:160px;"/>
@@ -351,348 +398,13 @@
           <td colspan="4" style="border-left: 0px;"><input type="text" v-model="csio.part8.authorizedRepresentative"/></td>
         </tr>
         <tr style="padding:0px;">
-          <td colspan="3" style="height:12px; border-right: none;">SIGNATURE OF
+          <td colspan="7" style="height:12px;padding:0px;">SIGNATURE OF
             AUTHORIZED REPRESENTATIVE</td>
-          <td colspan="4" style="border-left: none;">
-            <el-image
-              style="height: 40px"
-              :src="Signature"
-              :fit="fit"></el-image>
-          </td>
-          <td colspan="7" style="height:12px; border-left: none;">DATE <input type="text" v-model="printDate" style="width:180px;"/></td>
+          <!--td colspan="7" style="height:12px;">DATE <input type="text" v-model="csio.part8.date" style="width:120px;"/>EMAIL ADDRESS <input type="text" v-model="csio.part8.emailAddress" style="width:120px;"/></td-->
+          <td colspan="7" style="height:12px;">DATE <input type="text" v-model="csio.part8.date" style="width:180px;"/></td>
         </tr>
         </tbody>
       </table>
-      <!--table>
-        <colgroup>
-          <col style="width:20px;">
-          <col style="width:120px;">
-          <col style="width:140px;">
-          <col style="width:30px;">
-          <col style="width:40px;">
-          <col style="width:70px;">
-          <col style="width:80px;">
-          <col style="width:20px;">
-          <col style="width:50px;">
-          <col style="width:40px;">
-          <col style="width:150px;">
-          <col style="width:90px;">
-          <col style="width:68px;">
-          <col style="width:82px;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th colspan="2" style="padding-left:10px;  text-align:left;font-size: 1.0rem;">CSIO ></th>
-            <th colspan="10" style="font-family: 'Roboto Thin'; text-align: center;font-size: 1.9rem;">CERTIFICATE OF LIABILITY INSURANCE</th>
-            <th style=""></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td colspan="14" style="font-family: 'Roboto Thin';line-height: 14px;letter-spacing:0px; text-align: center;font-size: 1.0rem;">This certificate is issued as a matter of information only and conffers no rights upon the certificate holder and imposes no liability on the issurer.
-            This certificate does not amend, extend or alter the coverage afforded by the policies blow.</td>
-          </tr>
-        <tr>
-          <td class="label">1.</td>
-          <td colspan="6" class="title">CERTIFICATE HOLDER - NAME AND MAILING ADDRESS</td>
-          <td class="label">2.</td>
-          <td colspan="6" class="title">INSURED'S FULL NAME AND MAILING ADDRESS</td>
-        </tr>
-        <tr>
-          <td colspan="7" class="blank"><input type="text" :value="csio.certificateHolder.name"/></td>
-          <td colspan="7"><input type="text" :value="csio.insured.name"/></td>
-        </tr>
-        <tr>
-          <td colspan="7" class="blank"><input type="text" :value="csio.certificateHolder.mailAddress"/></td>
-          <td colspan="7"><input type="text" :value="csio.insured.mailAddress"/></td>
-        </tr>
-        <tr>
-          <td colspan="7" class="blank"><input type="text" /></td>
-          <td colspan="7"><input type="text" /></td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="5" style="height:12px;"></td>
-          <td class="postcode">POSTAL
-          CODE</td>
-          <td colspan="" style="border-left: 0px;"><input type="text" :value="csio.certificateHolder.postal"/></td>
-          <td colspan="5"></td>
-          <td class="postcode">POSTAL
-            CODE</td>
-          <td colspan="1" style="border-left: 0px;"><input type="text" :value="csio.insured.postal"/></td>
-        </tr>
-        <tr>
-          <td class="label">3.</td>
-          <td colspan="13" class="title">DESCRIPTION OF OPERATIONS/LOCATIONS/AUTOMOBILES/SPECIAL ITEMS TO WHICH THIS CERTIFICATE APPLIES <span style="font-weight: normal;font-size:0.8rem;">(but only with respect to the operations of the named insured)</span></td>
-        </tr>
-        <tr>
-          <td colspan="14" class="blank"><input type="text" :value="csio.riskDescription.line0"/></td>
-        </tr>
-        <tr>
-          <td colspan="14" class="blank"><input type="text" :value="csio.riskDescription.line1"/></td>
-        </tr>
-        <tr>
-          <td colspan="14" class="blank"><input type="text" :value="csio.riskDescription.line2"/></td>
-        </tr>
-        <tr>
-          <td class="label">4.</td>
-          <td colspan="13" class="title">COVERAGE</td>
-        </tr>
-        <tr>
-          <td colspan="14" style="line-height:14px; padding-left:10px;font-size: 0.8rem;font-family: 'Roboto Thin';">This is certify that the policies of insurance listed below have been insured to the insured named above for the policy period indicated notwithstanding any requirements, terms
-            or conditions of any contract or other document with respect to which this certificate may be insured or may pertain. The insurance afforded by the policies described herein is
-            subject to all terms, exclusions and conditions of such policies.
-            <div style="padding-left:400px;font-weight:bold; padding-bottom:10px;margin:-10px;font-size: 1.1rem;">LIMITS SHOWN MAY HAVE BEEN REDUCED BY PAID CLAIMS</div>
-          </td>
-        </tr>
-        <tr style="text-align: center; font-weight:bold;font-size:0.8rem;">
-          <td rowspan="2" colspan="3">TYPE OF INSURANCE</td>
-          <td rowspan="2" colspan="3" style="width:150px;">INSURANCE COMPANY
-            AND POLICY NUMBER</td>
-          <td rowspan="2" colspan="2">EFFECTIVE
-          DATE
-          YYYY/MM/DD</td>
-          <td rowspan="2" colspan="2">EXPIRY
-            DATE
-            YYYY/MM/DD</td>
-          <td rowspan="1" colspan="4" style="line-height: 12px; padding: 0px 5px;">LIMITS OF LIABILITY
-          (Canadian dollars unless indicated otherwise) </td>
-        </tr>
-        <tr style="text-align: center; font-weight:bold;font-size:0.8rem;">
-          <td colspan="2">COVERAGE</td>
-          <td>DED.</td>
-          <td style="line-height: 12px; padding: 0px 5px;">AMOUNT OF
-            INSURANCE</td>
-        </tr>
-        <tr style="letter-spacing: 0px;">
-          <td rowspan="9" colspan="3" style="line-height: 20px;"><div style="font-weight: bolder; text-align: center;">COMMERCIAL GENERAL LIABILITY</div>
-            <input type="checkbox" :checked="csio.coverage.general.CLAIMS_MADE" /> CLAIMS MADE <span style="padding:0 5px;font-weight:bolder;">OR</span>  <input type="checkbox"  :checked="csio.coverage.general.OCCURRENCE"/> OCCURRENCE
-            <input type="checkbox" :checked="csio.coverage.general.Operations" /> PRODUCTS AND/OR COMPLETED OPERATIONS
-            <input type="checkbox"  :checked="csio.coverage.general.Employers"/> EMPLOYER'S LIABILITY
-            <input type="checkbox" :checked="csio.coverage.general.Cross" /> CROSS LIABILITY
-            <br>
-
-            <input type="checkbox" :checked="csio.coverage.general.WAIVER" /> WAIVER OF SUBROGATION
-            <br>
-            <br>
-            <input type="checkbox" :checked="csio.coverage.general.TENANTS" /> TENANTS LEGAL LIABILITY
-            <input type="checkbox" :checked="csio.coverage.general.POLLUTION" /> POLLUTION LIABILITY EXTENSION
-            <input type="checkbox" /><br>
-            <input type="checkbox" />
-          </td>
-          <td rowspan="9" colspan="3">{{csio.CorpName}}<br />{{csio.PolicyNumber}}</td>
-          <td rowspan="9" colspan="2">{{csio.EffectiveDate}}</td>
-          <td rowspan="9" colspan="2">{{csio.ExpiryDate}}</td>
-          <td rowspan="2" colspan="2" style="font-weight: normal;font-family: 'JetBrains Mono Thin'; line-height:12px;letter-spacing:0px;">COMMERCIAL GENERAL LIABILITY
-            <span style="padding-left:5px;">BODILY INJURY AND PROPERTY DAMAGE</span><br>
-            <span style="padding-left:5px;">LIABILITY</span>
-          <div style="padding-left:90px; padding-bottom:10px;margin:-10px">- GENERAL AGGREGATE
-          - EACH OCCURRENCE</div></td>
-          <td style="height:28px;"><input type="text" :value="csio.coverage.general.BodilyInjury.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.BodilyInjury.amount"/></td>
-        </tr>
-        <tr>
-          <td><input type="text" :value="csio.coverage.general.PropertyDamage.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.PropertyDamage.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2" style="line-height: 12px; padding: 0px 5px;">PRODUCTS AND COMPLETED OPERATIONS
-            AGGREGATE</td>
-          <td><input type="text" :value="csio.coverage.general.Aggregate.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.Aggregate.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2" style="line-height: 12px;"><input type="checkbox" /> PERSONAL INSUARY LIABILITY
-            OR
-            <input type="checkbox" /> PERSONAL AND ADVERTISING INSURAY
-          LIABILITY</td>
-          <td><input type="text" :value="csio.coverage.general.PersonalInjury.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.PersonalInjury.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">MEDICAL PAYMENTS</td>
-          <td><input type="text" :value="csio.coverage.general.MedicalPayment.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.MedicalPayment.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">TENANTS LEGAL LIABILITY</td>
-          <td><input type="text" :value="csio.coverage.general.TenantsLegal.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.TenantsLegal.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">POLLUTION LIABILITY EXTENSION</td>
-          <td><input type="text" :value="csio.coverage.general.PollutionLimit.ded"/></td>
-          <td><input type="text" :value="csio.coverage.general.PollutionLimit.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2" class="blank"></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td colspan="2" class="blank"></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td colspan="3">
-            <input type="checkbox" :checked="csio.coverage.NONOWNED" /> NON-OWNED AUTOMOBILES
-          </td>
-          <td colspan="3"></td>
-          <td colspan="2"></td>
-          <td colspan="2"></td>
-          <td colspan="2"><input type="checkbox" :checked="csio.coverage.NONOWNED"/> NON-OWNED AUTOMOBILES</td>
-          <td><input type="text" :value="csio.coverage.NonOwnedLimit.ded"/></td>
-          <td><input type="text" :value="csio.coverage.NonOwnedLimit.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="3">
-            <input type="checkbox" :checked="csio.coverage.HIRED" /> HIRED AUTOMOBILES
-          </td>
-          <td colspan="3"></td>
-          <td colspan="2"></td>
-          <td colspan="2"></td>
-          <td colspan="2"><input type="checkbox" :checked="csio.coverage.HIRED"/> HIRED AUTOMOBILES</td>
-          <td><input type="text" :value="csio.coverage.HiredLimit.ded"/></td>
-          <td><input type="text" :value="csio.coverage.HiredLimit.amount"/></td>
-        </tr>
-        <tr style="letter-spacing: 0px;">
-          <td rowspan="4" colspan="3"><div style="font-weight: bolder; text-align: left;">AUTOMOBILE LIABILITY</div>
-            <input type="checkbox" :checked="csio.coverage.automobile.DESCRIBED" /> DESCRIBED AUTOMOBILES
-            <input type="checkbox" :checked="csio.coverage.automobile.ALLOWED"/> ALLOWED AUTOMOBILES
-            <input type="checkbox" :checked="csio.coverage.automobile.LEASED"/> LEASED AUTOMOBILES**
-            **ALL AUTOMOBILES LEASED IN EXCESS OF
-            30 DAYS WHERE THE INSURED IS REQUIRED
-            TO PROVIDE INSURANCE
-          </td>
-          <td rowspan="4" colspan="3"></td>
-          <td rowspan="4" colspan="2"></td>
-          <td rowspan="4" colspan="2"></td>
-          <td colspan="2">BODILY INJURY AND PROPERTY
-            DAMAGE COMBINED
-          </td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyPropertyCombined.ded"/></td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyPropertyCombined.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">BODILY INJURY (PER PERSON)</td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyInjuryPerson.ded"/></td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyInjuryPerson.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">BODILY INJURY (PER ACCIDENT)</td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyInjuryAccident.ded"/></td>
-          <td><input type="text" :value="csio.coverage.automobile.BodilyInjuryAccident.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">PROPERTY DAMAGE</td>
-          <td><input type="text" :value="csio.coverage.automobile.PropertyDamage.ded"/></td>
-          <td><input type="text" :value="csio.coverage.automobile.PropertyDamage.amount"/></td>
-        </tr>
-        <tr style="letter-spacing: 0px;">
-          <td rowspan="3" colspan="3"><div style="font-weight: bolder; text-align: left;">EXCESS LIABILITY</div>
-            <input type="checkbox" :checked="csio.coverage.excess.UmbrellaForm"/> UMBRELLA FORM
-            <input type="checkbox" :checked="csio.coverage.excess.OtherType"/>
-          </td>
-          <td rowspan="3" colspan="3"></td>
-          <td rowspan="3" colspan="2"></td>
-          <td rowspan="3" colspan="2"></td>
-          <td colspan="2">EACH OCCURRENCE</td>
-          <td><input type="text" :value="csio.coverage.excess.EachOccurrence.ded"/></td>
-          <td><input type="text" :value="csio.coverage.excess.EachOccurrence.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2">AGGREGATE</td>
-          <td><input type="text" :value="csio.coverage.excess.Aggregate.ded"/></td>
-          <td><input type="text" :value="csio.coverage.excess.Aggregate.amount"/></td>
-        </tr>
-        <tr>
-          <td colspan="2" class="blank"></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr style="letter-spacing: 0px;">
-          <td rowspan="1" colspan="3"><div style="font-weight: bolder; text-align: left;">OTHER LIABILITY (SPECIFY)</div>
-            <input type="checkbox" :checked="csio.coverage.other.OtherType"/>
-          </td>
-          <td rowspan="1" colspan="3"><input type="text" :value="csio.coverage.other.Other"/></td>
-          <td rowspan="1" colspan="2"></td>
-          <td rowspan="1" colspan="2"></td>
-          <td colspan="2"></td>
-          <td><input type="text" :value="csio.coverage.other.OtherLimit.ded"/></td>
-          <td><input type="text" :value="csio.coverage.other.OtherLimit.amount"/></td>
-        </tr>
-        <tr style="letter-spacing: 0px;">
-          <td rowspan="1" colspan="3">
-            <input type="checkbox" />
-          </td>
-          <td rowspan="1" colspan="3"></td>
-          <td rowspan="1" colspan="2"></td>
-          <td rowspan="1" colspan="2"></td>
-          <td colspan="2"></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td class="label">5.</td>
-          <td colspan="13" class="title">CANCELLATION</td>
-        </tr>
-        <tr>
-          <td colspan="14" style="font-size: 1.0rem; line-height: 14px;">Should any of the above described policies be cancelled before the expiration date thereof, the issuing company will endeavor to mail ____ days written notice to the certificate
-            holder named above, but failure to mail such notice shall impose no obligation or liability of ny kink upon the company, its agents or representatives.
-          </td>
-        </tr>
-        <tr>
-          <td class="label">6.</td>
-          <td colspan="6" class="title">BROKERAGE/AGENCY FULL NAME AND MAILING ADDRESS</td>
-          <td class="label">7.</td>
-          <td colspan="6" class="title" style="line-height: 11px;">ADDITIONAL INSURED NAME AND MAILING ADDRESS
-          <span style="font-weight: normal;font-size:0.7rem">(commercial General Liability- but only with respect to the operations of the Named Insured)</span></td>
-        </tr>
-        <tr>
-          <td colspan="7" class="blank"><input type="text" :value="csio.broker.name"/></td>
-          <td colspan="7"><input type="text" :value="csio.additionalInsured.name"/></td>
-        </tr>
-        <tr>
-          <td colspan="7" class="blank"><input type="text" :value="csio.broker.mailAddress"/></td>
-          <td colspan="7"><input type="text" :value="csio.additionalInsured.mailAddress"/></td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="5" style="height:12px;"></td>
-          <td class="postcode">POSTAL
-            CODE</td>
-          <td style="border-left: 0px;"><input type="text" :value="csio.broker.postal"/></td>
-          <td colspan="7"></td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="2" style="height:12px;border-right: 0px;">BROKER CLIENT ID:</td>
-          <td colspan="5" style="border-left: 0px;"><input type="text" :value="csio.broker.clientId"/></td>
-          <td colspan="5"></td>
-          <td class="postcode">POSTAL
-            CODE</td>
-          <td style="border-left: 0px;"><input type="text" :value="csio.additionalInsured.postal"/></td>
-        </tr>
-        <tr>
-          <td class="label">8.</td>
-          <td colspan="13" class="title">CERTIFICATE AUTHORIZATION</td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="7" style="height:12px;">ISSUER</td>
-          <td rowspan="2" colspan="7">CONTACT NUMBER(S)
-          TYPE<input type="text" style="border:0px;width:80px;"/>NO.<input type="text" style="border:0px;width:80px;"/>TYPE<input type="text" style="border:0px;width:80px;"/>NO.<input type="text" style="border:0px;width:80px;"/>
-            TYPE<input type="text" style="border:0px;width:80px;"/>NO.<input type="text" style="border:0px;width:80px;"/>TYPE<input type="text" style="border:0px;width:80px;"/>NO.<input type="text" style="border:0px;width:80px;"/>
-          </td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="7" style="height:12px;">AUTHORIZED REPRESENTATIVE</td>
-        </tr>
-        <tr style="padding:0px;">
-          <td colspan="7" style="height:12px;padding:0px;">SIGNATURE OF
-            AUTHORIZED REPRESENTATIVE</td>
-          <td colspan="7" style="height:12px;">DATE<input type="text" style="border:0px;width:120px;"/>EMAIL ADDRESS<input type="text" style="border:0px;width:120px;"/></td>
-        </tr>
-        </tbody>
-      </table-->
       <div style="padding:5px;margin-top:-25px;font-width: bolder;font-size:0.9rem;">
         CSIO - Certificte of Liability Insurance CA4301e 201609
         <div style="font-weight:normal; padding-right:30px; text-align: right; margin-top:-18px;">©2021. Centre for Study of Insurance Operaations. All rights reserved</div>
@@ -1017,16 +729,21 @@
         <tr style="padding:0px;">
           <td colspan="2" style="height:12px;border-right: 0px;">BROKER CLIENT ID:</td>
           <td colspan="5" style="border-left: 0px;"><input type="text" v-model="csiop.part7.clientId"/></td>
-          <td colspan="5" style="height:12px;border-right: 0px;">NATURE OF INTEREST:</td>
-          <td colspan="2" style="border-left: 0px;"><input type="text" v-model="csiop.part8.nature"/></td>
+          <td colspan="4" style="height:12px;border-right: 0px;">NATURE OF INTEREST:</td>
+          <td colspan="3" style="border-left: 0px;"><input type="text" v-model="csiop.part8.nature"/></td>
         </tr>
         <tr>
           <td class="label">9.</td>
           <td colspan="13" class="title">CERTIFICATE AUTHORIZATION</td>
         </tr>
         <tr style="padding:0px;">
+          <!--td colspan="7" style="height:12px;">ISSUER <span style="padding-left:50px;">CHAT Insurance Services Inc</span></td-->
           <td colspan="2" style="height:12px;border-right: 0px;">ISSUER</td>
           <td colspan="5" style="border-left: 0px;"><input type="text" v-model="csiop.part9.issuer"/></td>
+          <!--td rowspan="2" colspan="7">CONTACT NUMBER(S)
+            TYPE <input type="text" v-model="csiop.part9.type1" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csiop.part9.no1" style="border:0px;width:80px;"/>TYPE <input type="text" v-model="csiop.part9.type2" style="border:0px;width:80px;"/>NO. <input type="text" v-model="csiop.part9.no2" style="border:0px;width:80px;"/>
+            EMAIL ADDRESS <input type="text" v-model="csiop.part9.emailAddress" style="border:0px;width:120px;"/>
+          </td-->
           <td rowspan="2" colspan="7">CONTACT NUMBER(S)
             Representitive: <input type="text" v-model="csiop.part9.type1" style="width:160px;"/>   Email: <input type="text" v-model="csiop.part9.no1" style="width:160px;"/>
             Company: <input type="text" v-model="csiop.part9.type2" style="width:160px;"/>   Email: <input type="text" v-model="csiop.part9.no2" style="width:160px;"/>
@@ -1037,15 +754,9 @@
           <td colspan="4" style="border-left: 0px;"><input type="text" v-model="csiop.part9.authorizedRepresentative"/></td>
         </tr>
         <tr style="padding:0px;">
-          <td colspan="3" style="height:12px; border-right: none;">SIGNATURE OF
+          <td colspan="7" style="height:12px; border-right: none;">SIGNATURE OF
             AUTHORIZED REPRESENTATIVE</td>
-          <td colspan="4" style="border-left: none;">
-            <el-image
-              style="height: 40px"
-              :src="Signature"
-              :fit="fit"></el-image>
-          </td>
-          <td colspan="7" style="height:12px; border-left: none;">DATE <input type="text" v-model="printDate" style="width:180px;"/></td>
+          <td colspan="7" style="height:12px; border-left: none;">DATE <input type="text" v-model="csiop.part9.date" style="width:180px;"/></td>
         </tr>
         </tbody>
       </table>
@@ -1059,20 +770,14 @@
 
 <script>
 import moment from 'moment'
-import $ from 'jquery'
-import store from '../../store'
 export default {
-  name: 'CSIO',
+  name: 'sheet',
   data: function () {
     return {
-      csioId: null,
-      currentCsio: 0,
-      csioTypeId: 0,
-      csioList: [],
       csio: {
         part1: {
-          name: '',
-          mailAddress: '',
+          name: '{{holder.name}}',
+          mailAddress: '{{holder.address}}',
           postal: ''
         },
         part2: {
@@ -1086,25 +791,11 @@ export default {
         part4: {
           generalLiability: {
             liabilities: '',
-            liability: {
-              CLAIMS_MADE: false,
-              OCCURRENCE: false,
-              Operations: false,
-              Employers: false,
-              Cross: false,
-              WAIVER: false,
-              TENANTS: false,
-              POLLUTION: false,
-              NONOWNED: false,
-              HIRED: false
-            },
             insuranceCompany: '',
             policyNumber: '',
             effectiveDate: '',
             expiryDate: '',
             limitOfLiability: {
-              personalInjury: false,
-              personalAdvertisingInjury: false,
               generalAggregate: {
                 ded: '',
                 amount: ''
@@ -1146,11 +837,6 @@ export default {
           },
           automobileLiability: {
             liabilities: '',
-            liability: {
-              DESCRIBED: false,
-              ALLOWED: false,
-              LEASED: false
-            },
             insuranceCompany: '',
             PolicyNumber: '',
             effectiveDate: '',
@@ -1176,10 +862,6 @@ export default {
           },
           excessLiability: {
             liabilities: '',
-            liability: {
-              UmbrellaForm: false,
-              OtherType: false
-            },
             insuranceCompany: '',
             PolicyNumber: '',
             effectiveDate: '',
@@ -1229,13 +911,21 @@ export default {
           authorizedRepresentative: '',
           signatureRepresentative: '',
           date: null,
-          emailAddress: ''
+          emailAddress: '',
+          type1: '',
+          no1: '',
+          type2: '',
+          no2: '',
+          type3: '',
+          no3: '',
+          type4: '',
+          no4: ''
         }
       },
       csiop: {
         part1: {
-          name: '',
-          mailAddress: '',
+          name: '{{holder.name}}',
+          mailAddress: '{{holder.address}}',
           postal: ''
         },
         part2: {
@@ -1432,13 +1122,30 @@ export default {
           no2: ''
         }
       },
-      Signature: '/api/upload/signature/' + JSON.parse(store.getters.getAccount).StaffID + '/signature.jpg',
-      printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-      Author: JSON.parse(this.$store.getters.getAccount).Name
+      title: '',
+      expression: '',
+      isLoading: false,
+      isLoadingCsioTypes: false,
+      isLoadingQuestionTypes: false,
+      printDate: null,
+      currentDate: moment(new Date()).format('MMMM DD, YYYY'),
+      questionTypes: [],
+      questions: [],
+      csioTypes: [],
+      csioTypeId: 0,
+      questionTypeId: 3,
+      currentQuestionId: 0,
+      currentQuestion: null,
+      outputType: 2,
+      TypeID: 2,
+      editForm: {
+        tableTitle: '',
+        tdText: ''
+      }
     }
   },
   props: {
-    businessId: {
+    sheetId: {
       type: Number
     },
     businessTypeId: {
@@ -1446,50 +1153,162 @@ export default {
     }
   },
   mounted: function () {
-    this.loadCsios(this.businessId)
-    // $('input').attr('readonly', 'readonly')
-    // $('input:checkbox').attr('disabled', 'disabled')
+    // if (this.sheetId !== undefined) this.createSheet()
+    this.loadCsioTypes()
+    this.loadQuestionTypes()
+    if (this.sheetId !== 0) {
+      this.loadSheetContent(this.sheetId)
+    }
+    this.createSheet(this.sheetId)
+    // this.loadTemplateQuestion(this.template.TemplateID)
+    this.loadQuestions(0)
   },
   methods: {
-    selectChanged: function () {
-      let item = this.csioList.find(s => s.CsioID === this.csioId)
-      if (item === undefined) return
-      this.csioTypeId = item.TypeID
-      if (item.TypeID === 0) this.csio = item.Content
-      else this.csiop = item.Content
-      this.$nextTick(() => {
-        $('input').prop('readonly', true)
-        $('input:checkbox').prop('disabled', true)
-        $('textarea').prop('readonly', true)
+    start: function () {
+      console.log('start')
+    },
+    loadCsioTypes: function () {
+      this.isLoadingCsioTypes = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'CsioType'}).then(res => {
+        if (res) {
+          console.log('CsioTypes', res)
+          this.csioTypes = res.data
+        }
+        this.isLoadingCsioTypes = false
+      }).catch(err => {
+        console.log('loadCsioTypes error', err)
+        this.isLoadingCsioTypes = false
       })
     },
-    loadCsios: function (id) {
-      this.isLoading = true
-      this.axios.post('/api/Services/commerceservice.asmx/GetReleasedCsios', {businessid: id}).then(res => {
+    loadQuestionTypes: function () {
+      this.isLoadingQuestionTypes = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'QuestionType'}).then(res => {
         if (res) {
-          console.log('loadCsios', res)
-          this.csioList = res.data
-          this.csioList.forEach(c => {
-            c.Content = JSON.parse(c.Content)
-          })
+          console.log('QuestionTypes', res)
+          this.questionTypes = res.data
+        }
+        this.isLoadingQuestionTypes = false
+      }).catch(err => {
+        console.log('loadQuestionTypes error', err)
+        this.isLoadingQuestionTypes = false
+      })
+    },
+    addQ: function () {
+      if (this.currentQuestion === null) return
+      if (this.outputType === 1) {
+        this.expression += this.currentQuestion.Description
+      } else if (this.outputType === 2) {
+        this.expression += '{{' + this.currentQuestion.QuestionID + '.Ans}}'
+      } else if (this.outputType === 3) {
+        this.expression += '{{' + this.currentQuestion.QuestionID + '.Out}}'
+      } else if (this.outputType === 4) {
+        this.expression += '{{' + this.currentQuestion.QuestionID + '.Addi}}'
+      } else if (this.outputType === 5) {
+        this.expression += '{{' + this.currentQuestion.QuestionID + '.Orig}}'
+      }
+    },
+    createSheet: function (sheetId) {
+      let newSheet = {}
+      newSheet.SheetID = sheetId
+      newSheet.TemplateID = this.csioTypeId
+      newSheet.BusinessTypeID = this.businessTypeId
+      if (this.sheetId === 0) newSheet.IsNew = true
+      else newSheet.IsNew = false
+      this.sheet = newSheet
+      // this.title = template.Title
+    },
+    loadSheetContent: function (id) {
+      if (id === undefined) return
+      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetSheet', {sheetid: id}).then(res => {
+        if (res) {
+          console.log('SheetContent', res)
+          this.sheet = res.data
+          this.TypeID = res.data.TypeID
+          this.csioTypeId = res.data.TemplateID
+          this.title = res.data.Title
+          let content = JSON.parse(res.data.Content)
+          if (res.data.TemplateID === 0) this.csio = content
+          else this.csiop = content
         }
         this.isLoading = false
       }).catch(err => {
-        console.log('loadCsios error', err)
+        console.log('查询SheetContent出错', err)
         this.isLoading = false
       })
     },
 
-    close: function (done) {
-      done()
+    loadTemplateQuestion: function (id) {
+      if (id === undefined || id === null) return
+      if (id === 0) return
+      this.printDate = moment(new Date()).format('YYYY-MM-DD HH:mm:ss')
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetQuestionsByTemplate', {templateid: id}).then(res => {
+        if (res) {
+          console.log('Questions of Template' + id, res)
+          this.questions = res.data
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询template出错', err)
+        this.isLoading = false
+      })
     },
-    // 转pdf
-    toPDF: function (title, EffectiveDate) {
-      this.htmlTitle = title + ' ' + EffectiveDate
-      if (this.csioTypeId === 0) this.getPdf('#csioDom')
-      else this.getPdf('#csioDomp')
-    }
 
+    loadQuestions: function (start) {
+      this.isLoading = true
+      let id = this.questionTypeId
+      this.axios.post('/api/Services/BaseService.asmx/GetSimpleQuestionsByType', {typeid: id, btypeid: this.businessTypeId, start: start}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          if (start === 0) {
+            this.questionCount = res.count
+            this.questions = res.data
+          } else {
+            this.questions = this.questions.concat(res.data)
+          }
+          if (this.questions.length < this.questionCount) {
+            this.loadQuestions(this.questions.length)
+          } else {
+            this.isLoading = false
+          }
+        }
+      }).catch(err => {
+        console.log('loadQuestions error', err)
+        this.isLoading = false
+      })
+    },
+
+    saveSheet: function () {
+      this.isLoading = true
+      let value = this.sheet
+      value.TypeID = this.TypeID
+      value.TemplateID = this.csioTypeId
+      value.Title = this.title
+      console.log('sheet', value)
+      if (this.csioTypeId === 0) {
+        // value.Title = this.csioTypes[0].value
+        value.Content = JSON.stringify(this.csio)
+      } else {
+        value.Content = JSON.stringify(this.csiop)
+      }
+      this.axios.post('/api/Services/BaseService.asmx/SaveSheet', {sheet: JSON.stringify(value)}).then(res => {
+        if (res) {
+          console.log('新增', res)
+          this.sheet = res.data
+          this.$message({
+            type: 'success',
+            message: 'Operation Succeeded'
+          })
+          // this.$parent.search()
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('saveSheet', err)
+        this.isLoading = false
+      })
+    }
   }
 }
 </script>
@@ -1508,13 +1327,9 @@ input[type=checkbox] {
   vertical-align: -2px;
 }
 input[type=text] {
-  border: none;
-  outline: none;
-  width: 98%;
-}
-textarea {
-  border: none;
-  outline: none;
+  border: solid 1px;
+  border-color: #b4bccc;
+  outline: #3a8ee6;
   width: 98%;
 }
 caption {

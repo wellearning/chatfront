@@ -22,28 +22,25 @@ Function: Show all the questionnaire record list and download the records.
             <el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading" size="small">Reset</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button icon="el-icon-arrow-right" type="default" title="Next Month" @click="nextMonth()" :loading="isLoading "></el-button>
-          </el-form-item>
-          <el-form-item>
             <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isDownloading" size="small">ToExcel</el-button>
           </el-form-item>
         </el-form>
       </div>
       <el-table height="500" :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)">
-        <el-table-column label="ID" prop="ApplicationID" width="70" fixed="left"></el-table-column>
-        <el-table-column label="ObtainDate" min-width="120">
+        <el-table-column label="ID" prop="BusinessID" width="70" fixed="left"></el-table-column>
+        <el-table-column label="SentTime" min-width="120">
           <template v-slot="scope">
-            <span>{{scope.row.ObtainDate.format('YYYY-MM-DD')}}</span>
+            <span v-if="scope.row.SentCount>0">{{scope.row.SentTime.format('YYYY-MM-DD')}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="ExpiryDate" min-width="120">
+        <el-table-column label="ObtainTime" min-width="120">
           <template v-slot="scope">
-            <span>{{dateFormat(scope.row.ExpiryDate)}}</span>
+            <span v-if="scope.row.ObtainCount>0">{{scope.row.ObtainTime.format('YYYY-MM-DD')}}</span>
           </template>
         </el-table-column>
         <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column label="Applicant" prop="Applicant" min-width="200" sortable="custom"></el-table-column>
+        <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="Brief" prop="Brief" min-width="200" sortable="custom"></el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
@@ -65,7 +62,7 @@ export default {
       isLoadingAll: false,
       // 搜索
       searchForm: {
-        name: null
+        name: ''
       },
       searchName: null,
       // 列表
@@ -86,7 +83,7 @@ export default {
     }
   },
   mounted: function () {
-    this.loadObtainRecords(0)
+    this.loadQuestionnaireRecords(0)
     // this.search(null, 0)
   },
   methods: {
@@ -139,17 +136,65 @@ export default {
         a.ObtainDate = moment(a.ObtainDate)
       })
     },
+    loadQuestionnaireRecords: function (start) {
+      if (start === 0) {
+        this.totalList = []
+        this.isLoadingApplications = true
+        this.isLoadingAll = true
+      }
+      this.axios.post('/api/Services/CommerceService.asmx/GetQuestionnaireRecords', {start: start}).then(res => {
+        if (res) {
+          console.log('loadQuestionnaireRecords', res)
+          this.attachQuestionnaireRecords(res.data)
+          if (start === 0) {
+            this.total = res.count
+            this.totalList = res.data
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoadingApplications = false
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length === this.total) {
+            this.totalList.sort(this.bydesc('ObtainDate'))
+            this.list = this.totalList
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.isLoadingAll = false
+          } else this.loadQuestionnaireRecords(this.totalList.length)
+        }
+      }).catch(err => {
+        console.log('loadQuestionnaireRecords', err)
+        this.isLoading = false
+        this.isLoadingAll = false
+      })
+    },
+    attachQuestionnaireRecords: function (records) {
+      records.forEach(a => {
+        if (a.SentCount > 0) a.SentTime = moment(a.SentTime)
+        else a.SentTime = null
+        if (a.ObtainCount > 0) a.ObtainTime = moment(a.ObtainTime)
+        else a.ObtainTime = null
+      })
+    },
+    resetSearch: function () {
+      this.$refs['searchForm'].resetFields()
+      // this.searchForm.name = ''
+      this.search()
+    },
     search: function () {
       let query = this.searchForm.name.toLowerCase().trim()
       if (query === '') {
         this.list = this.totalList
       } else {
         this.list = this.totalList.filter(r =>
-          r.ApplicationID === Number(query) ||
-          (r.Applicant !== null && r.Applicant.toLowerCase().indexOf(query) >= 0) ||
+          r.BusinessID === Number(query) ||
+          (r.NameInsured !== null && r.NameInsured.toLowerCase().indexOf(query) >= 0) ||
           (r.PolicyNumber !== null && r.PolicyNumber.toLowerCase().indexOf(query) >= 0) ||
           (r.ClientCode !== null && r.ClientCode.toLowerCase().indexOf(query) >= 0) ||
-          r.ObtainDate.format('YYYY-MM-DD').indexOf(query) >= 0
+          (r.SentTime !== null && r.SentTime.format('YYYY-MM-DD').indexOf(query) >= 0) ||
+          (r.ObtainTime !== null && r.ObtainTime.format('YYYY-MM-DD').indexOf(query) >= 0)
         )
       }
       this.total = this.list.length

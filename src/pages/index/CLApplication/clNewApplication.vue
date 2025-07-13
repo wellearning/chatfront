@@ -379,7 +379,8 @@ export default {
     // 初始化Producer列表
     initProducers: function () {
       this.isLoadingProducer = true
-      this.axios.post('/api/Services/baseservice.asmx/GetProducers', {}).then(res => {
+      let server = '/api/Services/baseservice.asmx/GetProducers'
+      this.axios.post(server, {}).then(res => {
         if (res) {
           console.log('Producer列表', res)
           this.producerList = res.data

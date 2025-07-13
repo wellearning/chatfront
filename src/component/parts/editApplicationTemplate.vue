@@ -540,7 +540,13 @@ export default {
       index++
       let nextchild = tblist[index]
       console.log('Next child is ', nextchild)
-      nextchild.answers[0].StatusID = 1
+      // set the first non-title and non-reminder question statusid to 1
+      for (let i = 0; i < nextchild.answers.length; i++) {
+        let ca = nextchild.answers[i]
+        ca.StatusID = 1
+        if (ca.TypeID > 2) break
+      }
+      // nextchild.answers[0].StatusID = 1
       nextchild.isAnswer = true
       nextchild.StatusID = 3
     },

@@ -39,7 +39,7 @@ Function: Show personal information.
         <el-form-item label="Direct" prop="Direct">
           <el-input v-model="editForm.Direct" clearable></el-input>
         </el-form-item>
-        <el-form-item label="Cell" prop="Mobile">
+        <el-form-item label="Mobile" prop="Mobile">
           <el-input v-model="editForm.Mobile" clearable></el-input>
         </el-form-item>
         <el-form-item label="ProducerCode" prop="ProducerCode">
@@ -52,8 +52,24 @@ Function: Show personal information.
             </el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="Signature">
+          <el-image
+            style="width: 200px; height: 100px"
+            :src="Signature"
+            :fit="fit"></el-image>
+        </el-form-item>
         <el-form-item class="confirmBtn">
           <el-button icon="el-icon-check" type="primary" @click="edit()" :loading="isLoading || isLoadingOrganization || isLoadingRole">Confirm</el-button>
+          <el-upload
+            class="rightBtnBox"
+            :headers="headerObj"
+            :data="dataObj"
+            action="/api/Services/basehandle.ashx"
+            :before-upload="beforeSignatureUpload"
+            :on-success="handleSuccess"
+          >
+            <el-button icon="el-icon-upload" type="primary">upload signature</el-button>
+          </el-upload>
         </el-form-item>
       </el-form>
     </div>
@@ -62,6 +78,7 @@ Function: Show personal information.
 
 <script>
 import SelectTree from '@/component/selectTree/selectTree'
+import store from '../../../store'
 export default {
   components: {
     SelectTree
@@ -84,6 +101,13 @@ export default {
       },
       roleIdOptions: [],
       statusOptions: [{id: 1, name: 'Normal'}, {id: 2, name: 'Inactive'}],
+      dataObj: {
+        itemType: 'signature'
+      },
+      headerObj: {
+        Authorization: JSON.parse(store.getters.getAccount).Token
+      },
+      Signature: '/api/upload/signature/' + JSON.parse(store.getters.getAccount).StaffID + '/signature.jpg',
       editForm: {
         StaffID: null,
         Name: null,
@@ -131,6 +155,36 @@ export default {
     // selectTree返回值
     getValueEdit (value) {
       this.editForm.institution = value
+    },
+    beforeSignatureUpload: function (file) {
+      this.Signature = ''
+    },
+    handleSuccess: function (res, file, fileList) {
+      console.log('response', res.data)
+      if (res.code > 0) {
+        this.$message({
+          showClose: true,
+          type: 'warning',
+          message: res.message,
+          duration: 3000
+        })
+        return
+      }
+      let message = 'The file has been successfully imported.'
+      let duration = 6000
+      if (res.data.length > 0) {
+        message += 'There are some records failed. The list: ' + res.data.join(', ')
+        duration = 0
+      }
+      // 文件上传成功的回调
+      this.$message({
+        showClose: true,
+        type: 'success',
+        message: message,
+        duration: duration
+      })
+      this.Signature = '/api/upload/signature/' + JSON.parse(store.getters.getAccount).StaffID + '/signature.jpg?time=' + Date.now()
+      // this.loadRecords()
     },
     // 组织列表
     initOrganization: function () {

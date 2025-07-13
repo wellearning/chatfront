@@ -14,7 +14,7 @@ Function: Show branch report as administrator role.
       <div class="rightBtnBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <!--el-form-item label="BusinessLine" prop="BusinessLineID">
-            <el-select v-model="businessLineID" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
+            <el-select v-model="btypeId" placeholder="" class="yearMonthSelection" no-data-text="No Record" filterable @change="showMain()">
               <el-option v-for="item in businessLines" :key="item.key" :label="item.value" :value="item.key"></el-option>
             </el-select>
           </el-form-item-->
@@ -59,9 +59,9 @@ Function: Show branch report as administrator role.
             <el-col :span="3">NB Premium: ${{monthSummary.NBPremium.toLocaleString()}}</el-col>
             <el-col :span="4">Remarket(including rewrite) Counts: {{monthSummary.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{monthSummary.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 2">Renewal Counts: {{monthSummary.RenewalCounts}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 2">Renewal Premium: ${{monthSummary.RenewalPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 1">Score Average: {{monthSummary.ScoreAverage}}</el-col>
+            <el-col :span="4" v-if="btypeId === 4">Renewal Counts: {{monthSummary.RenewalCounts}}</el-col>
+            <el-col :span="4" v-if="btypeId === 4">Renewal Premium: ${{monthSummary.RenewalPremium.toLocaleString()}}</el-col>
+            <el-col :span="4" v-if="btypeId === 2">Score Average: {{monthSummary.ScoreAverage}}</el-col>
           </el-row>
           <el-row :gutter="20" class="title" v-loading="isLoadingYearToDate">
             <el-col :span="2" class="">Year to Date: </el-col>
@@ -69,9 +69,9 @@ Function: Show branch report as administrator role.
             <el-col :span="3">NB Premium: ${{yearSummary.NBPremium.toLocaleString()}}</el-col>
             <el-col :span="4">Remarket Counts: {{yearSummary.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{yearSummary.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 2">Renewal Counts: {{yearSummary.RenewalCounts}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 2">Renewal Premium: ${{yearSummary.RenewalPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID === 1">Score Average: {{yearSummary.ScoreAverage}}</el-col>
+            <el-col :span="4" v-if="btypeId === 4">Renewal Counts: {{yearSummary.RenewalCounts}}</el-col>
+            <el-col :span="4" v-if="btypeId === 4">Renewal Premium: ${{yearSummary.RenewalPremium.toLocaleString()}}</el-col>
+            <el-col :span="4" v-if="btypeId === 2">Score Average: {{yearSummary.ScoreAverage}}</el-col>
           </el-row>
         </el-main>
       </div>
@@ -104,18 +104,18 @@ Function: Show branch report as administrator role.
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
           <template v-slot="scope" >
             <span>${{scope.row.RenewalPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
           <!--template slot="header" >
             <span @click = "rank('ScoreAverage')" @dblclick="rankdesc('ScoreAverage')" title="Click to rank, double click to rank desc">Score Average</span>
           </template-->
@@ -133,9 +133,9 @@ Function: Show branch report as administrator role.
             <el-col :span="4">NB Premium: ${{currentBranch.NBPremium.toLocaleString()}}</el-col>
             <el-col :span="4">Remarket Counts: {{currentBranch.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{currentBranch.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID===2">Renewal Counts: {{currentBranch.RenewalCounts}}</el-col>
-            <el-col :span="4" v-if="businessLineID===2">Renewal Premium: ${{currentBranch.RenewalPremium.toLocaleString()}}</el-col>
-            <el-col :span="4" v-if="businessLineID===1">Score Average: {{currentBranch.ScoreAverage}}</el-col>
+            <el-col :span="4" v-if="btypeId===4">Renewal Counts: {{currentBranch.RenewalCounts}}</el-col>
+            <el-col :span="4" v-if="btypeId===4">Renewal Premium: ${{currentBranch.RenewalPremium.toLocaleString()}}</el-col>
+            <el-col :span="4" v-if="btypeId===2">Score Average: {{currentBranch.ScoreAverage}}</el-col>
           </el-row>
         </el-main>
       </div>
@@ -161,21 +161,21 @@ Function: Show branch report as administrator role.
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
           <template v-slot="scope" >
             <span>${{scope.row.RenewalPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
           <!--template slot="header" >
             <span @click = "rank('QualityScore')" @dblclick="rankdesc('QualityScore')" title="Click to rank, double click to rank desc">Quality Score</span>
           </template-->
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=branchPageSize :pager-count=pagerCount :current-page.sync=branchcurrentPage layout="prev, pager, next" :total=branchtotal class="pageList">
@@ -190,25 +190,25 @@ Function: Show branch report as administrator role.
             <el-col :span="4">NB Premium: ${{currentProducer.NBPremium.toLocaleString()}}</el-col>
             <el-col :span="4">Remarket Counts: {{currentProducer.RemarketCounts}}</el-col>
             <el-col :span="4">Remarket Premium: ${{currentProducer.RemarketPremium.toLocaleString()}}</el-col>
-            <el-col v-if="businessLineID===2" :span="4">Renewal Counts: {{currentProducer.RenewalCounts}}</el-col>
-            <el-col v-if="businessLineID===2" :span="4">Renewal Premium: ${{currentProducer.RenewalPremium.toLocaleString()}}</el-col>
-            <el-col v-if="businessLineID===1" :span="4">Score Average: {{currentProducer.ScoreAverage}}</el-col>
+            <el-col v-if="btypeId===4" :span="4">Renewal Counts: {{currentProducer.RenewalCounts}}</el-col>
+            <el-col v-if="btypeId===4" :span="4">Renewal Premium: ${{currentProducer.RenewalPremium.toLocaleString()}}</el-col>
+            <el-col v-if="btypeId===2" :span="4">Score Average: {{currentProducer.ScoreAverage}}</el-col>
           </el-row>
         </el-main>
       </div>
       <el-table :data="coverletters.slice((producercurrentPage - 1) * pageSize, producercurrentPage * pageSize)" empty-text="No Record" v-loading="isLoadingProducer" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="csorttable">
-        <el-table-column v-if="businessLineID===1" label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="ID" prop="CoverLetterID" width="80" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="ID" prop="BusinessID" width="80" fixed="left" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="ID" prop="BusinessID" width="80" fixed="left" sortable="custom">
         </el-table-column>
         <!--el-table-column label="" prop="ClientCode" min-width="1"></el-table-column-->
         <el-table-column label="Client Code" prop="ClientCode" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="App Type" prop="LeadsFrom" min-width="100" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="App Type" prop="LeadsFrom" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="App Type" prop="TypeName" min-width="100" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="App Type" prop="TypeName" min-width="100" sortable="custom">
         </el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="150" sortable="custom">
         </el-table-column>
@@ -216,15 +216,15 @@ Function: Show branch report as administrator role.
         <el-table-column label="Effective Date" prop="EffectiveDate" min-width="120" sortable="custom">
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column v-if="businessLineID===1" label="APP Premium" prop="PremiumOnApp" min-width="120" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="APP Premium" prop="PremiumOnApp" min-width="120" sortable="custom">
         </el-table-column>
         <el-table-column label="Submit Premium" prop="Premium" min-width="120" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="Score" min-width="80" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="UW Score" prop="Score" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Quality Score" prop="QualityScore" min-width="80" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Detail" prop="" min-width="80">
+        <el-table-column v-if="btypeId===2" label="Detail" prop="" min-width="80">
           <template v-slot="scope" >
             <a v-if="scope.row.Score>0||scope.row.QualityScore>0" @click = "showCoverLetter(scope.row)" href="#" style="color:darkblue" title="Click here to show the details.">detail</a>
           </template>
@@ -242,8 +242,8 @@ Function: Show branch report as administrator role.
             <el-col :span="4">Client Code: {{currentCoverLetter.ClientCode}}</el-col>
             <el-col :span="4">Name Insured: {{currentCoverLetter.NameInsured}}</el-col>
             <el-col :span="4">Premium: ${{currentCoverLetter.Premium.toLocaleString()}}</el-col>
-            <el-col v-if="businessLineID===1" :span="4">UW Score: {{currentCoverLetter.Score}}</el-col>
-            <el-col v-if="businessLineID===1" :span="4">Quality Score: {{currentCoverLetter.QualityScore}}</el-col>
+            <el-col v-if="btypeId===2" :span="4">UW Score: {{currentCoverLetter.Score}}</el-col>
+            <el-col v-if="btypeId===2" :span="4">Quality Score: {{currentCoverLetter.QualityScore}}</el-col>
           </el-row>
         </el-main>
       </div>
@@ -252,8 +252,8 @@ Function: Show branch report as administrator role.
         <!--el-table-column label="" prop="Name" min-width="1"></el-table-column-->
         <el-table-column label="Name" prop="Name" min-width="150"></el-table-column>
         <el-table-column label="Value" prop="Value" min-width="250"></el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="Score" min-width="80"></el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="80"></el-table-column>
+        <el-table-column v-if="btypeId===2" label="UW Score" prop="Score" min-width="80"></el-table-column>
+        <el-table-column v-if="btypeId===2" label="Quality Score" prop="QualityScore" min-width="80"></el-table-column>
 
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=coverlettercurrentPage layout="prev, pager, next" :total=coverlettertotal class="pageList">
@@ -270,6 +270,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       reportTitle: 'P/L Branch Report',
       viewMonthly: 'Month to Date',
       showAll: false,
@@ -296,7 +297,7 @@ export default {
       isLoadingBranch: false,
       isLoadingProducer: false,
       isLoadingCoverLetter: false,
-      businessLineID: 1,
+      // businessLineID: 1,
       // 搜索
       searchForm: {
         name: null,
@@ -380,8 +381,13 @@ export default {
     }
   },
   mounted: function () {
-    this.businessLineID = Number(this.$route.params.id)
-    if (this.businessLineID === 2) this.reportTitle = 'C/L Branch Report'
+    let id = this.$route.params.id === undefined ? 2 : Number(this.$route.params.id)
+    if (id !== undefined) {
+      this.btypeId = Number(id)
+    }
+    if (this.btypeId === 4) this.reportTitle = 'C/L Branch Report'
+    // this.btypeId = Number(this.$route.params.id)
+    // if (this.btypeId === 4) this.reportTitle = 'C/L Branch Report'
     this.loadAppTypes()
     this.loadApplicationStatus()
     this.loadInsuranceCorps()
@@ -560,7 +566,7 @@ export default {
     loadYearToDate: function () {
       this.isLoadingYearToDate = true
       let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_yearsummary'
-      if (this.businessLineID === 2) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_yearsummary'
+      if (this.btypeId === 4) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_yearsummary'
       this.axios.post(service, {year: this.searchForm.Year}).then(res => {
         if (res) {
           console.log('loadYearToDate', res)
@@ -575,7 +581,7 @@ export default {
     loadMonthToDate: function () {
       this.isLoadingMonthToDate = true
       let service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_monthsummary'
-      if (this.businessLineID === 2) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_monthsummary'
+      if (this.btypeId === 4) service = '/api/Services/CommerceService.asmx/GetInstitutionRecords_monthsummary'
       this.axios.post(service, {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('loadMonthToDate', res)
@@ -600,12 +606,12 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetInstitutionRecords_year'
         param = {year: this.searchForm.Year}
       }
-      if (this.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
+      if (this.btypeId === 4) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('InstitutionRecords', res)
           this.list = res.data
-          if (this.businessLineID === 2) {
+          if (this.btypeId === 4) {
             this.list.forEach(r => {
               this.appTypeList.forEach(t => {
                 r[t.value + 'Count'] = r.CountList[t.key - 1]
@@ -660,7 +666,7 @@ export default {
         service = service.replace('branch', 'all')
         param = {year: this.searchForm.Year, month: this.searchForm.Month}
       }
-      if (this.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
+      if (this.btypeId === 4) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('loadBranch', res)
@@ -682,7 +688,7 @@ export default {
     },
     loadProducer: function () {
       let producerid = this.currentProducer.ProducerID
-      let businessLineID = this.businessLineID
+      let btypeId = this.btypeId
       this.isLoadingProducer = true
       let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer'
       let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month}
@@ -690,7 +696,7 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year'
         param = {producerid: producerid, year: this.searchForm.Year}
       }
-      if (businessLineID === 2) {
+      if (btypeId === 4) {
         // service = service.replace('NewBusinessService', 'CommerceService')
         // service = service.replace('CoverLetter', 'Application')
         service = '/api/Services/CommerceService.asmx/GetProducerDetails'
@@ -706,7 +712,7 @@ export default {
             if (c.appPremium !== undefined) c.appPremium = '$' + c.PremiumOnApp.toLocaleString()
             c.submitPremium = '$' + c.Premium.toLocaleString()
             c.EffectiveDate = moment(c.EffectiveDate).format('YYYY-MM-DD')
-            if (businessLineID === 2) {
+            if (btypeId === 4) {
               let corp = this.insuranceCorpList.find(co => co.InsuranceCorpID === c.InsuranceCorpID)
               if (corp !== undefined) c.CorpName = corp.ShortName
               else c.CorpName = ''
@@ -729,7 +735,7 @@ export default {
     },
     loadProducerCoverLetters: function (start) {
       let producerid = this.currentProducer.ProducerID
-      let businessLineID = this.businessLineID
+      let btypeId = this.btypeId
       this.isLoadingProducer = true
       let service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_start'
       let param = {producerid: producerid, year: this.searchForm.Year, month: this.searchForm.Month, start: start}
@@ -737,7 +743,7 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetCoverLetters_producer_year_start'
         param = {producerid: producerid, year: this.searchForm.Year, start: start}
       }
-      if (businessLineID === 2) {
+      if (btypeId === 4) {
         service = '/api/Services/CommerceService.asmx/GetProducerDetails'
         if (this.viewMonthly === 'Year to Date') {
           service = '/api/Services/CommerceService.asmx/GetProducerDetails_year'
@@ -766,7 +772,7 @@ export default {
               let corp = this.insuranceCorpList.find(ic => ic.InsuranceCorpID === c.InsuranceCorpID)
               if (corp === undefined) c.CorpName = ''
               else c.CorpName = corp.ShortName
-              if (businessLineID === 2) {
+              if (btypeId === 4) {
                 let status = this.appStatusList.find(co => co.key === c.Status)
                 if (status !== undefined) c.StatusName = status.value
                 else c.StatusName = ''

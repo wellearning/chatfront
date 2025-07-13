@@ -123,6 +123,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       isDownloading: false,
       isLoading: false,
       // isLoadingStaffs: false,
@@ -171,6 +172,10 @@ export default {
     }
   },
   mounted: function () {
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    if (id !== undefined) {
+      this.btypeId = id
+    }
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (let i = 2020; i <= this.searchForm.Year; i++) {
@@ -215,7 +220,7 @@ export default {
     },
     showMain: function () {
       this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterStatistic_month', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetterStatistic_month', {btypeid: this.btypeId, year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('查询', res)
           this.list = res.data

@@ -59,14 +59,17 @@ Function: Show my commercial application list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="Status" min-width="100" sortable="custom"></el-table-column>
-        <el-table-column label="Action" width="480">
+        <el-table-column label="Action" width="400">
           <template v-slot="scope">
             <el-button-group>
               <el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">View</el-button>
-              <el-button icon="el-icon-edit" type="primary" :disabled="scope.row.StatusID > 3" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 4" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
+              <el-button icon="el-icon-edit" type="primary" v-if="scope.row.StatusID < 4" @click="showEditApplication(scope.row)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Edit</el-button>
               <el-button icon="el-icon-delete" type="danger" v-if="scope.row.StatusID < 2 " @click="del(scope.row.ApplicationID)" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" size="small">Del</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
-              <el-button icon="el-icon-view"  type="primary" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button>
+              <el-button icon="el-icon-view"  type="primary" v-if="scope.row.StatusID !== 9 && scope.row.StatusID > 0" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <!--el-button icon="el-icon-view"  type="primary" v-if="scope.row.StatusID !== 9 && scope.row.StatusID > 0" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">CSIO</el-button-->
+              <el-button icon="el-icon-view" type="primary" v-if="scope.row.StatusID === 9" @click="restart(scope.row.ApplicationID)" :loading="isLoading" size="small">Restart</el-button>
+              <el-button icon="el-icon-circle-plus" type="primary" v-if="scope.row.StatusID >= 2 " @click="duplicate(scope.row)"  size="small">Duplic</el-button>
             </el-button-group>
           </template>
         </el-table-column>
@@ -109,14 +112,14 @@ Function: Show my commercial application list and do all operations on the list.
         </div>
       </el-dialog>
       <!----------------------------------------------修改ApplicationBlock弹窗结束----------------------------------------------------->
-      <!----------------------------------------------Sheet 弹窗开始----------------------------------------------------->
+      <!----------------------------------------------CSIO 弹窗开始----------------------------------------------------->
       <el-dialog title="" :visible.sync="csioFormVisible" width="1184.56px"  height="2184.56px" center >
-        <ViewCSIO ref="vc" :businessObjId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
+        <ViewCSIO ref="vc" :businessId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
       </el-dialog>
-      <!----------------------------------------------Sheet 弹窗结束----------------------------------------------------->
+      <!----------------------------------------------CSIO 弹窗结束----------------------------------------------------->
       <!----------------------------------------------BaseInfo Edition 弹窗开始----------------------------------------------------->
       <el-dialog z-index="5" title="Application Base Info Edition" :visible.sync="applicationFormVisible" width="600px" center>
-        <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
+        <EditApplicationBase ref="eab" :application="currentApplication" :stageId="0" @hideEdition="hideEdition()"></EditApplicationBase>
       </el-dialog>
       <!----------------------------------------------BaseInfo Edition弹窗结束----------------------------------------------------->
       <!----------------------------------------------SubApplicationTemplate Edition 弹窗开始----------------------------------------------------->
@@ -482,6 +485,7 @@ export default {
         if (res) {
           console.log('GetApplicationBlock', res.data)
           aBlock.answers = res.data.answers
+          aBlock.StatusID = res.data.StatusID
           this.matchBlockQuestions(aTemplate, aBlock)
           this.isLoadingApplicationBlock = false
           if (aBlock.answers[0].StatusID !== 1) {
@@ -686,6 +690,35 @@ export default {
         done()
       }).catch(() => {})
     },
+    duplicate: function (application) {
+      this.$confirm('Are you sure to duplicate a new application? The new application will be shown in my applications', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        let id = application.ApplicationID
+        this.isLoading = true
+        this.axios.post('/api/Services/CommerceService.asmx/DuplicateApplication', {applicationid: id}).then(res => {
+          if (res) {
+            console.log('duplicate', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded. The new ApplicationID is ' + res.data
+            })
+          }
+          this.isLoading = false
+          this.loadApplications(0)
+        }).catch(err => {
+          console.log('duplicate error', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
 
     // 日期格式
     dateFormat (date) {
@@ -798,6 +831,38 @@ export default {
         })
       })
     },
+    restart: function (id) {
+      this.$confirm('Are you sure to restart it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/CommerceService.asmx/RestartApplication', {applicationid: id}).then(res => {
+          if (res) {
+            console.log('restart', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            let app = this.list.find(item => item.ApplicationID === id)
+            app.StatusID = res.data
+            this.setApplicationStatus(app)
+            // this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            // this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
     // Templates列表
     initTemplates: function () {
       this.isLoadingTemplates = true
@@ -873,7 +938,7 @@ export default {
       this.currentApplicationID = applicationid
       this.csioFormVisible = true
       if (this.$refs.vc !== undefined) {
-        this.$refs.vc.loadBusinessObj(applicationid)
+        this.$refs.vc.loadCsios(applicationid)
       }
     }
   }

@@ -126,6 +126,7 @@ export default {
       isLoadingAccountList: false,
       isLoadingRecord: false,
       currentId: null,
+      accountCount: 0,
       current: {
         PolicyNumber: '',
         Balance: 0,
@@ -169,7 +170,7 @@ export default {
   mounted: function () {
     if (this.$route.params.id !== undefined) this.reportTypeID = Number(this.$route.params.id)
     this.loadTransactionTypes()
-    this.loadAccounts()
+    this.loadAccounts(0)
   },
   watch: {
     finishNum (val) {
@@ -241,7 +242,7 @@ export default {
       })
     },
     // 查询
-    loadAccounts: function () {
+    loadAccounts_: function () {
       this.isLoading = true
       let service = '/api/Services/CommerceService.asmx/GetBusiAccounts'
       if (this.reportTypeID === 2) service = '/api/Services/CommerceService.asmx/GetMyBusiAccounts'
@@ -266,11 +267,47 @@ export default {
         this.isLoading = false
       })
     },
+    loadAccounts: function (start) {
+      this.isLoading = true
+      let service = '/api/Services/CommerceService.asmx/GetOverdueBusiAccounts'
+      let param = {start: start, length: 200}
+      if (this.reportTypeID === 2) {
+        service = '/api/Services/CommerceService.asmx/GetMyBusiAccounts'
+        param = {}
+      }
+      this.axios.post(service, param).then(res => {
+        if (res) {
+          console.log('loadAccounts', res.data)
+          if (start === 0) {
+            this.accountCount = res.count
+            this.totalList = res.data
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length < this.accountCount) {
+            this.loadAccounts(this.totalList.length)
+          } else {
+            this.statistics(this.totalList)
+            this.list = this.totalList
+            this.total = this.list.length
+            this.currentPage = 1
+            this.isLoading = false
+          }
+        }
+      }).catch(err => {
+        console.log('loadAccounts error', err)
+        this.isLoading = false
+      })
+    },
     statistics: function (records) {
       this.overDueItems[1].amount = 0
       this.overDueItems[2].amount = 0
       this.overDueItems[3].amount = 0
       records.forEach(r => {
+        let dueDate = moment(r.DueDate)
+        if (dueDate.year() <= moment().year()) r.DueDate_f = dueDate.format('YYYY-MM-DD')
+        else r.DueDate_f = ''
+        r.DueDate = dueDate
         if (r.OverDays > 60) this.overDueItems[1].amount += r.Balance
         else if (r.OverDays > 30) this.overDueItems[2].amount += r.Balance
         else if (r.OverDays > 0) this.overDueItems[3].amount += r.Balance

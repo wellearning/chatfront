@@ -34,11 +34,11 @@ Function: Show all commercial application list and do all operations on the list
               <el-table-column label="Sub-Action" width="380">
                 <template slot-scope="scope">
                   <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 0 && roleName.indexOf('Branch') < 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 1 && roleName.indexOf('Branch') < 0" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                  <el-button v-if="scope.row.TypeID === 1 && roleName.indexOf('Branch') < 0" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
                   <el-button v-if="scope.row.TypeID === 1 && scope.row.QuestionnaireID > 0" icon="el-icon-view" type="primary" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  <el-button v-if="scope.row.TypeID === 2 && roleName.indexOf('Branch') < 0" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -71,8 +71,8 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column label="Action" width="380" >
           <template slot-scope="scope">
             <el-button-group>
-              <el-button icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
-              <el-button icon="el-icon-view" :type="processType(scope.row)" @click="showRenewalProcessing(scope.row)"  size="small">Process</el-button>
+              <el-button v-if="roleName.indexOf('Branch') < 0" icon="el-icon-edit" type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
+              <el-button v-if="roleName.indexOf('Branch') < 0" icon="el-icon-view" :type="processType(scope.row)" @click="showRenewalProcessing(scope.row)"  size="small">Process</el-button>
               <el-button icon="el-icon-view" type="primary" plain @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.QuestionnaireID > 0" type="primary" plain @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
             </el-button-group>
@@ -221,6 +221,7 @@ export default {
   },
   data: function () {
     return {
+      roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
       EffectiveDate: null,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       Author: JSON.parse(this.$store.getters.getAccount).Name,

@@ -22,7 +22,7 @@
       <el-row :gutter="20" style="border-bottom:solid #0000ff 2px; margin-top:20px;  margin-left:10px; margin-right:20px; color: steelblue; text-align: right; font-size:14px;">
         <el-col :span="24">
           <!--div class="viewMemo-subtitle head">ID: {{businessObjId}}</div-->
-          <div class="viewMemo-subtitle head">{{sheetForm.BranchStreet}}{{sheetForm.BranchCity}}{{sheetForm.BranchPostcode}}</div>
+          <div class="viewMemo-subtitle head">{{sheetForm.BranchStreet}}{{sheetForm.BranchCity}} {{sheetForm.BranchPostcode}}</div>
           <div class="viewMemo-subtitle head">Bus: {{sheetForm.BranchTel}} Email: {{sheetForm.BranchEmail}} Website: {{sheetForm.Website}}</div>
         </el-col>
       </el-row>

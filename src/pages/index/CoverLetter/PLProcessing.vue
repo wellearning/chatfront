@@ -33,7 +33,7 @@ Function: Show the needed processing cover letter list and do the processing job
         <el-table-column label="Line of Business" prop="Title" min-width="180" sortable="custom"></el-table-column>
         <el-table-column label="Company" prop="CorpName" min-width="130" sortable="custom"></el-table-column>
         <el-table-column label="EffeDate" prop="EffectiveDate" min-width="120" sortable="custom">
-          <template slot-scope="scope">
+          <template v-slot="scope">
             <span>{{dateFormat(scope.row.EffectiveDate)}}</span>
           </template>
         </el-table-column>
@@ -86,6 +86,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       printObj: {
@@ -124,6 +125,10 @@ export default {
     }
   },
   mounted: function () {
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    if (id !== undefined) {
+      this.btypeId = id
+    }
     this.loadInsuranceCorps()
     this.loadProducers(0)
     this.loadCoverLetterStatuses()
@@ -230,7 +235,7 @@ export default {
         this.isLoading = true
         this.isLoadingTotal = true
       }
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProcessings', {start: start}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProcessings', {btypeid: this.btypeId, start: start}).then(res => {
         if (res) {
           console.log('CoverLetters', res)
           res.data.forEach(c => this.attachInfo(c))

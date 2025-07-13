@@ -41,7 +41,8 @@ Function: Show my personal line memo list and do all operations on the list.
         </el-table-column>
         <el-table-column label="CorpName" prop="CorpName" min-width="150" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNumber" prop="PolicyNumber" min-width="150" sortable="custom"></el-table-column>
-        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="300" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="StatusName" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Named Insured(s)" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
         <el-table-column label="Action" width="340" fixed="right">
           <template slot-scope="scope">
             <el-button-group>
@@ -113,6 +114,7 @@ export default {
       totalNum: 0,
       finishNum: 0,
       totalQuestionNum: 1,
+      memoStatusList: [],
       AnsweredArr: [],
       printDate: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       // printObj: {
@@ -208,9 +210,10 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
+    this.loadMemoStatus()
     this.initTemplates()
     this.initInsuranceCompany()
+    this.search(null)
     if (this.$store.state.MemoID !== undefined && this.$store.state.MemoID !== '') {
       // this.view(this.$store.state.MemoID)
       this.$store.state.MemoID = ''
@@ -238,6 +241,19 @@ export default {
     },
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
+    },
+    loadMemoStatus: function () {
+      this.isLoadingIMemoStatus = true
+      this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'MemoStatus'}).then(res => {
+        if (res) {
+          console.log('loadMemoStatus', res)
+          this.memoStatusList = res.data
+        }
+        this.isLoadingIMemoStatus = false
+      }).catch(err => {
+        console.log('loadMemoStatus error', err)
+        this.isLoadingIMemoStatus = false
+      })
     },
     setCurrent: function (memo) {
       this.currentMemo = memo
@@ -306,6 +322,11 @@ export default {
               this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
             }
             */
+          res.data.forEach(r => {
+            let status = this.memoStatusList.find(s => s.key === r.Status)
+            if (status !== undefined) r.StatusName = status.value
+            else r.StatusName = ''
+          })
           this.total = this.list.length
           this.currentPage = 1
         }

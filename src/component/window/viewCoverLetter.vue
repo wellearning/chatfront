@@ -61,7 +61,7 @@
           <div class="viewMemo-subtitle"><span></span></div>
         </el-col>
       </el-row>
-      <EditCoverLetterBody :coverLetter="viewForm" :disabled="true"></EditCoverLetterBody>
+      <EditCoverLetterBody ref="eclb" :coverLetter="viewForm" :disabled="true"></EditCoverLetterBody>
       <el-row :gutter="20" class="foot printDateInFoot">
         <el-col>
           <b>{{viewForm.Author + ' ' + printDate}}</b>
@@ -92,6 +92,7 @@ export default {
       author: JSON.parse(this.$store.getters.getAccount).Name,
       viewForm: {
         CoverLetterID: null,
+        InsuranceTypeID: 1,
         Title: null,
         EffectiveDate: null,
         InsuranceCorpID: null,
@@ -160,7 +161,7 @@ export default {
       this.isLoading = true
       this.axios.post('/api/Services/NewBusinessService.asmx/GetViewCoverLetter', {coverletterid: id}).then(res => {
         if (res) {
-          console.log('查询单个', res)
+          console.log('loadCoverLetter', res)
           this.viewForm = res.data
           this.loadingCount = 0
           this.totalBlocks = 0
@@ -180,6 +181,7 @@ export default {
           })
           this.$nextTick(() => { // resetFields初始化到第一次打开dialog时里面的form表单里的值，所以先渲染form表单，后改变值，这样resetFields后未空表单
             this.printObj.popTitle = this.viewForm.Title
+            this.$refs.eclb.loadForbidden()
           })
           // this.isLoading = false
         }
@@ -190,7 +192,7 @@ export default {
     },
     // 关闭Pink Slip
     close: function (done) {
-      this.viewForm.coverLetterTemplates = []
+      // this.viewForm.coverLetterTemplates = []
       /*
       this.viewForm = {
         CoverLetterID: null,

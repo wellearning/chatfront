@@ -58,25 +58,25 @@ Function: Show broker report as administrator role.
             <span>${{scope.row.RemarketPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Counts" prop="RenewalCounts" min-width="100" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===2" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===4" label="Renewal Premium" prop="RenewalPremium" min-width="150" sortable="custom">
           <template slot-scope="scope" >
             <span>${{scope.row.RenewalPremium.toLocaleString()}}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="UW Score" prop="UWScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Quality Score" prop="QualityScore" min-width="150" sortable="custom">
         </el-table-column>
-        <el-table-column v-if="businessLineID===1" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
+        <el-table-column v-if="btypeId===2" label="Score Average" prop="ScoreAverage" min-width="150" sortable="custom">
         </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
     </div>
     <div v-else-if="producerVisible">
-      <ProducerDetail ref="producerD" :businessLineID="businessLineID" :searchForm="searchForm" :producer="currentProducer"></ProducerDetail>
+      <ProducerDetail ref="producerD" :btypeId="btypeId" :searchForm="searchForm" :producer="currentProducer"></ProducerDetail>
     </div>
   </div>
 </template>
@@ -91,12 +91,13 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       reportTitle: 'P/L Broker Report',
       // viewMonthly: 'Month to Date',
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
-      businessLineID: 1,
+      // businessLineID: 1,
       // 搜索
       searchForm: {
         viewMonthly: 'Month to Date',
@@ -140,8 +141,12 @@ export default {
     }
   },
   mounted: function () {
-    this.businessLineID = Number(this.$route.params.id)
-    if (this.businessLineID === 2) this.reportTitle = 'C/L Broker Report'
+    let id = this.$route.params.id === undefined ? 2 : Number(this.$route.params.id)
+    if (id !== undefined) {
+      this.btypeId = id
+    }
+    // this.businessLineID = Number(this.$route.params.id)
+    if (this.btypeId === 4) this.reportTitle = 'C/L Broker Report'
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (var i = 2020; i <= this.searchForm.Year; i++) {
@@ -234,7 +239,11 @@ export default {
         service = '/api/Services/NewBusinessService.asmx/GetProducerRecords_all_year'
         param = {year: this.searchForm.Year}
       }
-      if (this.businessLineID === 2) service = service.replace('NewBusinessService', 'CommerceService')
+      if (this.btypeId === 4) {
+        service = service.replace('NewBusinessService', 'CommerceService')
+        param = {year: this.searchForm.Year, month: this.searchForm.Month}
+        if (this.searchForm.viewMonthly === 'Year to Date') param = {year: this.searchForm.Year}
+      }
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)

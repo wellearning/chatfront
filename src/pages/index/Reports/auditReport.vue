@@ -31,6 +31,10 @@ Function: Show audit report as administrator role.
               <el-option v-for="item in searchForm.periods" :key="item.value" :label="item.name" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item>
+            <!--el-button icon="el-icon-refresh" @click="resetSearch()" :loading="isLoading || isLoadingInsuranceCompany" size="small">Reset</el-button-->
+            <el-button icon="el-icon-refresh" @click="exportExcel()" :loading="isDownloading" size="small">ToExcel</el-button>
+          </el-form-item>
         </el-form>
       </div>
     </div>
@@ -77,6 +81,7 @@ export default {
     return {
       viewMonthly: 'View Monthly',
       isLoading: false,
+      isDownloading: false,
       isLoadingReportItems: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
@@ -130,6 +135,15 @@ export default {
     }
   },
   methods: {
+    exportExcel: function () {
+      this.isDownloading = true
+      let startDate = this.dateFormat(this.periodDates[0])
+      let endDate = this.dateFormat(this.periodDates[1])
+      let audittype = 'PlAuditUW'
+      if (this.currentItem.id === 2) audittype = 'PlAuditUpload'
+      let tablename = 'auditRecords.xlsx'
+      this.downloadData(audittype, startDate, endDate, tablename, this)
+    },
     sorttable: function (column) {
       if (column.order === 'descending') this.rankdesc(column.prop)
       else this.rank(column.prop)

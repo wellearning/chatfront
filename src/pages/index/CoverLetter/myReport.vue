@@ -139,6 +139,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       viewMonthly: 'Month to Date',
       totalPremium: 0,
       NBCounts: 0,
@@ -223,6 +224,10 @@ export default {
     }
   },
   mounted: function () {
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    if (id !== undefined) {
+      this.btypeId = id
+    }
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (let i = 2020; i <= this.searchForm.Year; i++) {
@@ -294,7 +299,7 @@ export default {
     },
     loadMonthToDate: function () {
       this.isLoadingMonthToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_producermonthsummary', {year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_producermonthsummary', {btypeid: this.btypeId, year: this.searchForm.Year, month: this.searchForm.Month}).then(res => {
         if (res) {
           console.log('查询', res)
           this.monthSummary = res.data
@@ -308,7 +313,7 @@ export default {
 
     loadYearToDate: function () {
       this.isLoadingYearToDate = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_produceryearsummary', {year: this.searchForm.Year}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetProducerRecord_produceryearsummary', {btypeid: this.btypeId, year: this.searchForm.Year}).then(res => {
         if (res) {
           console.log('查询', res)
           this.yearSummary = res.data
@@ -322,10 +327,10 @@ export default {
     loadCoverLetters: function (start) {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month_start'
-      let param = {year: this.searchForm.Year, month: this.searchForm.Month, start: start}
+      let param = {btypeid: this.btypeId, year: this.searchForm.Year, month: this.searchForm.Month, start: start}
       if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year_start'
-        param = {year: this.searchForm.Year, start: start}
+        param = {btypeid: this.btypeId, year: this.searchForm.Year, start: start}
       }
       this.axios.post(service, param).then(res => {
         if (res) {
@@ -352,10 +357,10 @@ export default {
     search: function () {
       this.isLoading = true
       let service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_month'
-      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      let param = {btypeid: this.btypeId, year: this.searchForm.Year, month: this.searchForm.Month}
       if (this.viewMonthly === 'Year to Date') {
         service = '/api/Services/NewBusinessService.asmx/GetMyCoverLetters_year'
-        param = {year: this.searchForm.Year}
+        param = {btypeid: this.btypeId, year: this.searchForm.Year}
       }
       this.axios.post(service, param).then(res => {
         if (res) {

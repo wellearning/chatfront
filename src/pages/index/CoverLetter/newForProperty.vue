@@ -87,6 +87,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       EffectiveDate: null,
       isAnswering: false,
       isLoading: false,
@@ -96,6 +97,8 @@ export default {
       isLoadingMakers: false,
       isLoadingBlockQuestions: false,
       coverLetterForm: {
+        BusinessTypeID: 2,
+        InsuranceTypeID: 2,
         Title: null,
         EffectiveDate: null,
         InsuranceCorpID: null,
@@ -147,6 +150,9 @@ export default {
     }
   },
   mounted: function () {
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    this.btypeId = id
+    this.coverLetterForm.BusinessTypeID = parseInt(id)
     this.initTemplates(2)
     this.initInsuranceCompany()
     this.initProducers()
@@ -232,7 +238,7 @@ export default {
     // Templates列表
     initTemplates: function (typeid) {
       this.isLoadingTemplates = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetTemplatesByType', {typeid: typeid}).then(res => {
+      this.axios.post('/api/Services/BaseService.asmx/GetTemplatesByType', {typeid: typeid, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('Templates列表', res)
           this.templatesList = res.data

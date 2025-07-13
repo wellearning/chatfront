@@ -17,7 +17,7 @@ Function: Show single choice list and do all operations on the list.
       <div class="searchBox">
         <el-form :model="searchForm" ref="searchForm" class="searchForm">
           <el-form-item label="" prop="name">
-            <el-input v-model="searchForm.name" placeholder="Question" size="small"></el-input>
+            <el-input v-model="searchForm.name" placeholder="Question" size="small" @change="search" @keyup.enter.native="search"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button icon="el-icon-search" type="primary" @click="search(searchForm.name)" :loading="isLoading" size="small">Go</el-button>
@@ -218,6 +218,7 @@ export default {
       searchName: null,
       // 列表
       list: [],
+      totalList: [],
       pageSize: 20,
       pagerCount: 5,
       currentPage: 1,
@@ -235,7 +236,8 @@ export default {
   mounted: function () {
     this.btypeId = parseInt(this.$route.params.id)
     this.typeName = this.businessTypes[this.btypeId] + this.typeName
-    this.search(null)
+    // this.search(null)
+    this.loadQuestions(0)
   },
   methods: {
     // show question list
@@ -293,7 +295,7 @@ export default {
       }
     },
     // 查询
-    search: function (name) {
+    _search: function (name) {
       this.isLoading = true
       // let query = ''
       // if (name !== null) query = name
@@ -315,6 +317,51 @@ export default {
           this.currentPage = 1
         }
         this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
+    search: function () {
+      let query = this.searchForm.name.toLowerCase().trim()
+      if (query === '' || query === null) {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r =>
+          r.Description.toLowerCase().indexOf(query) >= 0 ||
+          r.QuestionID === Number(query)
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentPage = 1
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
+    loadQuestions: function (start) {
+      this.isLoading = true
+      let id = 6
+      this.axios.post('/api/Services/BaseService.asmx/GetQuestions', {typeid: id, btypeid: this.btypeId, start: start}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          if (start === 0) {
+            this.questionCount = res.count
+            this.totalList = res.data
+            this.total = res.count
+            this.currentPage = 1
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length < this.questionCount) {
+            this.loadQuestions(this.totalList.length)
+          } else {
+            for (let i = 0; i < this.totalList.length; i++) {
+              this.totalList[i].value = null
+              this.totalList[i].options.forEach(item => { item.AdditionContent = null })
+            }
+            this.list = this.totalList
+            this.isLoading = false
+          }
+        }
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoading = false

@@ -41,16 +41,16 @@ Function: Show all commercial application list and do all operations on the list
         <el-table-column width="20" type="expand" :loading="isLoading" >
           <template slot-scope="props">
             <el-table :data="props.row.blocks" row-key="id" default-expand-all :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
-              <el-table-column prop="BlockName" label="Block Name" min-width="200"/>
+              <el-table-column prop="BlockName" label="Block Name" min-width="280"/>
               <el-table-column prop="Status" label="Status" min-width="100"/>
-              <el-table-column label="Sub-Action" width="480">
+              <el-table-column label="Sub-Action" width="400">
                 <template slot-scope="scope">
                   <el-button v-if="scope.row.TypeID === 0 && scope.row.Status !== 'Not Answer'" icon="el-icon-view" type="primary" plain @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" plain @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" plain @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
+                  <el-button v-if="scope.row.TypeID === 0 && roleName.indexOf('Branch') < 0" icon="el-icon-edit"  type="primary" plain @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                  <el-button v-if="scope.row.TypeID === 1 && roleName.indexOf('Branch') < 0" icon="el-icon-delete" type="danger" plain @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                  <el-button v-if="scope.row.TypeID === 1 && roleName.indexOf('Branch') < 0" icon="el-icon-edit" type="primary" plain @click="showSetBlockQuestionnaire(scope.row)" size="small">SetQuestionnaire</el-button>
                   <el-button v-if="scope.row.TypeID === 1" icon="el-icon-view" type="primary" plain @click="showBlockQuestionnaire(scope.row)" :loading="isLoading" size="small">Questionnaire</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" plain @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  <el-button v-if="scope.row.TypeID === 2 && roleName.indexOf('Branch') < 0" icon="el-icon-plus" type="primary" plain @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
                   <el-button v-if="scope.row.TypeID === 2 && (roleName === 'Developer' || roleName === 'Admin')" icon="el-icon-edit" type="primary" plain @click="resetApplicationTemplate(scope.row)" :loading="isLoading" size="small" title="reset the disordered templates and blocks">Reset</el-button>
                 </template>
               </el-table-column>
@@ -60,9 +60,9 @@ Function: Show all commercial application list and do all operations on the list
         <!--el-table-column label="Title" prop="Title" min-width="300" sortable="custom"></el-table-column-->
         <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="InsuCorp" prop="CorpName" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="130" sortable="custom">
+        <el-table-column label="Applicant" prop="NameInsured" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="InsuCorp" prop="CorpName" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="EffeDate" prop="EffectiveDate" min-width="120" sortable="custom">
           <template slot-scope="scope">
             <span>{{scope.row.EffectiveDate.format('YYYY-MM-DD')}}</span>
           </template>
@@ -79,13 +79,14 @@ Function: Show all commercial application list and do all operations on the list
           <template slot-scope="scope">
             <el-button-group>
               <!--el-button icon="el-icon-view" type="primary" @click="showViewApplication(scope.row)" :loading="isLoading || isLoadingInsuranceCompany" size="small">View</el-button-->
-              <el-button icon="el-icon-edit" v-if="scope.row.Status !== 8"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
+              <el-button icon="el-icon-edit" v-if="scope.row.Status !== 8 && roleName.indexOf('Branch') < 0"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.Status !== 8" type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Form</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.Status !== 8 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
-              <el-button icon="el-icon-unlock" v-if="scope.row.Status === 8" type="warning" @click="reinstateApplication(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
-              <el-button icon="el-icon-circle-plus" type="primary" @click="duplicate(scope.row)"  size="small">Duplic</el-button>
-              <el-button icon="el-icon-close" v-if="scope.row.Status !== 8 && scope.row.Status !== 6" type="danger" @click="showSetCancellation(scope.row)"  size="small">Cancel</el-button>
-              <el-button icon="el-icon-view" type="primary" @click="showQuestionnaireObtain(scope.row)"  size="small">QObtain</el-button>
+              <el-button icon="el-icon-view" v-if="scope.row.Status !== 8"  type="primary" @click="showCsioList(scope.row)"  size="small">COI</el-button>
+              <el-button icon="el-icon-unlock" v-if="scope.row.Status === 8 && roleName.indexOf('Branch') < 0" type="warning" @click="reinstateApplication(scope.row)" :loading="isLoading" size="small">Reinstate</el-button>
+              <el-button icon="el-icon-circle-plus" v-if="roleName.indexOf('Branch') < 0" type="primary" @click="duplicate(scope.row)"  size="small">Duplic</el-button>
+              <el-button icon="el-icon-close" v-if="scope.row.Status !== 8 && scope.row.Status !== 6 && roleName.indexOf('Branch') < 0" type="danger" @click="showSetCancellation(scope.row)"  size="small">Cancel</el-button>
+              <el-button icon="el-icon-view" v-if="roleName.indexOf('Branch') < 0" type="primary" @click="showQuestionnaireObtain(scope.row)"  size="small">QObtain</el-button>
               <el-button icon="el-icon-view" type="primary" @click="showObtainRecord(scope.row)"  size="small">qoRecord</el-button>
             </el-button-group>
           </template>
@@ -255,6 +256,11 @@ Function: Show all commercial application list and do all operations on the list
         </el-table>
       </el-dialog>
       <!----------------------------------------------Questionnaire obtain records end----------------------------------------------------->
+      <!----------------------------------------------CSIO List 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="COI List" :visible.sync="csioListVisible" width="984.56px" center>
+        <csioList ref="csiol" :businessTypeID="4" :businessID="currentApplicationID"></csioList>
+      </el-dialog>
+      <!----------------------------------------------SCSIO List弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -267,6 +273,7 @@ import ViewQuestionnaire from '@/component/window/questionnaire'
 import EditApplicationBase from '@/component/parts/editApplicationBase'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import EditApplicationBlock from '@/component/parts/editApplicationBlock'
+import csioList from '@/component/window/csioList'
 
 export default {
   components: {
@@ -275,7 +282,8 @@ export default {
     ViewSheet,
     ViewQuestionnaire,
     ViewApplication,
-    EditApplicationBase
+    EditApplicationBase,
+    csioList
   },
   data: function () {
     return {
@@ -406,6 +414,7 @@ export default {
       // processing
       ProcessingTypeID: null,
       ProcessingTitle: '',
+      csioListVisible: false,
       processingVisible: false,
       applicationFormVisible: false,
       applicationForm: {
@@ -1364,6 +1373,14 @@ export default {
       }).catch(err => {
         console.log('导出Application PDF出错', err)
       })
+    },
+    showCsioList: function (application) {
+      if (application !== undefined) this.setCurrent(application)
+      this.csioListVisible = true
+      if (this.$refs.csiol !== undefined) {
+        // this.$refs.csiol.loadSheets(application.ApplicationID)
+        this.$refs.csiol.loadCsios(application.ApplicationID)
+      }
     },
     showSheet: function (applicationid) {
       this.currentApplicationID = applicationid

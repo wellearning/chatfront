@@ -43,7 +43,7 @@ Function: Show cover letter report as administrator role.
       <el-table :data="list.slice((currentPage - 1) * pageSize, currentPage * pageSize)" empty-text="No Record" v-loading="isLoading" element-loading-background="rgba(255, 255, 255, 0.5)" @sort-change="sorttable">
         <el-table-column label="ID" prop="ID" width="60" fixed="left" sortable="custom">
         </el-table-column>
-        <el-table-column label="Name" prop="Name" min-width="150" sortable="custom">
+        <el-table-column label="Name" prop="Name" min-width="200" sortable="custom">
           <!--template slot-scope="scope" >
             <a @click = "showBranch(scope.row)" style="color:darkblue" href="#" title="Click here to show the branch detail.">{{scope.row.Name}}</a>
           </template-->
@@ -79,18 +79,32 @@ Function: Show cover letter report as administrator role.
             <span>${{scope.row.Premium.toLocaleString()}}</span>
           </template>
         </el-table-column>
+        <el-table-column v-if="businessLineID === 2" label="Action" min-width="100">
+          <template v-slot="scope">
+            <el-button-group>
+              <el-button icon="el-icon-view" type="primary" @click="showReportDetail(scope.row)" :loading="isLoading" size="small">Detail</el-button>
+            </el-button-group>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
+      <!----------------------------------------------CSIO List 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="Report Detail" :visible.sync="reportDetailVisible" width="1500px" center>
+        <ReportDetail ref="rd" :reportItem="reportItem" :itemID="itemID" :year="searchForm.Year" :month="searchForm.Month"></ReportDetail>
+      </el-dialog>
+      <!----------------------------------------------SCSIO List弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
 
 <script>
 import moment from 'moment'
+import ReportDetail from '@/component/window/clReportDetail'
 
 export default {
   components: {
+    ReportDetail
   },
   data: function () {
     return {
@@ -99,6 +113,9 @@ export default {
       isLoading: false,
       isLoadingYearToDate: false,
       isLoadingMonthToDate: false,
+      reportDetailVisible: false,
+      reportItem: 'Company',
+      itemID: 0,
       businessLineID: 1,
       // 搜索
       searchForm: {
@@ -123,7 +140,7 @@ export default {
       },
       // 列表
       list: [],
-      reportItems: [ {key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'} ],
+      reportItems: [ {key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'}, {key: 'Portfolio', value: 'RemarkFrom'} ],
       currentItem: {key: 'Corperation', value: 'Company'},
       coverletters: [],
       coverletterproperties: [],
@@ -144,6 +161,7 @@ export default {
   },
   mounted: function () {
     this.presets()
+    this.loadReportItems()
     this.searchForm.Year = new Date().getFullYear()
     this.searchForm.Month = new Date().getMonth() + 1
     for (let i = 2020; i <= this.searchForm.Year; i++) {
@@ -227,11 +245,32 @@ export default {
     dateFormat (date) {
       return moment(date).format('YYYY-MM-DD')
     },
+    loadReportItems: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/GetReportItem', {businesslineid: this.businessLineID}).then(res => {
+        if (res) {
+          console.log('reportItems', res)
+          // this.reportItems = res.data
+          if (res.data.length > 0) {
+            let list = []
+            res.data.forEach(item => {
+              list.push({key: item.ItemValue, value: item.Name})
+            })
+            this.reportItems = list
+          }
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadReportItems error', err)
+        this.isLoading = false
+      })
+    },
+
     presets: function () {
       this.businessLineID = Number(this.$route.params.id)
       if (this.businessLineID === 2) this.reportTitle = 'C/L Business Report'
       if (this.businessLineID === 1) {
-        this.reportItems = [{key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'}]
+        this.reportItems = [{key: 'Corperation', value: 'Company'}, {key: 'InsuranceType', value: 'Business Line'}, {key: 'Template', value: 'Template'}, {key: 'RemarketFrom', value: 'Portfolio'}]
       } else if (this.businessLineID === 2) {
         this.reportItems = [{key: 'Corperation', value: 'Company'}, {key: 'Template', value: 'Template'}]
       }
@@ -239,14 +278,20 @@ export default {
     // 查询
     search: function () {
       this.isLoading = true
-      let service = '/api/Services/NewBusinessService.asmx/Get' + this.searchForm.ReportItem + 'Records'
-      let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      // let service = '/api/Services/NewBusinessService.asmx/Get' + this.searchForm.ReportItem + 'Records'
+      // let param = {year: this.searchForm.Year, month: this.searchForm.Month}
+      let service = '/api/Services/NewBusinessService.asmx/GetReportItemRecords'
+      let param = {reportitem: this.searchForm.ReportItem, year: this.searchForm.Year, month: this.searchForm.Month}
+      let lineId = this.businessLineID
+      if (lineId === 2) {
+        service = '/api/Services/CommerceService.asmx/Get' + this.searchForm.ReportItem + 'Records'
+        param = {year: this.searchForm.Year, month: this.searchForm.Month}
+        // service = service.replace('NewBusinessService', 'CommerceService')
+      }
       if (this.viewMonthly === 'Year to Date') {
         service += '_year'
         param = {year: this.searchForm.Year}
       }
-      let lineId = this.businessLineID
-      if (lineId === 2) service = service.replace('NewBusinessService', 'CommerceService')
       this.axios.post(service, param).then(res => {
         if (res) {
           console.log('查询', res)
@@ -268,8 +313,15 @@ export default {
         console.log('查询出错', err)
         this.isLoading = false
       })
+    },
+    showReportDetail: function (row) {
+      this.itemID = row.ID
+      this.reportItem = this.currentItem.value
+      this.reportDetailVisible = true
+      if (this.$refs.rd !== undefined) {
+        this.$refs.rd.loadRecords(this.reportItem, this.itemID, this.searchForm.Year, this.searchForm.Month)
+      }
     }
-
   }
 }
 </script>

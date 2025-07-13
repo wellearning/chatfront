@@ -51,7 +51,7 @@
       </el-col>
     </el-row>
   </el-form>
-  <EditCoverLetterBody :coverLetter="coverLetterForm"></EditCoverLetterBody>
+  <EditCoverLetterBody ref="eclb1" :coverLetter="coverLetterForm"></EditCoverLetterBody>
   <div class="newMemo-submit">
     <el-button icon="el-icon-check" type="primary" @click="submit('save')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany">Save</el-button>
     <el-button icon="el-icon-check" type="primary" @click="submit('saveAndPrint')" :loading="isLoading || isLoadingTemplates || isLoadingInsuranceCompany" v-if="coverLetterForm.StatusID === 1">Save & Print</el-button>
@@ -229,6 +229,7 @@ export default {
             // this.matchAnswerBlockQuestion()
             // this.coverLetterForm.Templates = res.data.coverLetterTemplates.map(item => { return item.TemplateID })
             // this.changeTemplates(this.coverLetterForm.Templates, 'Answer')
+            this.$refs.eclb1.loadForbidden()
           })
         }
         // this.isLoading = false

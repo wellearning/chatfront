@@ -99,7 +99,7 @@ table tr td {
 }
 ::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -113,6 +113,15 @@ table tr td {
 .el-table .cell { /*表格识别换行符*/
   white-space: pre-line;
   word-break: normal;
+}
+.forbidden {
+  margin: 20px 30px 20px 30px;
+  padding: 18px;
+  color: red;
+  font-size: 18px;
+  border: solid;
+  border-width: 1px;
+  word-break: keep-all;
 }
 /*通用结束*/
 /*login开始*/
@@ -593,7 +602,7 @@ table tr td {
 }
 .viewCSIO {
   margin: 0px 0 0px 0;
-  padding: 50px 50px;
+  padding: 20px 50px;
   font-size: 18px;
   position: relative;
   white-space: pre-line;

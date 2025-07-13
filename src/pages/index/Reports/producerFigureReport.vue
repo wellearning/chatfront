@@ -181,7 +181,7 @@ export default {
         r.children = []
         let index = 0
         r.listValueRecords.forEach(lvr => {
-          r.RemarketCounts += lvr.Count
+          // r.RemarketCounts += lvr.Count
           index++
           let child = {
             ProducerID: r.ProducerID + '_' + index,

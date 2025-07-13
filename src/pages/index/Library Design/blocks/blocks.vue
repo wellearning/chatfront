@@ -526,6 +526,8 @@ export default {
     // 选择问题类型
     changeQuestionType: function (id) {
       this.currentQuestion = null
+      this.loadQuestions(id, 0)
+      /*
       this.isLoading = true
       this.axios.post('/api/Services/BaseService.asmx/GetSimpleQuestionsByType', {typeid: id, btypeid: this.btypeId}).then(res => {
         if (res) {
@@ -539,6 +541,35 @@ export default {
           }
         }
         this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+      */
+    },
+    loadQuestions: function (id, start) {
+      this.isLoading = true
+      this.axios.post('/api/Services/BaseService.asmx/GetSimpleQuestionsByType', {typeid: id, btypeid: this.btypeId, start: start}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          if (start === 0) {
+            this.questionCount = res.count
+            this.questionList = res.data
+          } else {
+            this.questionList = this.questionList.concat(res.data)
+          }
+          if (this.questionList.length < this.questionCount) {
+            this.loadQuestions(id, this.questionList.length)
+          } else {
+            // 同一个block中，同一个question只能有一个
+            if (this.addFormVisible) {
+              this.questionList = this.questionList.filter(item => this.addForm.blockQuestions.map(it => it.QuestionID).indexOf(item.QuestionID) === -1)
+            } else if (this.editFormVisible) {
+              this.questionList = this.questionList.filter(item => this.editForm.blockQuestions.map(it => it.QuestionID).indexOf(item.QuestionID) === -1)
+            }
+            this.isLoading = false
+          }
+        }
       }).catch(err => {
         console.log('查询出错', err)
         this.isLoading = false

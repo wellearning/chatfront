@@ -32,12 +32,14 @@ Function: Show all commercial application list and do all operations on the list
               <el-table-column prop="BlockName" label="Block Name" min-width="300"/>
               <el-table-column prop="Status" label="Status" min-width="100"/>
               <el-table-column label="Sub-Action" width="380">
-                <template slot-scope="scope">
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
-                  <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" :disabled="props.row.StatusID > 1" @click="showEditSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Edit</el-button>
-                  <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
-                  <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                <template v-slot="scope">
+                  <div v-if="scope.row.Status !=='Skipped'">
+                    <el-button v-if="scope.row.TypeID === 0" icon="el-icon-view" type="primary" @click="showViewApplicationBlock(scope.row)" :loading="isLoading" size="small">View</el-button>
+                    <el-button v-if="scope.row.TypeID === 0" icon="el-icon-edit"  type="primary" @click="showEditBlock(scope.row)" :loading="isLoadingApplicationBlock" size="small">Edit</el-button>
+                    <el-button v-if="scope.row.TypeID === 1" icon="el-icon-edit" type="primary" :disabled="props.row.StatusID > 1" @click="showEditSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Edit</el-button>
+                    <el-button v-if="scope.row.TypeID === 1" icon="el-icon-delete" type="danger" @click="removeSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Del</el-button>
+                    <el-button v-if="scope.row.TypeID === 2" icon="el-icon-plus" type="primary" @click="addSubApplicationTemplate(scope.row)" :loading="isLoading" size="small">Add</el-button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -63,6 +65,8 @@ Function: Show all commercial application list and do all operations on the list
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6"  :type="processType(scope.row)" @click="showQuotation(scope.row)"  size="small">Process</el-button>
               <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 6" type="danger" @click="voidApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Void</el-button>
+              <el-button icon="el-icon-delete" v-if="scope.row.StatusID !== 6" type="danger" @click="followApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">FollowUp</el-button>
+              <!--el-button icon="el-icon-view" v-if="roleName === 'Developer'"  type="primary" @click="showCsioList(scope.row)"  size="small">CSIO</el-button-->
               <!--el-button icon="el-icon-unlock" v-if="scope.row.StatusID === 6" type="warning" @click="reinstateApplication(scope.row.ApplicationID)" :loading="isLoading" size="small">Reinstate</el-button-->
             </el-button-group>
           </template>
@@ -319,7 +323,7 @@ Function: Show all commercial application list and do all operations on the list
             <el-button icon="el-icon-check" type="primary" @click="checkQuotationProcessInput" :loading="isQuotationProcessing">Send Email</el-button>
           </div>
         </el-form-->
-        <sendEmail ref="se" :mail="quoteEmail" @hideEmailWindow="hideEmailWindow">
+        <sendEmail ref="se" :mail="quoteEmail" :body="emailBody" @hideEmailWindow="hideEmailWindow">
         </sendEmail>
       </el-dialog>
       <!----------------------------------------------InsuranceCorpQuotation Send Email 弹窗结束----------------------------------------------------->
@@ -370,6 +374,11 @@ Function: Show all commercial application list and do all operations on the list
         </el-table>
       </el-dialog>
       <!----------------------------------------------Quotation Suggestion弹窗结束----------------------------------------------------->
+      <!----------------------------------------------CSIO List 弹窗开始----------------------------------------------------->
+      <el-dialog z-index="5" title="CSIO List" :visible.sync="csioListVisible" width="984.56px" center>
+        <csioList ref="csiol" :businessTypeID="4" :businessID="currentApplicationID"></csioList>
+      </el-dialog>
+      <!----------------------------------------------SCSIO List弹窗结束----------------------------------------------------->
     </div>
   </div>
 </template>
@@ -382,6 +391,7 @@ import editApplicationBlock from '@/component/parts/editApplicationBlock'
 import EditApplication from '@/component/parts/editApplication'
 import editSubApplicationTemplate from '@/component/parts/editSubApplicationTemplate'
 import sendEmail from '@/component/window/sendEmail'
+import csioList from '@/component/window/csioList'
 
 export default {
   components: {
@@ -391,7 +401,8 @@ export default {
     editSubApplicationTemplate,
     ViewApplicationBlock,
     ViewApplication,
-    sendEmail
+    sendEmail,
+    csioList
   },
   data: function () {
     return {
@@ -442,12 +453,22 @@ export default {
         subject: null,
         mailto: null
       },
+      emailBody: 'Class of business and detailed operation description.\n' +
+        '\n' +
+        'Whether new venture or already in business for XX years?  if existing business, how many years have they been continuously insured or never have insurance before?\n' +
+        '\n' +
+        'Name of existing insurance carrier? Expiring/Renewal premium? Target premium (if any)? Required effective date?\n' +
+        '\n' +
+        'Disclosure of past claims/losses (if any)\n' +
+        '\n' +
+        'Optional: highlights of specific coverages requirement or something UW needs to pay attention to.',
       currentApplication: {
         quote: {
           quotations: []
         },
         unselectedCorps: []
       },
+      currentApp: null,
       currentApplicationID: 0,
       currentApplicationTemplate: null,
       currentApplicationBlockID: 0,
@@ -459,6 +480,7 @@ export default {
       currentPage: 1,
       total: 0,
       isAll: false,
+      csioListVisible: false,
       quotationVisible: false,
       quotationBindVisible: false,
       quotationSuggestionVisible: false,
@@ -654,7 +676,7 @@ export default {
       let subject = 'Quote request | ' + this.currentApplication.NameInsured + ' | ' + operating
       this.quotationProcessingForm.CorpName = corp.ShortName
       if (this.$refs.se !== undefined) {
-        this.$refs.se.setEmail(quotation.InsuranceCorpQuotationID, subject, corp.Email)
+        this.$refs.se.setEmail(quotation.InsuranceCorpQuotationID, subject, corp.Email, this.emailBody)
       } else {
         this.quoteEmail.businessId = quotation.InsuranceCorpQuotationID
         this.quoteEmail.subject = subject
@@ -982,7 +1004,7 @@ export default {
       let value = JSON.stringify(ablock)
       console.log('SaveApplicationBlock', ablock)
       this.isLoading = true
-      this.axios.post('/api/Services/CommerceService.asmx/SaveApplicationBlock', {applicationblock: value}).then(res => {
+      this.axios.post('/api/Services/CommerceService.asmx/SaveApplicationBlock_withEffective', {applicationblock: value}).then(res => {
         if (res) {
           console.log('修改', res)
           this.$message({
@@ -995,8 +1017,9 @@ export default {
         }
         this.isLoading = false
         if (close) this.editApplicationBlockVisible = false
+        this.loadApplication()
       }).catch(err => {
-        console.log('修改出错', err)
+        console.log('saveApplicationBlock error', err)
         this.$message({
           type: 'error',
           message: 'Operation failed'
@@ -1107,6 +1130,8 @@ export default {
     },
     loadApplication: function (app) {
       // if (app.applicationTemplate !== null) return
+      if (app !== undefined) this.currentApp = app
+      else app = this.currentApp
       let id = app.ApplicationID
       this.isLoading = true
       this.axios.post('/api/Services/CommerceService.asmx/GetApplicationFrame', {applicationid: id}).then(res => {
@@ -1434,7 +1459,7 @@ export default {
     // 保险公司列表
     initInsuranceCompany: function () {
       this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetInsuranceCorps', {}).then(res => {
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
         if (res) {
           console.log('保险公司列表', res)
           let nocorp = [{InsuranceCorpID: 0, Name: 'No Company'}]
@@ -1447,6 +1472,42 @@ export default {
       })
     },
     // 删除
+    followApplication: function (id) {
+      this.$confirm('Are you sure to follow up it?', 'Confirm', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.isLoading = true
+        this.axios.post('/api/Services/CommerceService.asmx/FollowApplication', {applicationid: id}).then(res => {
+          if (res) {
+            console.log('删除', res)
+            this.$message({
+              type: 'success',
+              message: 'Operation Succeeded'
+            })
+            console.log('void', this.list)
+            let app = this.list.find(item => item.ApplicationID === id)
+            app.StatusID = res.data
+            this.setApplicationStatus(app)
+            // this.list.splice(index, 1)
+            // this.list = this.list.filter(item => item.ApplicationID !== id)
+
+            this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+            this.total = this.list.length
+          }
+          this.isLoading = false
+        }).catch(err => {
+          console.log('删除出错', err)
+          this.isLoading = false
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Operation Cancelled'
+        })
+      })
+    },
     voidApplication: function (id) {
       this.$confirm('Are you sure to void it?', 'Confirm', {
         confirmButtonText: 'Confirm',
@@ -1568,9 +1629,9 @@ export default {
     attachInfo: function (a) {
       a.EffectiveDate = moment(a.EffectiveDate)
       a.ExpiryDate = moment(a.ExpiryDate)
-      // let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
-      // if (corp !== undefined) a.CorpName = corp.Name
-      // else a.CorpName = ''
+      let corp = this.insuranceCorpList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.ShortName
+      else a.CorpName = ''
       let status = this.statusList.find(s => s.key === a.Status)
       if (status !== undefined) a.Status = status.value
       else a.Status = ''
@@ -1740,6 +1801,14 @@ export default {
       }).catch(err => {
         console.log('导出Application PDF出错', err)
       })
+    },
+    showCsioList: function (application) {
+      if (application !== undefined) this.setCurrent(application)
+      this.csioListVisible = true
+      if (this.$refs.csiol !== undefined) {
+        // this.$refs.csiol.loadSheets(application.ApplicationID)
+        this.$refs.csiol.loadCsios(application.ApplicationID)
+      }
     },
     showSheet: function (applicationid) {
       this.currentApplicationID = applicationid

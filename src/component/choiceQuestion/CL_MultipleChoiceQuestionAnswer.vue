@@ -123,7 +123,8 @@ export default {
         }
       })
       this.answer.hasAnswer = hasanswer && secondcheck
-      if (this.answer.hasAnswer) this.$emit('changeValue')
+      // if (this.answer.hasAnswer) this.$emit('changeValue')
+      this.$emit('changeValue')
     },
     fillin_changeVal: function (value) {
       // this.$emit('changeValue', this.templateId, this.blockSequenceNo, this.questionSequenceNo, value)

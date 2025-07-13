@@ -29,6 +29,11 @@ Function: Show all defined data list and do all operations on the list.
             <el-input v-model="scope.row.Name" :disabled="!(scope.row.DataItemID === currentId)"></el-input>
           </template>
         </el-table-column>
+        <el-table-column label="Value" prop="ItemValue" min-width="300" sortable>
+          <template v-slot:="scope">
+            <el-input v-model="scope.row.ItemValue" :disabled="!(scope.row.DataItemID === currentId)"></el-input>
+          </template>
+        </el-table-column>
         <el-table-column label="Action" width="350" fixed="right">
           <template v-slot:="scope">
             <el-button v-if="currentId === null && !(scope.row.DataItemID === currentId)" icon="el-icon-edit" type="primary" @click="showEdit(scope.row.DataItemID, scope.row.Name)" :loading="isLoading || isLoadingTree" size="small">Edit</el-button>
@@ -43,10 +48,13 @@ Function: Show all defined data list and do all operations on the list.
       <el-pagination background :page-size=pageSize :pager-count=pagerCount :current-page.sync=currentPage layout="prev, pager, next" :total=total class="pageList">
       </el-pagination>
       <!----------------------------------------------新增弹窗开始----------------------------------------------------->
-      <el-dialog :title="'Add New ' + dataName" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
+      <el-dialog :title="'Add New' + dataName + 'item'" :visible.sync="addFormVisible" width="600px" center :before-close="closeAdd">
         <el-form :model="addForm" ref="addForm" :rules="addFormRules" class="form" width="500px">
-          <el-form-item :label="dataName" prop="name">
+          <el-form-item label="Name" prop="name">
             <el-input v-model="addForm.Name" width="500px" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="Value" prop="value">
+            <el-input v-model="addForm.Value" width="500px" clearable></el-input>
           </el-form-item>
           <el-form-item class="confirmBtn">
             <el-button icon="el-icon-check" type="primary" @click="add()" :loading="isLoading || isLoadingTree">Confirm</el-button>
@@ -114,7 +122,8 @@ export default {
       // 新增
       addFormVisible: false,
       addForm: {
-        Name: null
+        Name: null,
+        Value: null
       },
       addFormRules: {
         Name: [
@@ -254,7 +263,7 @@ export default {
         })
       } else {
         this.isLoading = true
-        obj.ItemValue = obj.Name
+        // obj.ItemValue = obj.Name
         this.axios.post('/api/Services/baseservice.asmx/SaveDataItem', {dataitem: JSON.stringify(obj)}).then(res => {
           if (res) {
             console.log('修改', res)
@@ -304,7 +313,8 @@ export default {
         if (valid) {
           this.isLoading = true
           let name = this.addForm.Name
-          this.axios.post('/api/Services/BaseService.asmx/AddDataItem', {datatype: this.dataName, name: name, value: name, parentid: 0}).then(res => {
+          let value = this.addForm.Value
+          this.axios.post('/api/Services/BaseService.asmx/AddDataItem', {datatype: this.dataName, name: name, value: value, parentid: 0}).then(res => {
             if (res) {
               console.log('新增', res)
               this.$message({

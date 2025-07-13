@@ -45,6 +45,11 @@ Function: Show my cover letter list and do all operations on the list.
           </template>
         </el-table-column>
         <el-table-column label="Status" prop="StatusName" min-width="100"></el-table-column>
+        <!--el-table-column label="Tag" prop="Tag" min-width="80" sortable="customer">
+          <template v-slot="scope">
+            <span>{{scope.row.Tag?'Tag':''}}</span>
+          </template>
+        </el-table-column-->
         <el-table-column label="Action" width="350" fixed="right">
           <template slot-scope="scope">
             <el-button-group>
@@ -96,6 +101,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       AutoBindingAuthority: null,
       PropertyBindingAuthority: null,
       EffectiveDate: null,
@@ -121,7 +127,10 @@ export default {
       currentCoverLetterID: null,
       currentCoverLetter: null,
       // 列表
+      producerList: [],
+      insuranceCompanyList: [],
       tempList: [],
+      totalList: [],
       list: [],
       pageSize: 20,
       pagerCount: 5,
@@ -129,9 +138,9 @@ export default {
       total: 0,
       // 修改
       isLoadingTemplates: false,
+      isLoadingProducer: false,
       isLoadingInsuranceCompany: false,
       templatesList: [],
-      insuranceCompanyList: [],
       currentTemplates: [],
       coverLetterFormVisible: false,
       coverLetterForm: {
@@ -196,15 +205,23 @@ export default {
     }
   },
   mounted: function () {
-    this.search(null)
-    this.initTemplates()
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    if (id !== undefined) {
+      this.btypeId = id
+    }
+    // this.initTemplates()
     this.initInsuranceCompany()
+    this.initProducers()
+    this.loadMyCoverletters(0)
     if (this.$store.state.CoverLetterID !== undefined && this.$store.state.CoverLetterID !== '') {
       // this.view(this.$store.state.CoverLetterID)
       let coverLetterId = this.$store.state.CoverLetterID
       this.$store.state.CoverLetterID = ''
       this.currentCoverLetterID = coverLetterId
       this.viewFormVisible = true
+      if (this.$refs.ps !== undefined) {
+        this.$refs.ps.loadCoverLetter(coverLetterId)
+      }
     }
   },
   watch: {
@@ -229,6 +246,146 @@ export default {
     },
     rankdesc: function (name) {
       this.list.sort(this.bydesc(name))
+    },
+    // 日期格式
+    dateFormat (date) {
+      return moment(date).format('YYYY-MM-DD')
+    },
+    // Templates列表
+    initTemplates: function () {
+      this.isLoadingTemplates = true
+      this.axios.post('/api/Services/BaseService.asmx/GetTemplatesByBusinessType', {btypeid: this.btypeId}).then(res => {
+        if (res) {
+          console.log('Templates列表', res)
+          this.templatesList = res.data
+        }
+        this.isLoadingTemplates = false
+      }).catch(err => {
+        console.log('Templates列表出错', err)
+        this.isLoadingTemplates = false
+      })
+    },
+    // 保险公司列表
+    initInsuranceCompany: function () {
+      this.isLoadingInsuranceCompany = true
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
+        if (res) {
+          console.log('保险公司列表', res)
+          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
+        }
+        this.isLoadingInsuranceCompany = false
+        this.attachCoverLetters()
+      }).catch(err => {
+        console.log('保险公司列表出错', err)
+        this.isLoadingInsuranceCompany = false
+      })
+    },
+    initProducers: function () {
+      this.isLoadingProducer = true
+      this.axios.post('/api/Services/baseservice.asmx/GetProducers', {}).then(res => {
+        if (res) {
+          console.log('Producer列表', res)
+          this.producerList = res.data
+        }
+        this.isLoadingProducer = false
+        this.attachCoverLetters()
+      }).catch(err => {
+        console.log('producer列表出错', err)
+        this.isLoadingProducer = false
+      })
+    },
+    loadMyCoverletters: function (start) {
+      this.isLoading = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetMyCoverLetters_start', {btypeid: this.btypeId, start: start}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          if (start === 0) {
+            this.total = res.count
+            this.totalList = res.data
+          } else {
+            this.totalList = this.totalList.concat(res.data)
+          }
+          if (this.totalList.length === this.total) {
+            this.list = this.totalList
+            this.currentPage = 1
+            this.pageCount = Math.ceil(this.total / this.pageSize)
+            this.isLoading = false
+            this.attachCoverLetters()
+          } else this.loadMyCoverletters(this.totalList.length)
+        }
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
+    attachCoverLetters: function () {
+      if (this.isLoadingInsuranceCompany || this.isLoadingProducer || this.isLoading) return
+      this.totalList.forEach(a => {
+        this.attachInfo(a)
+      })
+    },
+    attachInfo: function (a) {
+      a.EffectiveDate = moment(a.EffectiveDate)
+      a.ExpiryDate = moment(a.ExpiryDate)
+      let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
+      if (corp !== undefined) a.CorpName = corp.ShortName
+      else a.CorpName = ''
+      // let status = this.statusList.find(s => s.key === a.StatusID)
+      // if (status !== undefined) a.Status = status.value
+      // else a.Status = ''
+      let producer = this.producerList.find(p => p.StaffID === a.ProducerID)
+      if (producer !== undefined) a.Producer = producer.Name
+      else a.Producer = ''
+      if (a.StaffID === a.ProducerID) a.Author = a.Producer
+      else {
+        let author = this.producerList.find(p => p.StaffID === a.StaffID)
+        if (author !== undefined) a.Author = author.Name
+        else a.Author = ''
+      }
+    },
+    // 查询
+    search: function () {
+      let query = this.searchForm.name.toLowerCase().trim()
+      if (query === '') {
+        this.list = this.totalList
+      } else {
+        this.list = this.totalList.filter(r => r.Title.toLowerCase().indexOf(query) >= 0 ||
+          r.CoverLetterID === Number(query) ||
+          r.Producer.toLowerCase().indexOf(query) >= 0 ||
+          r.NameInsured.toLowerCase().indexOf(query) >= 0 ||
+          r.CorpName.toLowerCase().indexOf(query) >= 0 ||
+          r.EffectiveDate.format('YYYY-MM-DD').indexOf(query) >= 0 ||
+          r.ClientCode.toLowerCase().indexOf(query) >= 0
+        )
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentPage = 1
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+    },
+    /*
+    search: function () {
+      let name = this.searchForm.name
+      this.isLoading = true
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetMyCoverLetters', {query: name}).then(res => {
+        if (res) {
+          console.log('查询', res)
+          this.list = res.data
+          this.total = this.list.length
+          this.currentPage = 1
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('查询出错', err)
+        this.isLoading = false
+      })
+    },
+    */
+    // 重置查询
+    resetSearch: function () {
+      this.$refs['searchForm'].resetFields()
+      this.searchName = null
+      this.search(null)
     },
     showCoverLetter: function (coverLetter) {
       this.currentCoverLetter = coverLetter
@@ -286,40 +443,6 @@ export default {
         done()
       }).catch(() => {})
     },
-
-    // 日期格式
-    dateFormat (date) {
-      return moment(date).format('YYYY-MM-DD')
-    },
-    // 查询
-    search: function () {
-      let name = this.searchForm.name
-      this.isLoading = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetMyCoverLetters', {query: name}).then(res => {
-        if (res) {
-          console.log('查询', res)
-          this.list = res.data
-          /*
-            if (name !== null) {
-              this.searchName = name
-              this.list = this.list.filter(item => item.Title.toLowerCase().indexOf(this.searchName.toLowerCase()) !== -1)
-            }
-            */
-          this.total = this.list.length
-          this.currentPage = 1
-        }
-        this.isLoading = false
-      }).catch(err => {
-        console.log('查询出错', err)
-        this.isLoading = false
-      })
-    },
-    // 重置查询
-    resetSearch: function () {
-      this.$refs['searchForm'].resetFields()
-      this.searchName = null
-      this.search(null)
-    },
     // 删除
     del: function (id) {
       this.$confirm('Are you sure to delete it?', 'Confirm', {
@@ -348,34 +471,6 @@ export default {
           type: 'info',
           message: 'Operation Cancelled'
         })
-      })
-    },
-    // Templates列表
-    initTemplates: function () {
-      this.isLoadingTemplates = true
-      this.axios.post('/api/Services/NewBusinessService.asmx/SearchTemplates', {query: ''}).then(res => {
-        if (res) {
-          console.log('Templates列表', res)
-          this.templatesList = res.data
-        }
-        this.isLoadingTemplates = false
-      }).catch(err => {
-        console.log('Templates列表出错', err)
-        this.isLoadingTemplates = false
-      })
-    },
-    // 保险公司列表
-    initInsuranceCompany: function () {
-      this.isLoadingInsuranceCompany = true
-      this.axios.post('/api/Services/baseservice.asmx/GetBrokageInsuranceCorps', {}).then(res => {
-        if (res) {
-          console.log('保险公司列表', res)
-          this.insuranceCompanyList = res.data.filter(c => c.BusinessLineID !== 2)
-        }
-        this.isLoadingInsuranceCompany = false
-      }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
       })
     },
     voidCoverLetter: function (id) {

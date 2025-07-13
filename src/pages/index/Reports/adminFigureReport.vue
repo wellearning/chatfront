@@ -16,6 +16,9 @@ Function: Show figure report as administrator role.
               <el-option v-for="item in reportItems" :key="item.ParameterID" :label="item.Name" :value="item.ParameterID"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="" prop="name">
+            <el-input v-model="searchForm.name" placeholder="Producer" style="width:100px;" size="" @change="search" @keyup.enter.native="search"></el-input>
+          </el-form-item>
           <el-form-item>
             <el-date-picker @change="showMain()"
               v-model="periodDates" class="middleWidth"
@@ -94,6 +97,7 @@ export default {
       },
       // 列表
       list: [],
+      totalList: [],
       reportItems: [],
       currentItem: {ParameterID: -1, Name: ''},
       reportID: '0',
@@ -179,7 +183,7 @@ export default {
       if (this.reportItems.length === 0) return
       this.currentItem = this.reportItems.find(i => i.ParameterID === this.searchForm.ReportItem)
       // this.setColumns(this.currentItem)
-      this.search()
+      this.loadReport()
       // this.$forceUpdate()
     },
     // 日期格式
@@ -219,8 +223,8 @@ export default {
     compute: function () {
       this.summaryCounts = 0
       if (this.currentItem.DataType === 'List' || this.currentItem.DataType === 'Number') {
-        for (var j = 0; j < this.list.length; j++) {
-          let item = this.list[j]
+        for (var j = 0; j < this.totalList.length; j++) {
+          let item = this.totalList[j]
           for (var i = 0; i < item.listValueRecords.length; i++) {
             item['ListCounts' + i] = item.listValueRecords[i].Count
             if (item.NBCounts !== 0) item['ListPercent' + i] = Math.round(item.listValueRecords[i].Count / item.NBCounts * 100)
@@ -230,8 +234,8 @@ export default {
           this.summaryCounts += item.NBCounts
         }
       } else if (this.currentItem.DataType === 'Check') {
-        for (j = 0; j < this.list.length; j++) {
-          let item = this.list[j]
+        for (j = 0; j < this.totalList.length; j++) {
+          let item = this.totalList[j]
           if (item.NBCounts !== 0) item['Percentage'] = Math.round(item.RemarketCounts * 100 / item.NBCounts)
           else item['Percentage'] = 0
           this.summary[0].Counts += item.RemarketCounts
@@ -242,8 +246,19 @@ export default {
         if (this.summaryCounts > 0) this.summary[i].Percent = Math.round(10000 * this.summary[i].Counts / this.summaryCounts) / 100
       }
     },
-    // 查询
     search: function () {
+      let query = this.searchForm.name
+      if (query === null || query === '') {
+        this.list = this.totalList
+      } else {
+        query = query.toLowerCase().trim()
+        this.list = this.totalList.filter(r => r.ProducerName.toLowerCase().indexOf(query) >= 0)
+      }
+      this.total = this.list.length
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+    },
+    // 查询
+    loadReport: function () {
       if (this.searchForm.ReportItem === null) return
       this.isLoading = true
       let startDate = this.dateFormat(this.periodDates[0])
@@ -252,10 +267,10 @@ export default {
       let param = {parameterid: this.searchForm.ReportItem, startdate: startDate, enddate: endDate}
       this.axios.post(service, param).then(res => {
         if (res) {
-          console.log('查询', res)
-          this.list = res.data
-          if (this.currentItem.DataType === 'Number' && this.list.length > 0) {
-            let records = this.list[0].listValueRecords
+          console.log('loadReport', res)
+          this.totalList = res.data
+          if (this.currentItem.DataType === 'Number' && this.totalList.length > 0) {
+            let records = this.totalList[0].listValueRecords
             this.currentItem.listValues = []
             records.forEach(r => {
               this.currentItem.listValues.push({Name: r.Name})
@@ -263,6 +278,7 @@ export default {
           }
           this.setColumns(this.currentItem)
           this.compute()
+          this.search()
           /*
           if (this.currentItem.DataType === 'List') {
             this.list.forEach(function (item) {

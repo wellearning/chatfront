@@ -48,9 +48,9 @@ Function: Show my commercial application list and do all operations on the list.
         <el-table-column label="Title" prop="Title" min-width="150" sortable="custom"></el-table-column>
         <el-table-column label="ClientCode" prop="ClientCode" min-width="120" sortable="custom"></el-table-column>
         <el-table-column label="PolicyNum" prop="PolicyNumber" min-width="120" sortable="custom"></el-table-column>
-        <el-table-column label="Applicant" prop="NameInsured" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="InsuCorp" prop="CorpName" min-width="200" sortable="custom"></el-table-column>
-        <el-table-column label="EffectiveDate" prop="EffectiveDate" min-width="150" sortable="custom">
+        <el-table-column label="Applicant" prop="NameInsured" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="InsuCorp" prop="CorpName" min-width="120" sortable="custom"></el-table-column>
+        <el-table-column label="EffeDate" prop="EffectiveDate" min-width="120" sortable="custom">
           <template slot-scope="scope">
             <span>{{scope.row.EffectiveDate.format('YYYY-MM-DD')}}</span>
           </template>
@@ -60,7 +60,7 @@ Function: Show my commercial application list and do all operations on the list.
             <span>{{dateFormat(scope.row.RequestDate)}}</span>
           </template>
         </el-table-column-->
-        <el-table-column label="Status" prop="PolicyStatus" min-width="100" sortable="custom"></el-table-column>
+        <el-table-column label="Status" prop="PolicyStatus" min-width="90" sortable="custom"></el-table-column>
         <el-table-column label="Action" width="400">
           <template slot-scope="scope">
             <el-button-group>
@@ -70,6 +70,7 @@ Function: Show my commercial application list and do all operations on the list.
               <el-button icon="el-icon-edit" v-if="scope.row.StatusID !== 6"  type="primary" @click="showEdition(scope.row)"  size="small">BaseInfo</el-button-->
               <el-button icon="el-icon-view" v-if="scope.row.StatusID !== 6 && scope.row.QuestionnaireID > 0" type="primary" @click="showQuestionnaire(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">Quesnaire</el-button>
               <el-button icon="el-icon-view"  type="primary" @click="showSheet(scope.row.ApplicationID)" :loading="isLoading || isLoadingInsuranceCompany" size="small">FORM</el-button>
+              <el-button icon="el-icon-view"  type="primary" v-if="scope.row.StatusID !== 9 && scope.row.StatusID > 0" @click="showCSIO(scope.row.ApplicationID)" :loading="isLoading" size="small">COI</el-button>
               <el-button icon="el-icon-circle-plus" type="primary" @click="duplicate(scope.row)"  size="small">Duplicate</el-button>
             </el-button-group>
           </template>
@@ -122,6 +123,11 @@ Function: Show my commercial application list and do all operations on the list.
         <EditApplicationBase ref="eab" :application="currentApplication" @hideEdition="hideEdition()"></EditApplicationBase>
       </el-dialog>
       <!----------------------------------------------BaseInfo弹窗结束----------------------------------------------------->
+      <!----------------------------------------------CSIO 弹窗开始----------------------------------------------------->
+      <el-dialog title="" :visible.sync="csioFormVisible" width="1184.56px"  height="2184.56px" center >
+        <ViewCSIO ref="vc" :businessId="currentApplicationID" :businessTypeId="4"></ViewCSIO>
+      </el-dialog>
+      <!----------------------------------------------CSIO 弹窗结束----------------------------------------------------->
 
     </div>
   </div>
@@ -136,6 +142,7 @@ import ViewQuestionnaire from '@/component/window/questionnaire'
 import EditApplication from '@/component/parts/editApplication'
 import ViewApplicationBlock from '@/component/window/viewApplicationBlock'
 import editApplicationBlock from '@/component/parts/editApplicationBlock'
+import ViewCSIO from '@/component/window/csio'
 
 export default {
   components: {
@@ -145,7 +152,8 @@ export default {
     EditApplication,
     ViewApplication,
     ViewQuestionnaire,
-    EditApplicationBase
+    EditApplicationBase,
+    ViewCSIO
   },
   data: function () {
     return {
@@ -192,6 +200,8 @@ export default {
       isLoadingTemplates: false,
       isLoadingApplicationBlock: false,
       isLoadingInsuranceCompany: false,
+      isLoadingApplicationStatus: false,
+      isLoadingRenewalStatus: false,
       templatesList: [],
       statusList: [],
       renewalStatusList: [],
@@ -231,6 +241,7 @@ export default {
       // 查阅
       editApplicationWindowVisible: false,
       sheetFormVisible: false,
+      csioFormVisible: false,
       viewApplicationBlockVisible: false,
       viewApplicationVisible: false,
       editApplicationBlockVisible: false
@@ -241,8 +252,8 @@ export default {
     this.loadApplicationStatus()
     this.loadRenewalStatus()
     this.initInsuranceCompany()
-    this.loadApplications(0)
     this.initTemplates()
+    this.loadApplications(0)
     if (this.$store.state.ApplicationID !== undefined && this.$store.state.ApplicationID !== '') {
       this.view(this.$store.state.ApplicationID)
       this.$store.state.ApplicationID = ''
@@ -630,6 +641,9 @@ export default {
             this.totalList = this.totalList.concat(res.data)
           }
           if (this.totalList.length === this.total) {
+            this.isLoading = false
+            this.attachingInfo()
+            /*
             this.totalList.forEach(a => {
               a.EffectiveDate = moment(a.EffectiveDate)
               a.ExpiryDate = moment(a.ExpiryDate)
@@ -654,7 +668,7 @@ export default {
             this.list = this.totalList
             this.pageCount = Math.ceil(this.total / this.pageSize)
             this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-            this.isLoading = false
+             */
           } else this.loadApplications(this.totalList.length)
         }
       }).catch(err => {
@@ -662,7 +676,34 @@ export default {
         this.isLoading = false
       })
     },
-
+    attachingInfo: function () {
+      if (this.isLoadingRenewalStatus || this.isLoadingTemplates || this.isLoadingInsuranceCompany || this.isLoading) return
+      this.totalList.forEach(a => {
+        a.EffectiveDate = moment(a.EffectiveDate)
+        a.ExpiryDate = moment(a.ExpiryDate)
+        a.RequestDate = moment(a.RequestDate)
+        a.DateOfBirth = moment(a.DateOfBirth)
+        let status = this.statusList.find(s => s.key === a.Status)
+        let renewalStatus = this.renewalStatusList.find(s => s.key === a.RenewalStatus)
+        if (status.value !== 'Bound') {
+          a.PolicyStatus = status.value
+        } else {
+          if (renewalStatus.value === 'Opened') {
+            let dateline = moment().add(2, 'M')
+            if (a.ExpiryDate < dateline) a.PolicyStatus = 'Open Renewal'
+            else a.PolicyStatus = 'NB'
+          } else if (renewalStatus.value === 'Pending') a.PolicyStatus = 'Pending Renewal'
+          else a.PolicyStatus = renewalStatus.value
+        }
+        let corp = this.insuranceCorpList.find(p => p.InsuranceCorpID === a.InsuranceCorpID)
+        if (corp !== undefined) a.CorpName = corp.Name
+        else a.CorpName = ''
+      })
+      this.list = this.totalList
+      this.pageCount = Math.ceil(this.total / this.pageSize)
+      this.currentlist = this.list.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
+      this.isLoading = false
+    },
     handleCurrentChange: function (val) {
       console.log(`当前页: ${val}`)
       if (val === this.pageCount && !this.isAll) {
@@ -736,35 +777,37 @@ export default {
           this.templatesList = res.data
         }
         this.isLoadingTemplates = false
+        this.attachingInfo()
       }).catch(err => {
         console.log('Templates列表出错', err)
         this.isLoadingTemplates = false
       })
     },
     loadApplicationStatus: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingApplicationStatus = true
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationStatus'}).then(res => {
         if (res) {
-          console.log('statusList', res)
+          console.log('ApplicationStatus', res)
           this.statusList = res.data
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingApplicationStatus = false
+        this.attachingInfo()
       }).catch(err => {
-        console.log('保险公司列表出错', err)
-        this.isLoadingInsuranceCompany = false
+        console.log('loadingApplicationStatus error', err)
+        this.isLoadingApplicationStatus = false
       })
     },
     loadRenewalStatus: function () {
-      this.isLoadingInsuranceCompany = true
+      this.isLoadingRenewalStatus = true
       this.axios.post('/api/Services/baseservice.asmx/GetEnumData', {enumtype: 'ApplicationRenewalStatus'}).then(res => {
         if (res) {
           console.log('loadRenewalStatus', res)
           this.renewalStatusList = res.data
         }
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingRenewalStatus = false
       }).catch(err => {
         console.log('loadRenewalStatus', err)
-        this.isLoadingInsuranceCompany = false
+        this.isLoadingRenewalStatus = false
       })
     },
     // 保险公司列表
@@ -776,6 +819,7 @@ export default {
           this.insuranceCorpList = res.data
         }
         this.isLoadingInsuranceCompany = false
+        this.attachingInfo()
       }).catch(err => {
         console.log('保险公司列表出错', err)
         this.isLoadingInsuranceCompany = false
@@ -819,6 +863,13 @@ export default {
       this.applicationFormVisible = false
       if (this.currentApplication.applicationTemplate !== null) {
         this.loadApplication(this.currentApplication)
+      }
+    },
+    showCSIO: function (applicationid) {
+      this.currentApplicationID = applicationid
+      this.csioFormVisible = true
+      if (this.$refs.vc !== undefined) {
+        this.$refs.vc.loadCsios(applicationid)
       }
     },
     duplicate: function (application) {

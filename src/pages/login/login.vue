@@ -12,7 +12,7 @@ Function: Log in page of the system.
           <el-col :xs="2" :sm="4" :md="6" :lg="8" :xl="9">&#12288;</el-col>
           <el-col :xs="20" :sm="16" :md="12" :lg="8" :xl="6">
             <div class="loginBox">
-              <h2 class="loginTitle">Welcome to Intelli Broker</h2>
+              <h2 class="loginTitle">Welcome to Intelli Broker of {{brokage.Name}}</h2>
               <el-form class="loginForm" ref="loginForm" :model="loginForm" :rules="loginFormRules" @keyup.13.native="login()">
                 <el-form-item label prop="username">
                   <el-input v-model.trim="loginForm.username" placeholder="Account" clearable></el-input>
@@ -55,6 +55,10 @@ export default {
     // }
     return {
       verifyCodeUsed: false,
+      brokage: {
+        Name: null,
+        VerifyCodeUsed: false
+      },
       isLoading: false,
       loginForm: {
         username: '',
@@ -72,7 +76,24 @@ export default {
       }
     }
   },
+  mounted: function () {
+    this.loadBrokage()
+  },
   methods: {
+    loadBrokage: function () {
+      this.isLoading = true
+      this.axios.post('/api/Services/baseservice.asmx/GetBrokage', {}).then(res => {
+        console.log('loadBrokage', res)
+        if (res) {
+          this.brokage = res.data
+          this.verifyCodeUsed = res.data.VerifyCodeUsed
+        }
+        this.isLoading = false
+      }).catch(err => {
+        console.log('loadBrokage error', err)
+        this.isLoading = false
+      })
+    },
     login: function () {
       if (this.verifyCodeUsed) this.login_v()
       else this.login_nv()

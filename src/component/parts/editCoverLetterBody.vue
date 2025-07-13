@@ -6,6 +6,12 @@ Function: The main edit part of the cover letter edition.
 -->
 <template>
 <div>
+  <div v-if="forbiddens.length > 0" class="forbidden">
+    <div>Attention:</div>
+    <div v-for="forbidden in forbiddens" :key="forbidden.ForbiddenID">
+      {{forbidden.Brief}}
+    </div>
+  </div>
   <div class="newMemo-content" v-for="ctemplate in coverLetter.coverLetterTemplates" :key="ctemplate.TemplateID">
     <div v-for="cblock in ctemplate.coverLetterBlocks" :key="cblock.BlockID">
       <!--<div class="newMemo-content-block-title">{{item.BlockName}}</div>-->
@@ -13,13 +19,13 @@ Function: The main edit part of the cover letter edition.
         <div v-if="answer.StatusID === 1">
           <div class="answerMemo" v-if="answer.TypeID === 1 && answer.StatusID === 1">
             <div class="typeTitle">
-              <span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span>
+              <!--span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span-->
               {{answer.QuestionDesc}}
             </div>
           </div>
-          <div clueass="answerMemo" v-else-if="answer.TypeID === 2 && answer.StatusID === 1">
+          <div class="answerMemo" v-else-if="answer.TypeID === 2 && answer.StatusID === 1">
             <div class="typeReminder">
-              <span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span>
+              <!--span v-if="answer.blockQuestion.Label !== undefined && answer.blockQuestion.Label !== null && answer.blockQuestion.Label !== ''">{{answer.blockQuestion.Label}}&nbsp;&nbsp;</span-->
               {{answer.QuestionDesc}}
             </div>
           </div>
@@ -64,6 +70,7 @@ export default {
   name: 'editCoverLetterBody',
   data: function () {
     return {
+      forbiddens: [],
       isLoading: false
     }
   },
@@ -74,9 +81,30 @@ export default {
     disabled: Boolean
   },
   mounted: function () {
+    this.loadForbidden()
     this.viewCoverLetter()
   },
   methods: {
+    loadForbidden: function () {
+      if (this.coverLetter.CoverLetterID === null) return
+      this.isLoading = true
+      let insurtypeid = this.coverLetter.InsuranceTypeID
+      let producerid = this.coverLetter.ProducerID
+      let insurancecorpid = this.coverLetter.InsuranceCorpID
+      let templateid = this.coverLetter.coverLetterTemplates[0].TemplateID
+      let date = this.coverLetter.EffectiveDate
+      let server = '/api/Services/baseservice.asmx/GetInsuranceTypeForbiddens'
+      let param = {insurtypeid: insurtypeid, producerid: producerid, insurancecorpid: insurancecorpid, templateid: templateid, date: date}
+      this.axios.post(server, param).then(res => {
+        if (res) {
+          console.log('loadForbidden', res)
+          this.forbiddens = res.data
+        }
+      }).catch(err => {
+        console.log('loadForbidden', err)
+        this.isLoading = false
+      })
+    },
     viewCoverLetter: function () {
       console.log('disabled:' + this.disabled)
     },
@@ -310,7 +338,10 @@ export default {
               // cblock.answers[i + skipsteps].StatusID = 1
               let ca = cblock.answers[i + skipsteps]
               ca.StatusID = 1
-              if (ca.hasAnswer) this.showNextQuestion(ctemplate, cblock, ca)
+              if (ca.TypeID === 1 || ca.TypeID === 2) {
+                ca.hasAnswer = true
+                this.showNextQuestion(ctemplate, cblock, ca)
+              } else if (ca.hasAnswer) this.showNextQuestion(ctemplate, cblock, ca)
             }
             break
           }

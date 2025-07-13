@@ -116,6 +116,7 @@ export default {
   },
   data: function () {
     return {
+      btypeId: 2,
       roleName: JSON.parse(this.$store.getters.getAccount).role.Name,
       processingRight: false,
       isUploadAuditVisible: false,
@@ -171,6 +172,10 @@ export default {
     }
   },
   mounted: function () {
+    let id = this.$route.params.id === undefined ? 2 : this.$route.params.id
+    if (id !== undefined) {
+      this.btypeId = id
+    }
     this.isUploadAuditVisible = this.roleName === 'Processing Advanced Member' || this.roleName === 'Developer' || this.roleName === 'Admin'
     this.isUWAuditVisible = this.roleName === 'Developer' || this.roleName === 'Admin'
     this.changePeriod()
@@ -419,7 +424,7 @@ export default {
       if (start === 0) this.totalList = []
       let startDate = this.dateFormat(this.searchForm.periodDates[0])
       let endDate = this.dateFormat(this.searchForm.periodDates[1])
-      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetters', {startdate: startDate, enddate: endDate, start: start}).then(res => {
+      this.axios.post('/api/Services/NewBusinessService.asmx/GetCoverLetters_btype', {startdate: startDate, enddate: endDate, start: start, btypeid: this.btypeId}).then(res => {
         if (res) {
           console.log('CoverLetters', res)
           if (start === 0) {
@@ -444,7 +449,7 @@ export default {
     },
     attachInfo: function (a) {
       a.EffectiveDate = moment(a.EffectiveDate)
-      a.ExpiryDate = moment(a.ExpiryDate)
+      a.RequestDate = moment(a.RequestDate)
       let corp = this.insuranceCompanyList.find(c => c.InsuranceCorpID === a.InsuranceCorpID)
       if (corp !== undefined) a.CorpName = corp.Name
       else a.CorpName = ''
